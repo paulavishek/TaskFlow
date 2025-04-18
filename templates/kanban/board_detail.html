@@ -1,0 +1,533 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ board.name }} - Digital Kanban Board{% endblock %}
+
+{% block extra_css %}
+<style>
+    .kanban-column {
+        cursor: grab;
+        user-select: none; /* Prevent text selection during drag */
+    }
+    .kanban-column:active {
+        cursor: grabbing;
+    }
+    .kanban-column.dragging {
+        opacity: 0.6;
+        z-index: 100;
+    }
+    .column-drag-placeholder {
+        border: 2px dashed #6c757d;
+        background-color: rgba(108, 117, 125, 0.1);
+        margin: 0 10px;
+        border-radius: 5px;
+        flex: 0 0 300px;
+    }
+    .kanban-column-header {
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #ddd;
+        position: relative;
+        cursor: grab;
+    }
+    .kanban-column-header:active {
+        cursor: grabbing;
+    }
+    .column-task-count {
+        display: inline-block;
+        margin-left: 5px;
+        background-color: rgba(0,0,0,0.1);
+        border-radius: 10px;
+        padding: 0 8px;
+        font-size: 0.8em;
+    }
+    .drag-handle {
+        cursor: move;
+        margin-right: 5px;
+        opacity: 0.5;
+    }
+    .drag-handle:hover {
+        opacity: 1;
+    }
+    .column-position-input {
+        width: 50px;
+        text-align: center;
+        margin-right: 5px;
+    }
+    .column-ordering-panel {
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    .column-ordering-badge {
+        display: inline-flex;
+        align-items: center;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        padding: 5px 10px;
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+    .column-ordering-badge input {
+        width: 40px;
+        margin-right: 5px;
+    }
+    .column-position-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #6c757d;
+        color: white;
+        font-weight: bold;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+        margin-right: 8px;
+    }
+    /* Search panel styles */
+    .search-panel {
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    .search-panel .form-group {
+        margin-bottom: 10px;
+    }
+    .active-filters {
+        background-color: #e9ecef;
+        border-radius: 5px;
+        padding: 10px;
+        margin-top: 10px;
+    }
+    .filter-badge {
+        display: inline-block;
+        background-color: #007bff;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        margin-right: 5px;
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0 text-gray-800">{{ board.name }}</h1>
+        {% if board.description %}
+            <p class="text-muted">{{ board.description }}</p>
+        {% endif %}
+    </div>
+    <div class="btn-group">
+        <a href="{% url 'board_analytics' board.id %}" class="btn btn-outline-primary">
+            <i class="fas fa-chart-pie me-1"></i> Analytics
+        </a>
+        <div class="btn-group">
+            <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-file-export me-1"></i> Export
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="{% url 'export_board' board.id %}?format=json">Export as JSON</a></li>
+                <li><a class="dropdown-item" href="{% url 'export_board' board.id %}?format=csv">Export as CSV</a></li>
+            </ul>
+        </div>
+        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <i class="fas fa-cog"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{% url 'create_column' board.id %}">Add Column</a></li>
+            <li><a class="dropdown-item" href="{% url 'create_label' board.id %}">Manage Labels</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#boardSettingsModal">Board Settings</a></li>
+        </ul>
+    </div>
+</div>
+
+<!-- Search Panel -->
+<div class="search-panel">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Search Tasks</h5>
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="toggle-search-panel">
+            <i class="fas fa-chevron-up" id="toggle-search-icon"></i>
+        </button>
+    </div>
+    
+    <div id="search-form-container">
+        <form method="get" class="row">
+            <div class="col-md-4 form-group">
+                <label for="{{ search_form.search_term.id_for_label }}" class="form-label">Search Term</label>
+                {{ search_form.search_term }}
+            </div>
+            <div class="col-md-2 form-group">
+                <label for="{{ search_form.column.id_for_label }}" class="form-label">Column</label>
+                {{ search_form.column }}
+            </div>
+            <div class="col-md-2 form-group">
+                <label for="{{ search_form.priority.id_for_label }}" class="form-label">Priority</label>
+                {{ search_form.priority }}
+            </div>
+            <div class="col-md-2 form-group">
+                <label for="{{ search_form.label.id_for_label }}" class="form-label">Label</label>
+                {{ search_form.label }}
+            </div>
+            <div class="col-md-2 form-group">
+                <label for="{{ search_form.assignee.id_for_label }}" class="form-label">Assignee</label>
+                {{ search_form.assignee }}
+            </div>
+            <div class="col-12 mt-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i> Search
+                </button>
+                {% if any_filter_active %}
+                <a href="{% url 'board_detail' board.id %}" class="btn btn-outline-secondary ms-2">
+                    <i class="fas fa-times me-1"></i> Clear Filters
+                </a>
+                {% endif %}
+            </div>
+        </form>
+        
+        {% if any_filter_active %}
+        <div class="active-filters mt-3">
+            <small class="text-muted mb-2 d-block">Active filters:</small>
+            {% if search_form.cleaned_data.search_term %}
+            <span class="filter-badge">
+                <i class="fas fa-search me-1"></i> "{{ search_form.cleaned_data.search_term }}"
+            </span>
+            {% endif %}
+            
+            {% if search_form.cleaned_data.column %}
+            <span class="filter-badge">
+                <i class="fas fa-columns me-1"></i> Column: {{ search_form.cleaned_data.column.name }}
+            </span>
+            {% endif %}
+            
+            {% if search_form.cleaned_data.priority %}
+            <span class="filter-badge">
+                <i class="fas fa-flag me-1"></i> Priority: {{ search_form.cleaned_data.priority|title }}
+            </span>
+            {% endif %}
+            
+            {% if search_form.cleaned_data.label %}
+            <span class="filter-badge" style="background-color: '{{ search_form.cleaned_data.label.color }}'">
+                <i class="fas fa-tag me-1"></i> Label: {{ search_form.cleaned_data.label.name }}
+            </span>
+            {% endif %}
+            
+            {% if search_form.cleaned_data.assignee %}
+            <span class="filter-badge">
+                <i class="fas fa-user me-1"></i> Assignee: {{ search_form.cleaned_data.assignee.username }}
+            </span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Column Ordering Panel -->
+<div class="column-ordering-panel">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Column Ordering</h5>
+        <button id="refresh-columns-btn" class="btn btn-primary btn-sm">
+            <i class="fas fa-sync-alt me-1"></i> Rearrange Columns
+        </button>
+    </div>
+    <p class="text-muted small mb-2">Enter position numbers for each column and click "Rearrange Columns" to reorder.</p>
+    <div id="column-ordering-badges">
+        {% for column in columns %}
+        <div class="column-ordering-badge">
+            <input type="number" min="1" max="{{ columns|length }}" value="{{ forloop.counter }}" 
+                   class="form-control form-control-sm column-position-input" 
+                   data-column-id="{{ column.id }}">
+            <span>{{ column.name }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Kanban Board -->
+<div class="kanban-board" id="kanban-board">
+    {% for column in columns %}
+    <div class="kanban-column" id="column-{{ column.id }}" data-column-id="{{ column.id }}">
+        <div class="kanban-column-header">
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <div>
+                    <span class="column-position-badge">{{ forloop.counter }}</span>
+                    <span>{{ column.name }}</span>
+                </div>
+                <div class="column-actions">
+                    <button type="button" class="btn btn-sm btn-outline-danger delete-column-btn" 
+                            data-column-id="{{ column.id }}" data-column-name="{{ column.name }}"
+                            data-bs-toggle="modal" data-bs-target="#deleteColumnModal">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="kanban-column-tasks" data-column-id="{{ column.id }}">
+            {% for task in tasks %}
+                {% if task.column.id == column.id %}
+                <div class="kanban-task" id="task-{{ task.id }}">
+                    <div class="task-title">{{ task.title }}</div>
+                    
+                    {% if task.description %}
+                    <div class="task-description">{{ task.description|truncatechars:100 }}</div>
+                    {% endif %}
+                    
+                    <!-- Task Progress Bar -->
+                    <div class="task-progress-container mt-2 mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <button type="button" class="btn btn-sm btn-outline-secondary progress-btn decrease-progress" 
+                                    data-task-id="{{ task.id }}" title="Decrease progress by 10%">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            
+                            <div class="progress flex-grow-1 mx-1" style="height: 12px;">
+                                <div class="progress-bar {% if task.column.name|lower == 'done' %}bg-success{% elif task.progress < 30 %}bg-danger{% elif task.progress < 70 %}bg-warning{% else %}bg-success{% endif %}"
+                                     role="progressbar"
+                                     data-progress="{% if task.column.name|lower == 'done' %}100{% else %}{{ task.progress }}{% endif %}"
+                                     aria-valuenow="{% if task.column.name|lower == 'done' %}100{% else %}{{ task.progress }}{% endif %}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            
+                            <button type="button" class="btn btn-sm btn-outline-secondary progress-btn increase-progress" 
+                                    data-task-id="{{ task.id }}" title="Increase progress by 10%">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div class="text-center">
+                            <small class="text-muted">{% if task.column.name|lower == 'done' %}100{% else %}{{ task.progress }}{% endif %}% complete</small>
+                        </div>
+                    </div>
+                    
+                    {% if task.labels.all %}
+                    <div class="task-labels">
+                        {% for label in task.labels.all %}
+                        <span class="task-label" data-color="{{ label.color|default:'#6c757d' }}">{{ label.name }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="task-footer">
+                        <div>
+                            <span class="task-priority priority-{{ task.priority }}">{{ task.priority|title }}</span>
+                        </div>
+                        <div>
+                            {% if task.due_date %}
+                            <span class="task-due-date {% if task.due_date < now %}overdue{% endif %}">
+                                <i class="far fa-calendar-alt me-1"></i> {{ task.due_date|date:"M d" }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if task.assigned_to %}
+                    <div class="task-assignee mt-2">
+                        {% if task.assigned_to.profile.profile_picture %}
+                        <img src="{{ task.assigned_to.profile.profile_picture.url }}" alt="{{ task.assigned_to.username }}" class="task-assignee-avatar">
+                        {% else %}
+                        <span class="task-assignee-avatar bg-secondary text-white d-flex align-items-center justify-content-center">
+                            {{ task.assigned_to.username|slice:":1" }}
+                        </span>
+                        {% endif %}
+                        <small>{{ task.assigned_to.username }}</small>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mt-2 text-end">
+                        <a href="{% url 'task_detail' task.id %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-danger delete-task-btn" 
+                                data-task-id="{{ task.id }}" data-task-title="{{ task.title }}"
+                                data-bs-toggle="modal" data-bs-target="#deleteTaskModal">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% if column.name|lower == 'to do' or column.name|lower == 'todo' %}
+        <div class="p-2">
+            <a href="{% url 'create_task_in_column' board.id column.id %}" class="btn btn-sm btn-primary add-task-btn">
+                <i class="fas fa-plus me-1"></i> Add Task
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+    
+    <!-- Add Column Button -->
+    <div class="add-column-btn" style="flex: 0 0 auto; min-width: 100px; background: transparent; box-shadow: none;">
+        <a href="{% url 'create_column' board.id %}" class="btn btn-outline-secondary h-100 d-flex align-items-center justify-content-center">
+            <i class="fas fa-plus me-2"></i> Add Column
+        </a>
+    </div>
+</div>
+
+<!-- Delete Column Modal -->
+<div class="modal fade" id="deleteColumnModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Column</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the column "<span id="deleteColumnName"></span>"?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This will also delete all tasks in this column!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteColumnForm" method="post" action="">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete Column</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Task Modal -->
+<div class="modal fade" id="deleteTaskModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the task "<span id="deleteTaskTitle"></span>"?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteTaskForm" method="post" action="">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete Task</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Board Settings Modal -->
+<div class="modal fade" id="boardSettingsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Board Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>Board Members</h6>
+                <ul class="list-group mb-3">
+                    {% for member in board.members.all %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ member.username }}
+                        {% if member == board.created_by %}
+                        <span class="badge bg-primary rounded-pill">Owner</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                
+                <form method="post" action="{% url 'add_board_member' board.id %}">
+                    {% csrf_token %}
+                    <div class="input-group mb-3">
+                        <select class="form-select" name="user_id">
+                            <option selected disabled>Add a member...</option>
+                            {% for user_profile in organization_members %}
+                                {% if user_profile.user not in board.members.all %}
+                                <option value="{{ user_profile.user.id }}">{{ user_profile.user.username }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        <button class="btn btn-outline-primary" type="submit">Add</button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="{% static 'js/kanban.js' %}?v={{ board.id }}_{% now 'U' %}" id="kanban-script"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Apply label colors
+        document.querySelectorAll('.task-label').forEach(label => {
+            label.style.backgroundColor = label.dataset.color;
+        });
+
+        // Set progress bar widths after DOM is loaded
+        document.querySelectorAll('.progress-bar[data-progress]').forEach(el => {
+            el.style.width = el.dataset.progress + '%';
+        });
+        
+        // Set up search panel toggle
+        const toggleSearchBtn = document.getElementById('toggle-search-panel');
+        const searchFormContainer = document.getElementById('search-form-container');
+        const toggleSearchIcon = document.getElementById('toggle-search-icon');
+        
+        if (toggleSearchBtn && searchFormContainer) {
+            toggleSearchBtn.addEventListener('click', function() {
+                searchFormContainer.classList.toggle('d-none');
+                
+                // Update icon
+                if (searchFormContainer.classList.contains('d-none')) {
+                    toggleSearchIcon.classList.remove('fa-chevron-up');
+                    toggleSearchIcon.classList.add('fa-chevron-down');
+                } else {
+                    toggleSearchIcon.classList.remove('fa-chevron-down');
+                    toggleSearchIcon.classList.add('fa-chevron-up');
+                }
+            });
+        }
+        
+        // Set up column delete functionality
+        const deleteColumnBtns = document.querySelectorAll('.delete-column-btn');
+        deleteColumnBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const columnId = this.dataset.columnId;
+                const columnName = this.dataset.columnName;
+                const deleteForm = document.getElementById('deleteColumnForm');
+                const deleteColumnNameSpan = document.getElementById('deleteColumnName');
+                
+                deleteForm.action = `/columns/${columnId}/delete/`;
+                deleteColumnNameSpan.textContent = columnName;
+            });
+        });
+        
+        // Set up task delete functionality
+        const deleteTaskBtns = document.querySelectorAll('.delete-task-btn');
+        deleteTaskBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const taskId = this.dataset.taskId;
+                const taskTitle = this.dataset.taskTitle;
+                const deleteForm = document.getElementById('deleteTaskForm');
+                const deleteTaskTitleSpan = document.getElementById('deleteTaskTitle');
+                
+                deleteForm.action = `/tasks/${taskId}/delete/`;
+                deleteTaskTitleSpan.textContent = taskTitle;
+            });
+        });
+    });
+</script>
+{% endblock %}
+
+{% endblock content %}

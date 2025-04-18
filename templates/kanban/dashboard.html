@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Digital Kanban Board{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+            <a href="{% url 'board_list' %}" class="d-none d-sm-inline-block btn btn-primary shadow-sm">
+                <i class="fas fa-plus fa-sm text-white-50 me-2"></i> View All Boards
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Analytics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Tasks</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ task_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clipboard-list stats-icon text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Completed Tasks</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ completed_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle stats-icon text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Completion Rate</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ completion_rate }}%</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-line stats-icon text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Tasks Due Soon</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ due_soon }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-alt stats-icon text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Boards -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Your Boards</h6>
+                <div>
+                    <a href="{% url 'organization_boards' %}" class="btn btn-sm btn-outline-primary me-2">
+                        <i class="fas fa-building fa-sm me-1"></i> Organization Boards
+                    </a>
+                    <a href="{% url 'board_list' %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus fa-sm"></i> New Board
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if boards %}
+                <div class="row">
+                    {% for board in boards|slice:":6" %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card dashboard-card h-100 border-left-primary shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ board.name }}</h5>
+                                <p class="card-text text-muted small">
+                                    {% if board.description %}
+                                        {{ board.description|truncatechars:100 }}
+                                    {% else %}
+                                        No description provided.
+                                    {% endif %}
+                                </p>
+                                <div class="text-end mt-2">
+                                    <a href="{% url 'board_detail' board.id %}" class="btn btn-sm btn-primary">Open Board</a>
+                                    <a href="{% url 'board_analytics' board.id %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-chart-pie fa-sm"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent border-top-0">
+                                <small class="text-muted">Created {{ board.created_at|date:"M d, Y" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-list fa-4x text-gray-300 mb-3"></i>
+                    <p class="mb-4">You don't have any boards yet.</p>
+                    <a href="{% url 'board_list' %}" class="btn btn-primary">
+                        <i class="fas fa-plus fa-sm"></i> Create Your First Board
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

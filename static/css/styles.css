@@ -1,0 +1,336 @@
+/* General Styles */
+body {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.footer {
+    margin-top: auto;
+}
+
+/* Kanban Board Styles */
+.kanban-board {
+    display: flex;
+    overflow-x: auto;
+    padding: 20px 0;
+    min-height: 600px;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.kanban-column {
+    flex: 0 0 300px;
+    margin: 0 10px;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.1s ease-in-out, box-shadow 0.2s ease-in-out;
+    user-select: none;
+    cursor: move;
+}
+
+.kanban-column.dragging {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    transform: scale(1.01);
+    z-index: 1000;
+    opacity: 0.5;
+    border: 2px solid #007bff;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+/* Remove this redundant rule */
+/*
+.column-drag-placeholder {
+    border: 3px dashed #6c757d;
+    background-color: rgba(108, 117, 125, 0.1);
+    margin: 0 10px;
+    border-radius: 5px;
+    flex: 0 0 300px;
+    transition: all 0.2s ease;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+*/
+
+@keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 0.9; }
+    100% { opacity: 0.5; }
+}
+
+.kanban-column-header {
+    padding: 12px;
+    font-weight: bold;
+    background-color: #e9ecef;
+    border-radius: 5px 5px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #dee2e6;
+    cursor: grab;
+    user-select: none;
+}
+
+.kanban-column-header:active {
+    cursor: grabbing;
+    background-color: #d8dce0;
+}
+
+.kanban-column-header:hover {
+    background-color: #dde2e6;
+}
+
+.drag-handle {
+    cursor: grab;
+    margin-right: 8px;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.drag-handle:hover {
+    opacity: 1;
+}
+
+.kanban-column-header > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.column-task-count {
+    background-color: #6c757d;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+}
+
+.kanban-column-tasks {
+    padding: 10px;
+    flex-grow: 1;
+    overflow-y: auto;
+    min-height: 200px;
+}
+
+.kanban-column-tasks.drag-over {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.kanban-task {
+    background-color: white;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    cursor: grab;
+    position: relative;
+}
+
+.kanban-task:active {
+    cursor: grabbing;
+}
+
+.task-title {
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.task-description {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 10px;
+}
+
+.task-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+}
+
+.task-labels {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.task-label {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    color: white;
+}
+
+.task-due-date {
+    color: #6c757d;
+}
+
+.task-due-date.overdue {
+    color: #dc3545;
+}
+
+.task-priority {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-bottom: 5px;
+}
+
+.priority-low {
+    background-color: #28a745;
+    color: white;
+}
+
+.priority-medium {
+    background-color: #ffc107;
+    color: black;
+}
+
+.priority-high {
+    background-color: #fd7e14;
+    color: white;
+}
+
+.priority-urgent {
+    background-color: #dc3545;
+    color: white;
+}
+
+.task-assignee {
+    display: flex;
+    align-items: center;
+}
+
+.task-assignee-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.add-task-btn {
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* Drag and Drop */
+.task-drag-placeholder {
+    border: 2px dashed #ced4da;
+    background-color: #f8f9fa;
+    height: 80px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+.column-highlight {
+    background-color: #e2f5ff;
+}
+
+/* Styles for the placeholder shown during column drag */
+.column-placeholder {
+    /* Keep border, background, radius, margin (as fallback/base), animation */
+    border: 2px dashed #6c757d;
+    background-color: rgba(0, 123, 255, 0.1); /* Adjusted color slightly */
+    border-radius: 5px;
+    margin: 0 10px; /* JS will override margin if needed */
+    /* Remove flex property - size is set inline by JS */
+    /* flex: 0 0 auto; */
+    box-sizing: border-box; /* Ensure border is included in size */
+    animation: pulse 1s infinite ease-in-out;
+    /* Ensure it doesn't shrink in the flex container */
+    flex-shrink: 0;
+}
+
+/* Dashboard Styles */
+.dashboard-card {
+    transition: transform 0.2s;
+    height: 100%;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+}
+
+.stats-card {
+    border-left: 4px solid;
+    border-radius: 5px;
+}
+
+.stats-card.primary {
+    border-left-color: #007bff;
+}
+
+.stats-card.success {
+    border-left-color: #28a745;
+}
+
+.stats-card.warning {
+    border-left-color: #ffc107;
+}
+
+.stats-card.danger {
+    border-left-color: #dc3545;
+}
+
+.stats-icon {
+    font-size: 2rem;
+    opacity: 0.8;
+}
+
+/* Analytics Styles */
+.chart-container {
+    height: 300px;
+    margin-bottom: 30px;
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Priority pie chart specific constraints */
+#tasksPriorityChart {
+    max-height: 250px !important;
+    max-width: 100% !important;
+}
+
+/* Form Styles */
+.form-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .kanban-board {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .kanban-column {
+        width: 90%;
+        margin-bottom: 20px;
+        flex: none;
+    }
+}
+
+.column-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.column-controls button {
+    padding: 2px 5px;
+    font-size: 0.8rem;
+    line-height: 1;
+}

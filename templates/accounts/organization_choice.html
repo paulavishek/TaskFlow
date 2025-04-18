@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Organization Selection{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Welcome to Digital Kanban!</h4>
+            </div>
+            <div class="card-body">
+                <p class="lead">Choose how you want to get started:</p>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <h5 class="card-title"><i class="fas fa-building me-2"></i>Join an Organization</h5>
+                                <p class="card-text">Join an existing organization to collaborate with your team.</p>
+                                <a href="{% url 'join_organization' %}" class="btn btn-primary">Join Organization</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <h5 class="card-title"><i class="fas fa-plus-circle me-2"></i>Create New Organization</h5>
+                                <p class="card-text">Create your own organization and invite team members.</p>
+                                <a href="{% url 'create_organization' %}" class="btn btn-outline-primary">Create Organization</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

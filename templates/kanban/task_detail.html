@@ -1,0 +1,391 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ task.title }} - Task Details{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <!-- Task Detail Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Task Details</h6>
+                <div>
+                    <a href="{% url 'board_detail' task.column.board.id %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Board
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="text-end mt-3">
+                        <a href="{% url 'delete_task' task.id %}" class="btn btn-outline-danger me-2">Delete</a>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Comments Section -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Comments</h6>
+            </div>
+            <div class="card-body">
+                {% if comments %}
+                    {% for comment in comments %}
+                    <div class="d-flex mb-4">
+                        {% if comment.user.profile.profile_picture %}
+                            <img class="rounded-circle me-3" src="{{ comment.user.profile.profile_picture.url }}" width="50" height="50" alt="{{ comment.user.username }}">
+                        {% else %}
+                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                {{ comment.user.username|slice:":1" }}
+                            </div>
+                        {% endif %}
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">{{ comment.user.username }}</h6>
+                                <small class="text-muted">{{ comment.created_at|date:"M d, Y" }} at {{ comment.created_at|time:"H:i" }}</small>
+                            </div>
+                            <p class="mb-0">{{ comment.content }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No comments yet.</p>
+                {% endif %}
+
+                <hr>
+                
+                <!-- Add Comment Form -->
+                <form method="post">
+                    {% csrf_token %}
+                    {{ comment_form|crispy }}
+                    <div class="text-end mt-3">
+                        <button type="submit" class="btn btn-primary">Add Comment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Task Info Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Task Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="text-muted">Status</label>
+                    <div class="p-2 bg-light rounded">{{ task.column.name }}</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="text-muted">Created By</label>
+                    <div class="d-flex align-items-center p-2 bg-light rounded">
+                        {% if task.created_by.profile.profile_picture %}
+                            <img class="rounded-circle me-2" src="{{ task.created_by.profile.profile_picture.url }}" width="25" height="25" alt="{{ task.created_by.username }}">
+                        {% else %}
+                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width: 25px; height: 25px; font-size: 0.8rem;">
+                                {{ task.created_by.username|slice:":1" }}
+                            </div>
+                        {% endif %}
+                        {{ task.created_by.username }}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="text-muted">Created On</label>
+                    <div class="p-2 bg-light rounded">{{ task.created_at|date:"M d, Y" }}</div>
+                </div>
+
+                {% if task.assigned_to %}
+                <div class="mb-3">
+                    <label class="text-muted">Assigned To</label>
+                    <div class="d-flex align-items-center p-2 bg-light rounded">
+                        {% if task.assigned_to.profile.profile_picture %}
+                            <img class="rounded-circle me-2" src="{{ task.assigned_to.profile.profile_picture.url }}" width="25" height="25" alt="{{ task.assigned_to.username }}">
+                        {% else %}
+                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width: 25px; height: 25px; font-size: 0.8rem;">
+                                {{ task.assigned_to.username|slice:":1" }}
+                            </div>
+                        {% endif %}
+                        {{ task.assigned_to.username }}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if task.due_date %}
+                <div class="mb-3">
+                    <label class="text-muted">Due Date</label>
+                    <div class="p-2 bg-light rounded {% if task.due_date < now %}text-danger{% endif %}">
+                        {{ task.due_date|date:"M d, Y" }}
+                        {% if task.due_date < now %}<span class="badge bg-danger ms-2">Overdue</span>{% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label class="text-muted">Priority</label>
+                    <div class="p-2 bg-light rounded">
+                        <span class="task-priority priority-{{ task.priority }}">{{ task.priority|title }}</span>
+                    </div>
+                </div>
+
+                <!-- Task Progress Section -->
+                <div class="mb-3">
+                    <label class="text-muted">Progress</label>
+                    <div class="p-2 bg-light rounded">
+                        <div class="task-progress-container">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <button type="button" class="btn btn-sm btn-outline-secondary progress-btn decrease-progress" 
+                                        data-task-id="{{ task.id }}" title="Decrease progress by 10%">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                
+                                <div class="progress flex-grow-1 mx-1" style="height: 15px;">
+                                    <div class="progress-bar {% if task.progress < 30 %}bg-danger{% elif task.progress < 70 %}bg-warning{% else %}bg-success{% endif %}" 
+                                         role="progressbar" 
+                                         style="--progress-width: {{ task.progress }}%; width: var(--progress-width);" 
+                                         aria-valuenow="{{ task.progress }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                    </div>
+                                </div>
+                                
+                                <button type="button" class="btn btn-sm btn-outline-secondary progress-btn increase-progress" 
+                                        data-task-id="{{ task.id }}" title="Increase progress by 10%">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div class="text-center mt-1">
+                                <span id="progress-value">{{ task.progress }}% complete</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if task.labels.all %}
+                <div>
+                    <label class="text-muted">Labels</label>
+                    <div class="p-2 bg-light rounded">
+                        {% for label in task.labels.all %}
+                        <span class="task-label" style="--label-color: {{ label.color }}">{{ label.name }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Activity Log Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Activity Log</h6>
+            </div>
+            <div class="card-body">
+                {% if activities %}
+                <div class="timeline">
+                    {% for activity in activities %}
+                    <div class="timeline-item">
+                        <div class="timeline-item-marker">
+                            {% if activity.activity_type == 'created' %}
+                                <i class="fas fa-plus text-success"></i>
+                            {% elif activity.activity_type == 'moved' %}
+                                <i class="fas fa-arrows-alt text-info"></i>
+                            {% elif activity.activity_type == 'updated' %}
+                                <i class="fas fa-edit text-primary"></i>
+                            {% elif activity.activity_type == 'commented' %}
+                                <i class="fas fa-comment text-secondary"></i>
+                            {% elif activity.activity_type == 'assigned' %}
+                                <i class="fas fa-user-plus text-warning"></i>
+                            {% elif activity.activity_type == 'label_added' or activity.activity_type == 'label_removed' %}
+                                <i class="fas fa-tag text-danger"></i>
+                            {% endif %}
+                        </div>
+                        <div class="timeline-item-content">
+                            <p>{{ activity.description }}</p>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">{{ activity.user.username }}</small>
+                                <small class="text-muted">{{ activity.created_at|date:"M d, Y" }} at {{ activity.created_at|time:"H:i" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No activity recorded yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .task-label {
+        background-color: var(--label-color);
+        padding: 2px 8px;
+        border-radius: 4px;
+        color: white;
+        display: inline-block;
+        margin-right: 5px;
+        margin-bottom: 5px;
+        font-size: 0.85rem;
+    }
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    .timeline-item {
+        position: relative;
+        padding-bottom: 20px;
+    }
+    .timeline-item:not(:last-child):before {
+        content: "";
+        position: absolute;
+        left: -20px;
+        top: 0;
+        width: 2px;
+        height: 100%;
+        background-color: #e0e0e0;
+    }
+    .timeline-item-marker {
+        position: absolute;
+        left: -30px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 0 2px #e0e0e0;
+    }
+    .timeline-item-content {
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set up increase progress buttons
+        document.querySelectorAll('.increase-progress').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const taskId = this.dataset.taskId;
+                updateTaskProgress(taskId, 'increase');
+            });
+        });
+        
+        // Set up decrease progress buttons
+        document.querySelectorAll('.decrease-progress').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const taskId = this.dataset.taskId;
+                updateTaskProgress(taskId, 'decrease');
+            });
+        });
+        
+        // Initialize labels with their colors
+        document.querySelectorAll('.task-label').forEach(label => {
+            const color = label.style.getPropertyValue('--label-color');
+            if (color) {
+                label.style.backgroundColor = color;
+            }
+        });
+    });
+    
+    function updateTaskProgress(taskId, direction) {
+        // Get the CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Send AJAX request to update progress
+        fetch(`/tasks/${taskId}/update-progress/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                direction: direction
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update the progress bar
+                const progressBar = document.querySelector('.progress-bar');
+                const progressText = document.getElementById('progress-value');
+                
+                if (progressBar && progressText) {
+                    // Remove existing color classes
+                    progressBar.classList.remove('bg-danger', 'bg-warning', 'bg-success');
+                    // Add new color class
+                    progressBar.classList.add(data.colorClass);
+                    // Update width
+                    progressBar.style.width = `${data.progress}%`;
+                    // Update text
+                    progressText.textContent = `${data.progress}% complete`;
+                }
+                
+                // Add a new timeline item for the progress update
+                const timeline = document.querySelector('.timeline');
+                if (timeline) {
+                    const now = new Date();
+                    const formattedDate = `${now.toLocaleDateString()} at ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                    
+                    const timelineItem = document.createElement('div');
+                    timelineItem.className = 'timeline-item';
+                    timelineItem.innerHTML = `
+                        <div class="timeline-item-marker">
+                            <i class="fas fa-edit text-primary"></i>
+                        </div>
+                        <div class="timeline-item-content">
+                            <p>Updated progress to ${data.progress}%</p>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">You</small>
+                                <small class="text-muted">${formattedDate}</small>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Insert at the top of the timeline
+                    if (timeline.firstChild) {
+                        timeline.insertBefore(timelineItem, timeline.firstChild);
+                    } else {
+                        timeline.appendChild(timelineItem);
+                    }
+                    
+                    // Remove "No activity" message if it exists
+                    const noActivityMessage = document.querySelector('.card-body > .text-muted');
+                    if (noActivityMessage && noActivityMessage.textContent === 'No activity recorded yet.') {
+                        noActivityMessage.remove();
+                    }
+                }
+            } else {
+                console.error('Error updating task progress:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error updating task progress:', error);
+        });
+    }
+</script>
+{% endblock %}
