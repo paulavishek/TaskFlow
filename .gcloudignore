@@ -1,0 +1,34 @@
+# .gcloudignore
+# Python build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+VENV/
+
+# Django specific
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Instance metadata files (created by GAE)
+.DS_Store
+app.yaml.save
+
+# Git
+.git
+.gitignore
+
+# Static files (if you collect them to a specific directory before deployment)
+# staticfiles/ # If you run collectstatic locally and don't want to upload the result
+
+# Other
+*.swp
+*.swo
