@@ -61,9 +61,13 @@
                                 <div class="invalid-feedback d-block">{{ form.assigned_to.errors }}</div>
                             {% endif %}
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.labels.id_for_label }}" class="form-label">Labels</label>
+                          <div class="mb-3">
+                            <label for="{{ form.labels.id_for_label }}" class="form-label">
+                                Labels
+                                <button type="button" class="btn btn-sm p-0" data-bs-toggle="modal" data-bs-target="#leanLabelsInfoModal">
+                                    <i class="fas fa-info-circle text-primary" title="Learn about Lean Six Sigma labels"></i>
+                                </button>
+                            </label>
                             {{ form.labels }}
                             <small class="form-text text-muted">Hold Ctrl (or Cmd on Mac) to select multiple labels</small>
                             {% if form.labels.errors %}
@@ -81,6 +85,59 @@
                         </div>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lean Six Sigma Labels Info Modal -->
+<div class="modal fade" id="leanLabelsInfoModal" tabindex="-1" aria-labelledby="leanLabelsInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="leanLabelsInfoModalLabel">Understanding Lean Six Sigma Labels</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>TaskFlow includes Lean Six Sigma labels to help categorize your tasks based on their value contribution:</p>
+                
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        Value-Added (VA)
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Activities that transform inputs into outputs that customers value and are willing to pay for.</p>
+                        <p class="card-text small">Example: Developing a feature that customers requested</p>
+                    </div>
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-header bg-warning text-dark">
+                        Necessary Non-Value-Added (NNVA)
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Activities required by current regulations, processes, or constraints, but don't directly add value for the customer.</p>
+                        <p class="card-text small">Example: Compliance documentation, quality checks</p>
+                    </div>
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-header bg-danger text-white">
+                        Waste/Eliminate (NVA)
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Activities that consume resources without adding any value. These should be minimized or eliminated.</p>
+                        <p class="card-text small">Example: Fixing defects, unnecessary meetings, waiting for approvals</p>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-lightbulb me-2"></i> 
+                    <strong>Tip:</strong> Tagging your tasks this way helps identify process improvement opportunities and focus on value-adding activities.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

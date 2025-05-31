@@ -175,9 +175,13 @@
             <div class="col-md-2 form-group">
                 <label for="{{ search_form.label.id_for_label }}" class="form-label">Label</label>
                 {{ search_form.label }}
-            </div>
-            <div class="col-md-2 form-group">
-                <label for="{{ search_form.label_category.id_for_label }}" class="form-label">Label Type</label>
+            </div>            <div class="col-md-2 form-group">
+                <label for="{{ search_form.label_category.id_for_label }}" class="form-label">
+                    Label Type
+                    <button type="button" class="btn btn-sm p-0" data-bs-toggle="modal" data-bs-target="#leanLabelsInfoModal">
+                        <i class="fas fa-info-circle text-primary" title="Learn about Lean Six Sigma categories"></i>
+                    </button>
+                </label>
                 {{ search_form.label_category }}
             </div>
             <div class="col-md-2 form-group mt-2">
@@ -466,6 +470,59 @@
                         <button class="btn btn-outline-primary" type="submit">Add</button>
                     </div>
                 </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lean Six Sigma Labels Info Modal -->
+<div class="modal fade" id="leanLabelsInfoModal" tabindex="-1" aria-labelledby="leanLabelsInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="leanLabelsInfoModalLabel">Understanding Lean Six Sigma Categories</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>TaskFlow's Lean Six Sigma categories help you analyze tasks based on how they contribute value:</p>
+                
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        Value-Added (VA)
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Activities that transform inputs into outputs that customers value and are willing to pay for.</p>
+                        <p class="card-text small">Example: Developing a feature that customers requested</p>
+                    </div>
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-header bg-warning text-dark">
+                        Necessary Non-Value-Added (NNVA)
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Activities required by current regulations, processes, or constraints, but don't directly add value for the customer.</p>
+                        <p class="card-text small">Example: Compliance documentation, quality checks</p>
+                    </div>
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-header bg-danger text-white">
+                        Waste/Eliminate (NVA)
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Activities that consume resources without adding any value. These should be minimized or eliminated.</p>
+                        <p class="card-text small">Example: Fixing defects, unnecessary meetings, waiting for approvals</p>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-filter me-2"></i> 
+                    <strong>Tip:</strong> Use the "Label Type" filter to focus on specific categories of tasks to help prioritize value-adding work and identify improvement opportunities.
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

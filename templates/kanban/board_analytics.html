@@ -175,10 +175,12 @@
 <div class="row">
     <!-- Value-Added Analysis Card -->
     <div class="col-lg-6">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <div class="card shadow mb-4">            <div class="card-header py-3 d-flex justify-content-between align-items-center">
                 <h6 class="m-0 font-weight-bold text-primary">
                     <i class="fas fa-chart-line me-1"></i> Lean Six Sigma Value Analysis
+                    <button type="button" class="btn btn-sm text-primary border-0 p-0 ms-1" data-bs-toggle="modal" data-bs-target="#leanSixSigmaInfoModal">
+                        <i class="fas fa-info-circle" title="Learn more about Lean Six Sigma categories"></i>
+                    </button>
                 </h6>
                 {% if not total_categorized %}
                 <a href="{% url 'create_label' board.id %}" class="btn btn-sm btn-outline-primary">
@@ -630,6 +632,83 @@
                     <p class="lead">No tasks coming due soon!</p>
                 </div>
                 {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lean Six Sigma Info Modal -->
+<div class="modal fade" id="leanSixSigmaInfoModal" tabindex="-1" aria-labelledby="leanSixSigmaInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="leanSixSigmaInfoModalLabel">Understanding Lean Six Sigma Categories</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card bg-success bg-opacity-10 h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <span class="badge bg-success">&nbsp;</span> Value-Added (VA)
+                                </h5>
+                                <p class="card-text">Activities that directly contribute to meeting customer requirements and that the customer is willing to pay for.</p>
+                                <h6>Examples:</h6>
+                                <ul>
+                                    <li>Performing actual work/service</li>
+                                    <li>Transforming a product</li>
+                                    <li>Creating features customers request</li>
+                                </ul>
+                                <p class="small text-muted">These tasks should be optimized and prioritized.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-warning bg-opacity-10 h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <span class="badge bg-warning">&nbsp;</span> Necessary Non-Value-Added (NNVA)
+                                </h5>
+                                <p class="card-text">Activities that don't add value from the customer's perspective but are required due to current constraints.</p>
+                                <h6>Examples:</h6>
+                                <ul>
+                                    <li>Regulatory compliance</li>
+                                    <li>Documentation for legal reasons</li>
+                                    <li>Quality inspections</li>
+                                </ul>
+                                <p class="small text-muted">These tasks should be minimized but cannot be eliminated entirely.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-danger bg-opacity-10 h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <span class="badge bg-danger">&nbsp;</span> Waste/Eliminate (NVA)
+                                </h5>
+                                <p class="card-text">Activities that consume resources but add no value from the customer's perspective.</p>
+                                <h6>Examples:</h6>
+                                <ul>
+                                    <li>Waiting time</li>
+                                    <li>Rework and defects</li>
+                                    <li>Unnecessary meetings or documentation</li>
+                                </ul>
+                                <p class="small text-muted">These tasks should be eliminated whenever possible.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h5>Why This Matters:</h5>
+                        <p>Categorizing tasks this way helps teams identify and eliminate waste, streamline necessary processes, and focus resources on what truly adds value. Aim for a high percentage of Value-Added tasks to improve overall efficiency.</p>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

@@ -81,6 +81,30 @@
     </div>
 </div>
 
+<!-- Feature Highlight: Lean Six Sigma -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow border-left-info mb-4">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col-auto me-3">
+                        <i class="fas fa-chart-line fa-2x text-info"></i>
+                    </div>
+                    <div class="col">
+                        <div class="font-weight-bold text-info mb-1">New Feature: Lean Six Sigma Integration</div>
+                        <p class="mb-0">TaskFlow now includes Lean Six Sigma features to help identify value-adding activities and eliminate waste in your processes.</p>
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#leanSixSigmaInfoModal">
+                            Learn More
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Recent Boards -->
 <div class="row">
     <div class="col-12">
@@ -134,6 +158,110 @@
                     </a>
                 </div>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lean Six Sigma Info Modal -->
+<div class="modal fade" id="leanSixSigmaInfoModal" tabindex="-1" aria-labelledby="leanSixSigmaInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="leanSixSigmaInfoModalLabel">
+                    <i class="fas fa-chart-line me-2"></i> Lean Six Sigma Features in TaskFlow
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5>What is Lean Six Sigma?</h5>
+                        <p>Lean Six Sigma is a methodology that combines Lean (eliminating waste) and Six Sigma (reducing variation) to improve business processes. TaskFlow now integrates key Lean Six Sigma principles to help you visualize, categorize, and optimize your work.</p>
+                    </div>
+                </div>
+
+                <h5 class="mb-3">Key Features:</h5>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-primary text-white">
+                                <i class="fas fa-tags me-1"></i> Value-Added Task Categorization
+                            </div>
+                            <div class="card-body">
+                                <p>Categorize tasks using Lean Six Sigma labels:</p>
+                                <ul>
+                                    <li><strong class="text-success">Value-Added (VA):</strong> Activities customers value and would pay for</li>
+                                    <li><strong class="text-warning">Necessary Non-Value-Added (NNVA):</strong> Required but non-value adding activities</li>
+                                    <li><strong class="text-danger">Waste/Eliminate (NVA):</strong> Activities that should be eliminated</li>
+                                </ul>
+                                <p class="small text-muted">Access from: Task creation/editing forms and the label management page</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-success text-white">
+                                <i class="fas fa-chart-pie me-1"></i> Process Efficiency Analytics
+                            </div>
+                            <div class="card-body">
+                                <p>Gain insights with specialized Lean Six Sigma metrics:</p>
+                                <ul>
+                                    <li>Value-Added percentage calculation</li>
+                                    <li>Distribution of VA/NNVA/Waste tasks</li>
+                                    <li>Process improvement recommendations</li>
+                                </ul>
+                                <p class="small text-muted">Access from: Board Analytics page</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-info text-white">
+                                <i class="fas fa-filter me-1"></i> Lean Six Sigma Filtering
+                            </div>
+                            <div class="card-body">
+                                <p>Filter tasks by value category to focus efforts:</p>
+                                <ul>
+                                    <li>Focus on value-adding tasks first</li>
+                                    <li>Identify waste for elimination</li>
+                                    <li>Balance necessary non-value activities</li>
+                                </ul>
+                                <p class="small text-muted">Access from: Board task search panel</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-warning text-dark">
+                                <i class="fas fa-lightbulb me-1"></i> Process Improvement Tips
+                            </div>
+                            <div class="card-body">
+                                <p>Get actionable recommendations based on your task distribution:</p>
+                                <ul>
+                                    <li>Ways to eliminate identified waste</li>
+                                    <li>How to increase value-added percentage</li>
+                                    <li>Strategies for continuous improvement</li>
+                                </ul>
+                                <p class="small text-muted">Access from: Board Analytics page</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Getting Started:</strong> Begin by adding Lean Six Sigma labels to your tasks. Visit the "Manage Labels" section within any board and click "Add Default Lean Six Sigma Labels".
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
