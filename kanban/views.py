@@ -8,6 +8,7 @@ from datetime import timedelta
 import json
 import csv
 from django.contrib.auth.models import User
+from django.core.management import call_command
 
 from .models import Board, Column, Task, TaskLabel, Comment, TaskActivity
 from .forms import BoardForm, ColumnForm, TaskForm, TaskLabelForm, CommentForm, TaskMoveForm, TaskSearchForm
@@ -115,10 +116,28 @@ def board_detail(request, board_id):
         # Filter by priority
         if search_form.cleaned_data.get('priority'):
             tasks = tasks.filter(priority=search_form.cleaned_data['priority'])
-        
-        # Filter by label
+          # Filter by label
         if search_form.cleaned_data.get('label'):
             tasks = tasks.filter(labels=search_form.cleaned_data['label'])
+        
+        # Filter by label category (Lean Six Sigma)
+        if search_form.cleaned_data.get('label_category'):
+            category = search_form.cleaned_data['label_category']
+            if category == 'lean':
+                # All Lean Six Sigma labels
+                tasks = tasks.filter(labels__category='lean')
+            elif category == 'regular':
+                # Only regular labels
+                tasks = tasks.filter(labels__category='regular')
+            elif category == 'lean_va':
+                # Value-Added tasks
+                tasks = tasks.filter(labels__name='Value-Added', labels__category='lean')
+            elif category == 'lean_nva':
+                # Necessary Non-Value-Added tasks
+                tasks = tasks.filter(labels__name='Necessary NVA', labels__category='lean')
+            elif category == 'lean_waste':
+                # Waste/Eliminate tasks
+                tasks = tasks.filter(labels__name='Waste/Eliminate', labels__category='lean')
         
         # Filter by assignee
         if search_form.cleaned_data.get('assignee'):
@@ -464,7 +483,38 @@ def board_analytics(request, board_id):
         due_date__date__lte=today + timedelta(days=7)
     ).order_by('due_date')
     
-    # We don't need to convert upcoming_tasks since it's only used in a for loop in the template
+    # Lean Six Sigma Metrics
+    # Get tasks by value added category
+    value_added_count = Task.objects.filter(
+        column__board=board, 
+        labels__name='Value-Added', 
+        labels__category='lean'
+    ).count()
+    
+    necessary_nva_count = Task.objects.filter(
+        column__board=board, 
+        labels__name='Necessary NVA', 
+        labels__category='lean'
+    ).count()
+    
+    waste_count = Task.objects.filter(
+        column__board=board, 
+        labels__name='Waste/Eliminate', 
+        labels__category='lean'
+    ).count()
+    
+    # Calculate value-added percentage
+    total_categorized = value_added_count + necessary_nva_count + waste_count
+    value_added_percentage = 0
+    if total_categorized > 0:
+        value_added_percentage = (value_added_count / total_categorized) * 100
+    
+    # Tasks by Lean Six Sigma category
+    tasks_by_lean_category = [
+        {'name': 'Value-Added', 'count': value_added_count, 'color': '#28a745'},
+        {'name': 'Necessary NVA', 'count': necessary_nva_count, 'color': '#ffc107'},
+        {'name': 'Waste/Eliminate', 'count': waste_count, 'color': '#dc3545'}
+    ]
     
     return render(request, 'kanban/board_analytics.html', {
         'board': board,
@@ -479,6 +529,10 @@ def board_analytics(request, board_id):
         'total_tasks': total_tasks,
         'completed_count': completed_count,
         'now': timezone.now(),  # For comparing dates in the template
+        # Lean Six Sigma metrics
+        'tasks_by_lean_category': tasks_by_lean_category,
+        'value_added_percentage': round(value_added_percentage, 1),
+        'total_categorized': total_categorized,
     })
 
 @login_required
@@ -1053,3 +1107,18 @@ def import_board(request):
     except Exception as e:
         messages.error(request, f"Error importing board: {str(e)}")
         return redirect('board_list')
+
+@login_required
+def add_lean_labels(request, board_id):
+    board = get_object_or_404(Board, id=board_id)
+    
+    # Check if user has access to this board
+    if not (board.created_by == request.user or request.user in board.members.all()):
+        return HttpResponseForbidden("You don't have access to this board.")
+    
+    if request.method == 'POST':
+        # Call the management command to add the labels
+        call_command('add_lean_labels', board_id=board_id)
+        messages.success(request, 'Lean Six Sigma labels added successfully!')
+    
+    return redirect('create_label', board_id=board.id)

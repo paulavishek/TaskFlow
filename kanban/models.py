@@ -27,9 +27,15 @@ class Column(models.Model):
         return f"{self.name} - {self.board.name}"
 
 class TaskLabel(models.Model):
+    CATEGORY_CHOICES = [
+        ('regular', 'Regular'),
+        ('lean', 'Lean Six Sigma'),
+    ]
+    
     name = models.CharField(max_length=50)
     color = ColorField(default='#FF5733')
     board = models.ForeignKey(Board, on_delete=models.CASCADE, related_name='labels')
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='regular')
     
     def __str__(self):
         return self.name

@@ -160,8 +160,7 @@
     </div>
     
     <div id="search-form-container">
-        <form method="get" class="row">
-            <div class="col-md-4 form-group">
+        <form method="get" class="row">            <div class="col-md-4 form-group">
                 <label for="{{ search_form.search_term.id_for_label }}" class="form-label">Search Term</label>
                 {{ search_form.search_term }}
             </div>
@@ -178,6 +177,10 @@
                 {{ search_form.label }}
             </div>
             <div class="col-md-2 form-group">
+                <label for="{{ search_form.label_category.id_for_label }}" class="form-label">Label Type</label>
+                {{ search_form.label_category }}
+            </div>
+            <div class="col-md-2 form-group mt-2">
                 <label for="{{ search_form.assignee.id_for_label }}" class="form-label">Assignee</label>
                 {{ search_form.assignee }}
             </div>
@@ -307,11 +310,17 @@
                             <small class="text-muted">{% if task.column.name|lower == 'done' %}100{% else %}{{ task.progress }}{% endif %}% complete</small>
                         </div>
                     </div>
-                    
-                    {% if task.labels.all %}
+                      {% if task.labels.all %}
                     <div class="task-labels">
                         {% for label in task.labels.all %}
-                        <span class="task-label" data-color="{{ label.color|default:'#6c757d' }}">{{ label.name }}</span>
+                            {% if label.category == 'lean' %}
+                                <span class="task-label lean-label" data-color="{{ label.color|default:'#6c757d' }}" 
+                                      title="Lean Six Sigma: {{ label.name }}">
+                                    <i class="fas fa-chart-line"></i> {{ label.name }}
+                                </span>
+                            {% else %}
+                                <span class="task-label" data-color="{{ label.color|default:'#6c757d' }}">{{ label.name }}</span>
+                            {% endif %}
                         {% endfor %}
                     </div>
                     {% endif %}

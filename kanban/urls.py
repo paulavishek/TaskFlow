@@ -21,9 +21,9 @@ urlpatterns = [
     path('tasks/<int:task_id>/update-progress/', views.update_task_progress, name='update_task_progress'),
     path('organization-boards/', views.organization_boards, name='organization_boards'),
     path('labels/<int:label_id>/delete/', views.delete_label, name='delete_label'),
-    path('columns/<int:column_id>/move/left/', views.move_column, {'direction': 'left'}, name='move_column_left'),
-    path('columns/<int:column_id>/move/right/', views.move_column, {'direction': 'right'}, name='move_column_right'),
+    path('columns/<int:column_id>/move/left/', views.move_column, {'direction': 'left'}, name='move_column_left'),    path('columns/<int:column_id>/move/right/', views.move_column, {'direction': 'right'}, name='move_column_right'),
     path('columns/reorder/', views.reorder_columns, name='reorder_columns'),
     path('columns/reorder-multiple/', views.reorder_multiple_columns, name='reorder_multiple_columns'),
     path('columns/<int:column_id>/delete/', views.delete_column, name='delete_column'),
+    path('boards/<int:board_id>/add-lean-labels/', views.add_lean_labels, name='add_lean_labels'),
 ]

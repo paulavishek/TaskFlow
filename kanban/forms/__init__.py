@@ -21,10 +21,11 @@ class ColumnForm(forms.ModelForm):
 class TaskLabelForm(forms.ModelForm):
     class Meta:
         model = TaskLabel
-        fields = ['name', 'color']
+        fields = ['name', 'color', 'category']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'color': forms.TextInput(attrs={'class': 'form-control'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
         }
 
 class TaskForm(forms.ModelForm):
@@ -80,6 +81,18 @@ class TaskSearchForm(forms.Form):
     )
     label = forms.ModelChoiceField(
         queryset=TaskLabel.objects.none(),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    label_category = forms.ChoiceField(
+        choices=[
+            ('', 'Any Category'),
+            ('regular', 'Regular Labels'),
+            ('lean', 'Lean Six Sigma Labels'),
+            ('lean_va', 'Value-Added'),
+            ('lean_nva', 'Necessary Non-Value-Added'),
+            ('lean_waste', 'Waste/Eliminate')
+        ],
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'})
     )

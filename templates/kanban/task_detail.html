@@ -171,9 +171,15 @@
                 {% if task.labels.all %}
                 <div>
                     <label class="text-muted">Labels</label>
-                    <div class="p-2 bg-light rounded">
-                        {% for label in task.labels.all %}
-                        <span class="task-label" style="--label-color: {{ label.color }}">{{ label.name }}</span>
+                    <div class="p-2 bg-light rounded">                        {% for label in task.labels.all %}
+                            {% if label.category == 'lean' %}
+                            <span class="task-label lean-label" style="--label-color: {{ label.color }}" 
+                                  title="Lean Six Sigma: {{ label.name }}">
+                                <i class="fas fa-chart-line"></i> {{ label.name }}
+                            </span>
+                            {% else %}
+                            <span class="task-label" style="--label-color: {{ label.color }}">{{ label.name }}</span>
+                            {% endif %}
                         {% endfor %}
                     </div>
                 </div>

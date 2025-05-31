@@ -24,9 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-jnx45nz$x2t6r&zb=x@vep$4bf5v=!mznqq-!14q%)lo96*a3x'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['your-app-id.appspot.com'] # Add your App Engine app URL here after deployment
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'your-app-id.appspot.com'] # Add your App Engine app URL here after deployment
 
 
 # Application definition

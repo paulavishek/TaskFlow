@@ -171,6 +171,127 @@
     </div>
 </div>
 
+<!-- Lean Six Sigma Metrics Row -->
+<div class="row">
+    <!-- Value-Added Analysis Card -->
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-line me-1"></i> Lean Six Sigma Value Analysis
+                </h6>
+                {% if not total_categorized %}
+                <a href="{% url 'create_label' board.id %}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-plus me-1"></i> Add Lean Labels
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if total_categorized %}
+                    <div class="row align-items-center">
+                        <div class="col-md-7">
+                            <div class="chart-container">
+                                <canvas id="leanSixSigmaChart"></canvas>
+                            </div>
+                            {{ tasks_by_lean_category|json_script:"leanCategoryData" }}
+                        </div>
+                        <div class="col-md-5">
+                            <div class="text-center mb-4">
+                                <div class="progress-indicator">
+                                    <div class="progress-bar-circular" style="--progress-value: {{ value_added_percentage }}"></div>
+                                    <div class="progress-circle"></div>
+                                    <div class="progress-value">{{ value_added_percentage }}%</div>
+                                    <p class="text-muted mt-1">Value-Added Percentage</p>
+                                </div>
+                            </div>
+                            <div class="lean-stats">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span><i class="fas fa-circle text-success me-1"></i> Value-Added:</span>
+                                    <span class="badge bg-success">{{ tasks_by_lean_category.0.count }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span><i class="fas fa-circle text-warning me-1"></i> Necessary NVA:</span>
+                                    <span class="badge bg-warning text-dark">{{ tasks_by_lean_category.1.count }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-circle text-danger me-1"></i> Waste/Eliminate:</span>
+                                    <span class="badge bg-danger">{{ tasks_by_lean_category.2.count }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                        <p class="mb-0">No tasks have been categorized with Lean Six Sigma labels yet.</p>
+                        <p class="text-muted">Add Lean Six Sigma labels to your tasks to see value stream analysis here.</p>
+                        <a href="{% url 'create_label' board.id %}" class="btn btn-primary mt-2">
+                            <i class="fas fa-plus me-1"></i> Add Lean Six Sigma Labels
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Process Efficiency Card -->
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-pie me-1"></i> Process Efficiency
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if total_categorized %}
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="process-efficiency-tips card bg-light mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Lean Six Sigma Insights</h5>
+                                    {% if value_added_percentage < 30 %}
+                                        <div class="alert alert-danger">
+                                            <i class="fas fa-exclamation-triangle me-1"></i> Low Value-Added percentage ({{ value_added_percentage }}%)
+                                            <p class="small mb-0">Consider reducing waste activities and focusing on value-adding tasks.</p>
+                                        </div>
+                                    {% elif value_added_percentage < 70 %}
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-info-circle me-1"></i> Moderate Value-Added percentage ({{ value_added_percentage }}%)
+                                            <p class="small mb-0">Look for opportunities to convert necessary NVA tasks to value-added.</p>
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-success">
+                                            <i class="fas fa-check-circle me-1"></i> High Value-Added percentage ({{ value_added_percentage }}%)
+                                            <p class="small mb-0">Great job! Your process is focused on value-adding activities.</p>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <h6 class="mt-3">Recommendations:</h6>
+                                    <ul class="mb-0">
+                                        {% if tasks_by_lean_category.2.count > 0 %}
+                                            <li>Focus on eliminating {{ tasks_by_lean_category.2.count }} waste tasks to improve efficiency.</li>
+                                        {% endif %}
+                                        {% if tasks_by_lean_category.1.count > tasks_by_lean_category.0.count %}
+                                            <li>Review necessary NVA tasks to see if any can be streamlined or eliminated.</li>
+                                        {% endif %}
+                                        <li>Use the Lean Six Sigma filter to focus on high-value tasks first.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                        <p class="mb-0">Process efficiency metrics will appear here once tasks are categorized.</p>
+                        <p class="text-muted">Start by adding Lean Six Sigma labels to your tasks.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Tasks by Assignee Row -->
 <div class="row">
     <div class="col-lg-8">
@@ -522,9 +643,133 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 <script src="{% static 'js/kanban.js' %}"></script>
 
-<!-- Set progress bar widths based on data-width attribute -->
+<!-- Charts and Progress -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize all charts
+        initializeCharts();
+        
+        // Initialize Lean Six Sigma chart if data exists
+        const leanDataElement = document.getElementById('leanCategoryData');
+        if (leanDataElement) {
+            initializeLeanSixSigmaChart();
+        }
+        
+        // Function to initialize all standard charts
+        function initializeCharts() {
+            // Tasks by column chart
+            const columnsDataElement = document.getElementById('columnsData');
+            if (columnsDataElement) {
+                const columnsData = JSON.parse(columnsDataElement.textContent);
+                const columnCtx = document.getElementById('tasksColumnChart');
+                if (columnCtx) {
+                    new Chart(columnCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: columnsData.map(item => item.name),
+                            datasets: [{
+                                label: 'Number of Tasks',
+                                data: columnsData.map(item => item.count),
+                                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // Tasks by priority chart
+            const priorityDataElement = document.getElementById('priorityData');
+            if (priorityDataElement) {
+                const priorityData = JSON.parse(priorityDataElement.textContent);
+                const priorityCtx = document.getElementById('tasksPriorityChart');
+                if (priorityCtx) {
+                    const priorityColors = {
+                        'Low': 'rgba(40, 167, 69, 0.8)',
+                        'Medium': 'rgba(255, 193, 7, 0.8)',
+                        'High': 'rgba(255, 87, 51, 0.8)',
+                        'Urgent': 'rgba(220, 53, 69, 0.8)',
+                    };
+                    
+                    new Chart(priorityCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: priorityData.map(item => item.priority),
+                            datasets: [{
+                                data: priorityData.map(item => item.count),
+                                backgroundColor: priorityData.map(item => priorityColors[item.priority] || 'rgba(108, 117, 125, 0.8)'),
+                                borderColor: '#ffffff',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }
+        
+        // Function to initialize Lean Six Sigma chart
+        function initializeLeanSixSigmaChart() {
+            const leanDataElement = document.getElementById('leanCategoryData');
+            if (leanDataElement) {
+                const leanData = JSON.parse(leanDataElement.textContent);
+                const leanCtx = document.getElementById('leanSixSigmaChart');
+                if (leanCtx && leanData.length > 0) {
+                    new Chart(leanCtx, {
+                        type: 'pie',
+                        data: {
+                            labels: leanData.map(item => item.name),
+                            datasets: [{
+                                data: leanData.map(item => item.count),
+                                backgroundColor: leanData.map(item => item.color),
+                                borderColor: '#ffffff',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const value = context.raw;
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = Math.round((value / total) * 100);
+                                            return `${context.label}: ${value} (${percentage}%)`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }
         // Set width for the overall progress bar
         const overallProgressBar = document.getElementById('overall-progress-bar');
         if (overallProgressBar) {
@@ -591,4 +836,4 @@
     });
 </script>
 {% endblock %}
-{% endblock %}
+{% endblock %
