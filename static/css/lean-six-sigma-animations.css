@@ -1,0 +1,49 @@
+/* Simple styles for Lean Six Sigma section animations */
+.lean-six-sigma-section {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.lean-six-sigma-section.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Fade in animation for SVG */
+.svg-loaded img {
+    animation: fadeIn 0.8s ease-in-out;
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+/* Card styles on hover */
+.lean-six-sigma-section .d-flex {
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.lean-six-sigma-section .d-flex:hover {
+    background-color: rgba(255, 255, 255, 0.8);
+    transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* Subtle pulse animation for feature icons */
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 rgba(0, 0, 0, 0.1); }
+    50% { box-shadow: 0 0 15px rgba(78, 84, 200, 0.15); }
+}
+
+.feature-icon {
+    animation: pulse-glow 3s infinite alternate;
+    transition: transform 0.3s ease;
+}
+
+.feature-icon:hover {
+    transform: scale(1.1);
+}

@@ -347,3 +347,107 @@ body {
     font-size: 0.8rem;
     line-height: 1;
 }
+
+/* Feature card styles for Why TaskFlow Exists section */
+.feature-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    border-radius: 8px;
+    height: 100%;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+    width: 50px;
+    height: 50px;
+    background-color: #4e54c8;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.feature-card:nth-child(1) .feature-icon {
+    background-color: #dc3545; /* Red for problem */
+}
+
+.feature-card:nth-child(2) .feature-icon {
+    background-color: #0d6efd; /* Blue for solution */
+}
+
+.feature-card:nth-child(3) .feature-icon {
+    background-color: #198754; /* Green for impact */
+}
+
+/* Footer styles */
+.footer {
+    background-color: #212529;
+    color: #f8f9fa;
+    padding: 3rem 0 2rem;
+}
+
+.footer-links {
+    margin-top: 1.5rem;
+}
+
+.footer-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    color: #fff;
+    margin-right: 0.75rem;
+    transition: all 0.3s;
+}
+
+.footer-links a:hover {
+    background-color: #4e54c8;
+    transform: translateY(-3px);
+}
+
+.footer .list-unstyled li {
+    margin-bottom: 0.5rem;
+}
+
+.footer .list-unstyled li a:hover {
+    color: #fff !important;
+}
+
+.tech-stack .badge {
+    padding: 0.5rem 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.tech-stack .badge:hover {
+    background-color: #4e54c8 !important;
+    color: #fff !important;
+}
+
+.footer-nav-link {
+    color: #a8b6c3 !important;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+}
+
+.footer-nav-link:hover {
+    color: #ffffff !important;
+    transform: translateX(3px);
+}
+
+.footer-nav-link i {
+    color: #6c8db0;
+}
+
+/* End feature card styles */
