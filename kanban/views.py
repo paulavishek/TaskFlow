@@ -1131,4 +1131,10 @@ def welcome(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
     
-    return render(request, 'kanban/welcome.html')
+    # Add cache busting timestamp
+    import time
+    cache_buster = str(int(time.time()))
+    
+    return render(request, 'kanban/welcome.html', {
+        'cache_buster': cache_buster
+    })
