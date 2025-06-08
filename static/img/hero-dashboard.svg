@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="600" height="400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Gradient background -->
+  <defs>
+    <linearGradient id="heroGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4e54c8" />
+      <stop offset="100%" stop-color="#8f94fb" />
+    </linearGradient>
+    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="3" stdDeviation="4" flood-color="#000000" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  
+  <rect width="600" height="400" fill="url(#heroGradient)" rx="12"/>
+  
+  <!-- Background decorative elements -->
+  <g fill="rgba(255, 255, 255, 0.08)">
+    <circle cx="80" cy="60" r="4" />
+    <circle cx="520" cy="80" r="3" />
+    <circle cx="140" cy="350" r="5" />
+    <circle cx="480" cy="320" r="4" />
+    <circle cx="350" cy="40" r="3" />
+    <circle cx="50" cy="300" r="4" />
+  </g>
+  
+  <!-- Kanban Board Container -->
+  <rect x="40" y="80" width="520" height="240" fill="rgba(255, 255, 255, 0.15)" rx="8" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1"/>
+  
+  <!-- Column containers -->
+  <rect x="60" y="110" width="140" height="190" fill="rgba(255, 255, 255, 0.2)" rx="6" filter="url(#cardShadow)"/>
+  <rect x="230" y="110" width="140" height="190" fill="rgba(255, 255, 255, 0.2)" rx="6" filter="url(#cardShadow)"/>
+  <rect x="400" y="110" width="140" height="190" fill="rgba(255, 255, 255, 0.2)" rx="6" filter="url(#cardShadow)"/>
+  
+  <!-- Column headers -->
+  <text x="130" y="135" font-family="Arial, sans-serif" font-size="16" font-weight="600" text-anchor="middle" fill="white">To Do</text>
+  <text x="300" y="135" font-family="Arial, sans-serif" font-size="16" font-weight="600" text-anchor="middle" fill="white">In Progress</text>
+  <text x="470" y="135" font-family="Arial, sans-serif" font-size="16" font-weight="600" text-anchor="middle" fill="white">Done</text>
+  
+  <!-- Task cards -->
+  <!-- To Do column cards -->
+  <rect x="70" y="150" width="120" height="50" fill="rgba(255, 255, 255, 0.95)" rx="4" filter="url(#cardShadow)"/>
+  <rect x="75" y="155" width="30" height="8" fill="#28a745" rx="2"/>
+  <rect x="75" y="168" width="80" height="4" fill="#333333" rx="1" opacity="0.6"/>
+  <rect x="75" y="176" width="60" height="4" fill="#333333" rx="1" opacity="0.4"/>
+  <rect x="75" y="184" width="70" height="4" fill="#333333" rx="1" opacity="0.4"/>
+  
+  <rect x="70" y="220" width="120" height="50" fill="rgba(255, 255, 255, 0.95)" rx="4" filter="url(#cardShadow)"/>
+  <rect x="75" y="225" width="30" height="8" fill="#dc3545" rx="2"/>
+  <rect x="75" y="238" width="90" height="4" fill="#333333" rx="1" opacity="0.6"/>
+  <rect x="75" y="246" width="70" height="4" fill="#333333" rx="1" opacity="0.4"/>
+  <rect x="75" y="254" width="50" height="4" fill="#333333" rx="1" opacity="0.4"/>
+  
+  <!-- In Progress column cards -->
+  <rect x="240" y="150" width="120" height="50" fill="rgba(255, 255, 255, 0.95)" rx="4" filter="url(#cardShadow)"/>
+  <rect x="245" y="155" width="30" height="8" fill="#ffc107" rx="2"/>
+  <rect x="245" y="168" width="85" height="4" fill="#333333" rx="1" opacity="0.6"/>
+  <rect x="245" y="176" width="65" height="4" fill="#333333" rx="1" opacity="0.4"/>
+  <rect x="245" y="184" width="75" height="4" fill="#333333" rx="1" opacity="0.4"/>
+  
+  <!-- Done column card -->
+  <rect x="410" y="150" width="120" height="50" fill="rgba(255, 255, 255, 0.95)" rx="4" filter="url(#cardShadow)"/>
+  <rect x="415" y="155" width="30" height="8" fill="#28a745" rx="2"/>
+  <rect x="415" y="168" width="80" height="4" fill="#333333" rx="1" opacity="0.6"/>
+  <rect x="415" y="176" width="90" height="4" fill="#333333" rx="1" opacity="0.4"/>
+  <rect x="415" y="184" width="60" height="4" fill="#333333" rx="1" opacity="0.4"/>
+  
+  <!-- Workflow arrows -->
+  <path d="M200,175 L230,175" stroke="rgba(255, 255, 255, 0.7)" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M370,175 L400,175" stroke="rgba(255, 255, 255, 0.7)" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+            refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="rgba(255, 255, 255, 0.7)" />
+    </marker>
+  </defs>
+  
+  <!-- Bottom decorative text -->
+  <text x="300" y="370" font-family="Arial, sans-serif" font-size="18" font-weight="300" text-anchor="middle" fill="rgba(255, 255, 255, 0.6)">Kanban Workflow Visualization</text>
+</svg>
