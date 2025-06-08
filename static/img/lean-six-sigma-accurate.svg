@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8f9fa" />
+      <stop offset="100%" stop-color="#e9ecef" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="4" stdDeviation="6" flood-color="#4e54c8" flood-opacity="0.2" />
+    </filter>
+    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="1" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.1" />
+    </filter>
+  </defs>
+  
+  <!-- Main background -->
+  <rect width="800" height="600" fill="url(#bg-gradient)" rx="12" ry="12" />
+  
+  <!-- Subtle background pattern -->
+  <g opacity="0.05">
+    <circle cx="100" cy="80" r="20" fill="#4e54c8" />
+    <circle cx="700" cy="120" r="15" fill="#8f94fb" />
+    <circle cx="150" cy="500" r="25" fill="#4e54c8" />
+    <circle cx="650" cy="480" r="18" fill="#8f94fb" />
+    <circle cx="50" cy="300" r="12" fill="#4e54c8" />
+    <circle cx="750" cy="350" r="16" fill="#8f94fb" />
+  </g>
+  
+  <!-- Main Title -->
+  <text x="400" y="60" font-family="Arial, sans-serif" font-weight="bold" font-size="28" fill="#4e54c8" text-anchor="middle">Enhanced with Lean Six Sigma</text>
+  <text x="400" y="85" font-family="Arial, sans-serif" font-size="16" fill="#666" text-anchor="middle">Identify and eliminate waste in your processes with integrated features</text>
+  
+  <!-- Top Section: VA/NVA/Waste indicators and Productivity Metrics -->
+  <g transform="translate(0, 120)">
+    
+    <!-- Left side: VA, NVA, and Waste indicators (ACTUAL FEATURE) -->
+    <g transform="translate(80, 40)">
+      <!-- Background card for indicators -->
+      <rect x="-20" y="-20" width="320" height="140" rx="8" fill="#ffffff" filter="url(#cardShadow)" stroke="#e9ecef" stroke-width="1"/>
+      
+      <!-- Title -->
+      <text x="140" y="10" font-family="Arial, sans-serif" font-weight="bold" font-size="16" fill="#4e54c8" text-anchor="middle">Value-Added (VA) Tagging</text>
+      <text x="140" y="25" font-family="Arial, sans-serif" font-size="12" fill="#666" text-anchor="middle">Identify activities that directly contribute to customer value</text>
+      
+      <!-- Value Added (Green) -->
+      <circle cx="60" cy="70" r="25" fill="#28a745" filter="url(#cardShadow)"/>
+      <text x="60" y="75" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">VA</text>
+      <text x="60" y="105" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#333" text-anchor="middle">Value Added</text>
+      
+      <!-- Non-Value Added (Yellow) -->
+      <circle cx="140" cy="70" r="25" fill="#ffc107" filter="url(#cardShadow)"/>
+      <text x="140" y="75" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333" text-anchor="middle">NVA</text>
+      <text x="140" y="105" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#333" text-anchor="middle">Non-Value Added</text>
+      
+      <!-- Waste (Red) -->
+      <circle cx="220" cy="70" r="25" fill="#dc3545" filter="url(#cardShadow)"/>
+      <text x="220" y="75" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">W</text>
+      <text x="220" y="105" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#333" text-anchor="middle">Waste</text>
+    </g>
+
+    <!-- Right side: Overall Productivity Metrics (ACTUAL FEATURE) -->
+    <g transform="translate(500, 40)">
+      <!-- Background card -->
+      <rect x="-20" y="-20" width="280" height="140" rx="8" fill="#ffffff" filter="url(#cardShadow)" stroke="#e9ecef" stroke-width="1"/>
+      
+      <!-- Title -->
+      <text x="120" y="10" font-family="Arial, sans-serif" font-weight="bold" font-size="16" fill="#4e54c8" text-anchor="middle">Process Efficiency Metrics</text>
+      <text x="120" y="25" font-family="Arial, sans-serif" font-size="12" fill="#666" text-anchor="middle">Track value-added percentage and other key process metrics</text>
+      
+      <!-- Main Progress Circle -->
+      <circle cx="120" cy="75" r="30" fill="none" stroke="#e9ecef" stroke-width="5"/>
+      <circle cx="120" cy="75" r="30" fill="none" stroke="#28a745" stroke-width="5" 
+              stroke-dasharray="120" stroke-dashoffset="24" transform="rotate(-90 120 75)"/>
+      <text x="120" y="80" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#28a745" text-anchor="middle">80%</text>
+      <text x="120" y="115" font-family="Arial, sans-serif" font-size="10" fill="#333" text-anchor="middle">Value-Added %</text>
+    </g>
+  </g>
+
+  <!-- Middle Section: Task Analytics and Filtering (ACTUAL FEATURES) -->
+  <g transform="translate(0, 300)">
+    
+    <!-- Left side: Task Analytics -->
+    <g transform="translate(50, 20)">
+      <!-- Background card -->
+      <rect x="-20" y="-20" width="320" height="160" rx="8" fill="#ffffff" filter="url(#cardShadow)" stroke="#e9ecef" stroke-width="1"/>
+      
+      <!-- Title -->
+      <text x="140" y="10" font-family="Arial, sans-serif" font-weight="bold" font-size="16" fill="#4e54c8" text-anchor="middle">Task Filtering</text>
+      <text x="140" y="25" font-family="Arial, sans-serif" font-size="12" fill="#666" text-anchor="middle">Show icons for filtering by label, priority, and assignee</text>
+      
+      <!-- Filter icons -->
+      <g transform="translate(30, 45)">
+        <!-- Label Filter -->
+        <rect x="0" y="0" width="60" height="30" rx="4" fill="#e3f2fd" stroke="#2196f3" stroke-width="1"/>
+        <text x="30" y="20" font-family="Arial, sans-serif" font-size="10" fill="#333" text-anchor="middle">Labels</text>
+        
+        <!-- Priority Filter -->
+        <rect x="80" y="0" width="60" height="30" rx="4" fill="#fff3e0" stroke="#ff9800" stroke-width="1"/>
+        <text x="110" y="20" font-family="Arial, sans-serif" font-size="10" fill="#333" text-anchor="middle">Priority</text>
+        
+        <!-- Assignee Filter -->
+        <rect x="160" y="0" width="60" height="30" rx="4" fill="#e8f5e8" stroke="#4caf50" stroke-width="1"/>
+        <text x="190" y="20" font-family="Arial, sans-serif" font-size="10" fill="#333" text-anchor="middle">Assignee</text>
+      </g>
+      
+      <!-- Key Metrics -->
+      <g transform="translate(20, 85)">
+        <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#333">Key Analytics:</text>
+        
+        <!-- Task Completion Rate -->
+        <circle cx="10" cy="20" r="3" fill="#007bff"/>
+        <text x="20" y="25" font-family="Arial, sans-serif" font-size="10" fill="#333">Task Completion Rate</text>
+        
+        <!-- Tasks by Priority -->
+        <circle cx="10" cy="40" r="3" fill="#dc3545"/>
+        <text x="20" y="45" font-family="Arial, sans-serif" font-size="10" fill="#333">Tasks by Priority</text>
+        
+        <!-- Tasks by Assignee -->
+        <circle cx="140" cy="20" r="3" fill="#28a745"/>
+        <text x="150" y="25" font-family="Arial, sans-serif" font-size="10" fill="#333">Tasks by Assignee</text>
+        
+        <!-- Overall Productivity -->
+        <circle cx="140" cy="40" r="3" fill="#ffc107"/>
+        <text x="150" y="45" font-family="Arial, sans-serif" font-size="10" fill="#333">Overall Productivity</text>
+      </g>
+    </g>
+
+    <!-- Right side: Team Collaboration & Data Export (ACTUAL FEATURES) -->
+    <g transform="translate(420, 20)">
+      <!-- Background card -->
+      <rect x="-20" y="-20" width="320" height="160" rx="8" fill="#ffffff" filter="url(#cardShadow)" stroke="#e9ecef" stroke-width="1"/>
+      
+      <!-- Title -->
+      <text x="140" y="10" font-family="Arial, sans-serif" font-weight="bold" font-size="16" fill="#4e54c8" text-anchor="middle">Team Collaboration</text>
+      <text x="140" y="25" font-family="Arial, sans-serif" font-size="12" fill="#666" text-anchor="middle">Show icons representing multiple users working on a board</text>
+      
+      <!-- Team collaboration icons -->
+      <g transform="translate(90, 45)">
+        <!-- User 1 -->
+        <circle cx="20" cy="20" r="12" fill="#007bff" filter="url(#cardShadow)"/>
+        <text x="20" y="25" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle">U1</text>
+        
+        <!-- User 2 -->
+        <circle cx="50" cy="20" r="12" fill="#28a745" filter="url(#cardShadow)"/>
+        <text x="50" y="25" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle">U2</text>
+        
+        <!-- User 3 -->
+        <circle cx="80" cy="20" r="12" fill="#ffc107" filter="url(#cardShadow)"/>
+        <text x="80" y="25" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#333" text-anchor="middle">U3</text>
+        
+        <!-- Collaboration arrow -->
+        <path d="M 35 20 L 65 20" stroke="#4e54c8" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+      </g>
+      
+      <!-- Data Export section -->
+      <g transform="translate(20, 85)">
+        <text x="120" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#333" text-anchor="middle">Data Portability</text>
+        <text x="120" y="15" font-family="Arial, sans-serif" font-size="10" fill="#666" text-anchor="middle">Show icons for exporting to JSON/CSV</text>
+        
+        <!-- JSON Export -->
+        <rect x="40" y="25" width="50" height="25" rx="4" fill="#f8f9fa" stroke="#6c757d" stroke-width="1"/>
+        <text x="65" y="40" font-family="Arial, sans-serif" font-size="9" fill="#333" text-anchor="middle">JSON</text>
+        
+        <!-- CSV Export -->
+        <rect x="110" y="25" width="50" height="25" rx="4" fill="#f8f9fa" stroke="#6c757d" stroke-width="1"/>
+        <text x="135" y="40" font-family="Arial, sans-serif" font-size="9" fill="#333" text-anchor="middle">CSV</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Bottom Section: Feature Highlights -->
+  <g transform="translate(50, 500)">
+    <!-- Feature list -->
+    <text x="350" y="10" font-family="Arial, sans-serif" font-weight="bold" font-size="14" fill="#4e54c8" text-anchor="middle">Implemented TaskFlow Features</text>
+    
+    <g transform="translate(0, 25)">
+      <!-- Check marks for actual features -->
+      <g fill="#28a745">
+        <circle cx="10" cy="10" r="6" fill="#28a745"/>
+        <text x="10" y="14" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle">✓</text>
+        <text x="25" y="14" font-family="Arial, sans-serif" font-size="11" fill="#333">Value-Added task tagging and percentage calculation</text>
+        
+        <circle cx="350" cy="10" r="6" fill="#28a745"/>
+        <text x="350" y="14" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle">✓</text>
+        <text x="365" y="14" font-family="Arial, sans-serif" font-size="11" fill="#333">Task analytics by column, priority, and assignee</text>
+        
+        <circle cx="10" cy="30" r="6" fill="#28a745"/>
+        <text x="10" y="34" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle">✓</text>
+        <text x="25" y="34" font-family="Arial, sans-serif" font-size="11" fill="#333">Overall productivity based on task progress percentages</text>
+        
+        <circle cx="350" cy="30" r="6" fill="#28a745"/>
+        <text x="350" y="34" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle">✓</text>
+        <text x="365" y="34" font-family="Arial, sans-serif" font-size="11" fill="#333">JSON and CSV export for data portability</text>
+        
+        <circle cx="10" cy="50" r="6" fill="#28a745"/>
+        <text x="10" y="54" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle">✓</text>
+        <text x="25" y="54" font-family="Arial, sans-serif" font-size="11" fill="#333">Multi-user team collaboration with role management</text>
+        
+        <circle cx="350" cy="50" r="6" fill="#28a745"/>
+        <text x="350" y="54" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle">✓</text>
+        <text x="365" y="54" font-family="Arial, sans-serif" font-size="11" fill="#333">Task filtering by Lean Six Sigma categories</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4e54c8"/>
+    </marker>
+  </defs>
+</svg>

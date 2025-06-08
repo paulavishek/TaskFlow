@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600" height="400" viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Simple but professional Lean Six Sigma SVG -->
+  
+  <!-- Background -->
+  <rect width="600" height="400" fill="#f8f9fa" rx="8" />
+  
+  <!-- Title -->
+  <text x="300" y="40" font-family="Arial, sans-serif" font-weight="bold" font-size="20" fill="#4e54c8" text-anchor="middle">Enhanced with Lean Six Sigma</text>
+  <text x="300" y="60" font-family="Arial, sans-serif" font-size="14" fill="#666" text-anchor="middle">Identify and eliminate waste in your processes</text>
+  
+  <!-- Top Row: VA/NVA/Waste Indicators -->
+  <g transform="translate(50, 80)">
+    <!-- Card background -->
+    <rect x="0" y="0" width="240" height="100" rx="8" fill="#ffffff" stroke="#e9ecef" stroke-width="1"/>
+    
+    <!-- Title -->
+    <text x="120" y="25" font-family="Arial, sans-serif" font-weight="bold" font-size="14" fill="#333" text-anchor="middle">Activity Tagging</text>
+    
+    <!-- VA Circle -->
+    <circle cx="60" cy="60" r="15" fill="#28a745"/>
+    <text x="60" y="65" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle">VA</text>
+    <text x="60" y="85" font-family="Arial, sans-serif" font-size="9" fill="#666" text-anchor="middle">Value Added</text>
+    
+    <!-- NVA Circle -->
+    <circle cx="120" cy="60" r="15" fill="#ffc107"/>
+    <text x="120" y="65" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#333" text-anchor="middle">NVA</text>
+    <text x="120" y="85" font-family="Arial, sans-serif" font-size="9" fill="#666" text-anchor="middle">Non-Value</text>
+    
+    <!-- Waste Circle -->
+    <circle cx="180" cy="60" r="15" fill="#dc3545"/>
+    <text x="180" y="65" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle">W</text>
+    <text x="180" y="85" font-family="Arial, sans-serif" font-size="9" fill="#666" text-anchor="middle">Waste</text>
+  </g>
+  
+  <!-- Right: Process Metrics -->
+  <g transform="translate(310, 80)">
+    <!-- Card background -->
+    <rect x="0" y="0" width="240" height="100" rx="8" fill="#ffffff" stroke="#e9ecef" stroke-width="1"/>
+    
+    <!-- Title -->
+    <text x="120" y="25" font-family="Arial, sans-serif" font-weight="bold" font-size="14" fill="#333" text-anchor="middle">Process Metrics</text>
+    
+    <!-- Efficiency indicator -->
+    <circle cx="120" cy="60" r="20" fill="none" stroke="#e9ecef" stroke-width="3"/>
+    <circle cx="120" cy="60" r="20" fill="none" stroke="#28a745" stroke-width="3" 
+            stroke-dasharray="100" stroke-dashoffset="20" transform="rotate(-90 120 60)"/>
+    <text x="120" y="65" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#28a745" text-anchor="middle">80%</text>
+    <text x="120" y="85" font-family="Arial, sans-serif" font-size="9" fill="#666" text-anchor="middle">Efficiency</text>
+  </g>
+  
+  <!-- Bottom: Features -->
+  <g transform="translate(50, 200)">
+    <!-- Task Filtering Card -->
+    <rect x="0" y="0" width="240" height="120" rx="8" fill="#ffffff" stroke="#e9ecef" stroke-width="1"/>
+    <text x="120" y="25" font-family="Arial, sans-serif" font-weight="bold" font-size="14" fill="#333" text-anchor="middle">Task Filtering</text>
+    
+    <!-- Filter tags -->
+    <rect x="30" y="40" width="50" height="20" rx="10" fill="#e3f2fd" stroke="#2196f3" stroke-width="1"/>
+    <text x="55" y="53" font-family="Arial, sans-serif" font-size="9" fill="#1976d2" text-anchor="middle">Priority</text>
+    
+    <rect x="90" y="40" width="50" height="20" rx="10" fill="#f3e5f5" stroke="#9c27b0" stroke-width="1"/>
+    <text x="115" y="53" font-family="Arial, sans-serif" font-size="9" fill="#7b1fa2" text-anchor="middle">Labels</text>
+    
+    <rect x="150" y="40" width="50" height="20" rx="10" fill="#e8f5e8" stroke="#4caf50" stroke-width="1"/>
+    <text x="175" y="53" font-family="Arial, sans-serif" font-size="9" fill="#388e3c" text-anchor="middle">Assignee</text>
+    
+    <!-- Analytics -->
+    <text x="30" y="85" font-family="Arial, sans-serif" font-size="10" fill="#666">Analytics:</text>
+    <circle cx="30" cy="100" r="2" fill="#2196f3"/>
+    <text x="40" y="104" font-family="Arial, sans-serif" font-size="8" fill="#666">Completion Rate</text>
+    <circle cx="130" cy="100" r="2" fill="#4caf50"/>
+    <text x="140" y="104" font-family="Arial, sans-serif" font-size="8" fill="#666">By Priority</text>
+  </g>
+  
+  <!-- Team & Export -->
+  <g transform="translate(310, 200)">
+    <!-- Team Collaboration Card -->
+    <rect x="0" y="0" width="240" height="120" rx="8" fill="#ffffff" stroke="#e9ecef" stroke-width="1"/>
+    <text x="120" y="25" font-family="Arial, sans-serif" font-weight="bold" font-size="14" fill="#333" text-anchor="middle">Team &amp; Export</text>
+    
+    <!-- Team icons -->
+    <circle cx="70" cy="50" r="12" fill="#4e54c8"/>
+    <text x="70" y="54" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">U1</text>
+    
+    <circle cx="100" cy="50" r="12" fill="#28a745"/>
+    <text x="100" y="54" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">U2</text>
+    
+    <circle cx="130" cy="50" r="12" fill="#dc3545"/>
+    <text x="130" y="54" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">U3</text>
+    
+    <circle cx="160" cy="50" r="12" fill="#ffc107"/>
+    <text x="160" y="54" font-family="Arial, sans-serif" font-size="7" font-weight="bold" fill="#333" text-anchor="middle">+2</text>
+    
+    <!-- Export options -->
+    <text x="120" y="85" font-family="Arial, sans-serif" font-size="10" fill="#666" text-anchor="middle">Data Export:</text>
+    <rect x="80" y="95" width="35" height="16" rx="3" fill="#17a2b8"/>
+    <text x="97" y="105" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">JSON</text>
+    <rect x="125" y="95" width="35" height="16" rx="3" fill="#28a745"/>
+    <text x="142" y="105" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white" text-anchor="middle">CSV</text>
+  </g>
+  
+  <!-- Feature checklist at bottom -->
+  <g transform="translate(50, 340)">
+    <text x="250" y="15" font-family="Arial, sans-serif" font-weight="bold" font-size="12" fill="#333" text-anchor="middle">✓ Implemented Features</text>
+    
+    <circle cx="10" cy="35" r="4" fill="#28a745"/>
+    <text x="10" y="37" font-family="Arial, sans-serif" font-size="6" font-weight="bold" fill="white" text-anchor="middle">✓</text>
+    <text x="20" y="38" font-family="Arial, sans-serif" font-size="9" fill="#333">VA/NVA/Waste tagging</text>
+    
+    <circle cx="150" cy="35" r="4" fill="#28a745"/>
+    <text x="150" y="37" font-family="Arial, sans-serif" font-size="6" font-weight="bold" fill="white" text-anchor="middle">✓</text>
+    <text x="160" y="38" font-family="Arial, sans-serif" font-size="9" fill="#333">Task analytics &amp; filtering</text>
+    
+    <circle cx="300" cy="35" r="4" fill="#28a745"/>
+    <text x="300" y="37" font-family="Arial, sans-serif" font-size="6" font-weight="bold" fill="white" text-anchor="middle">✓</text>
+    <text x="310" y="38" font-family="Arial, sans-serif" font-size="9" fill="#333">Team collaboration</text>
+    
+    <circle cx="450" cy="35" r="4" fill="#28a745"/>
+    <text x="450" y="37" font-family="Arial, sans-serif" font-size="6" font-weight="bold" fill="white" text-anchor="middle">✓</text>
+    <text x="460" y="38" font-family="Arial, sans-serif" font-size="9" fill="#333">Data export (JSON/CSV)</text>
+  </g>
+  
+</svg>
