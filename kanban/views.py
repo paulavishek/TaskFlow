@@ -1122,3 +1122,13 @@ def add_lean_labels(request, board_id):
         messages.success(request, 'Lean Six Sigma labels added successfully!')
     
     return redirect('create_label', board_id=board.id)
+
+def welcome(request):
+    """
+    Welcome page view that will be shown to users who are not logged in.
+    Logged in users will be redirected to the dashboard.
+    """
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    
+    return render(request, 'kanban/welcome.html')

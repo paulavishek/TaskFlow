@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="600" height="400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="600" height="400" fill="#4e54c8"/>
+  <text x="300" y="200" font-family="Arial" font-size="40" text-anchor="middle" fill="white">TaskFlow Dashboard</text>
+  <rect x="50" y="100" width="150" height="200" fill="rgba(255, 255, 255, 0.2)" rx="5"/>
+  <rect x="220" y="100" width="150" height="200" fill="rgba(255, 255, 255, 0.2)" rx="5"/>
+  <rect x="390" y="100" width="150" height="200" fill="rgba(255, 255, 255, 0.2)" rx="5"/>
+  <text x="125" y="120" font-family="Arial" font-size="16" text-anchor="middle" fill="white">To Do</text>
+  <text x="295" y="120" font-family="Arial" font-size="16" text-anchor="middle" fill="white">In Progress</text>
+  <text x="465" y="120" font-family="Arial" font-size="16" text-anchor="middle" fill="white">Done</text>
+  
+  <!-- To Do cards -->
+  <rect x="60" y="140" width="130" height="40" fill="rgba(255, 255, 255, 0.9)" rx="3"/>
+  <rect x="60" y="190" width="130" height="40" fill="rgba(255, 255, 255, 0.9)" rx="3"/>
+  
+  <!-- In Progress cards -->
+  <rect x="230" y="140" width="130" height="40" fill="rgba(255, 255, 255, 0.9)" rx="3"/>
+  <rect x="230" y="190" width="130" height="40" fill="rgba(255, 255, 255, 0.9)" rx="3"/>
+  
+  <!-- Done cards -->
+  <rect x="400" y="140" width="130" height="40" fill="rgba(255, 255, 255, 0.9)" rx="3"/>
+  
+  <!-- Card labels -->
+  <rect x="65" y="145" width="40" height="10" fill="#28a745" rx="2"/>
+  <rect x="235" y="145" width="40" height="10" fill="#ffc107" rx="2"/>
+  <rect x="405" y="145" width="40" height="10" fill="#28a745" rx="2"/>
+</svg>

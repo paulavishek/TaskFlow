@@ -1,0 +1,444 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}TaskFlow - Modern Kanban Board with Lean Six Sigma{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Welcome page specific styling */
+    body {
+        background-color: #f8f9fa;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .hero-section {
+        background: linear-gradient(120deg, #4e54c8, #8f94fb);
+        color: white;
+        padding: 80px 0 100px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-pattern {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 70px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='1' d='M0,224L80,213.3C160,203,320,181,480,181.3C640,181,800,203,960,197.3C1120,192,1280,160,1360,144L1440,128L1440,320L1360,320C1280,320,1120,320,960,320C800,320,640,320,480,320C320,320,160,320,80,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+        background-size: cover;
+    }
+    
+    .hero-content {
+        max-width: 600px;
+    }
+    
+    .hero-title {
+        font-weight: 700;
+        font-size: 3.2rem;
+        margin-bottom: 20px;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.3rem;
+        opacity: 0.9;
+        margin-bottom: 30px;
+        line-height: 1.6;
+    }
+    
+    .btn-hero {
+        padding: 12px 30px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 30px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-hero:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+    }
+    
+    .feature-section {
+        padding: 80px 0;
+    }
+    
+    .feature-card {
+        border: none;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .feature-icon {
+        font-size: 40px;
+        margin-bottom: 20px;
+    }
+    
+    .feature-title {
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+    
+    .lean-six-sigma-section {
+        background: linear-gradient(45deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 80px 0;
+        border-radius: 0;
+    }
+    
+    .testimonial-section {
+        padding: 80px 0;
+        background-color: #ffffff;
+    }
+    
+    .testimonial-card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    }
+    
+    .testimonial-img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    
+    .cta-section {
+        background: linear-gradient(120deg, #8f94fb, #4e54c8);
+        color: white;
+        padding: 60px 0;
+    }
+    
+    .footer {
+        background-color: #212529;
+        color: white;
+        padding: 40px 0 20px;
+    }
+    
+    .footer-links a {
+        color: rgba(255,255,255,0.7);
+        text-decoration: none;
+        margin-right: 15px;
+        transition: color 0.2s;
+    }
+    
+    .footer-links a:hover {
+        color: white;
+    }
+    
+    .navbar {
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        .hero-subtitle {
+            font-size: 1.1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Override the navigation for the welcome page -->
+{% block navigation %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'welcome' %}">
+            <i class="fas fa-tasks me-2"></i>TaskFlow
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#features">Features</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#lean-six-sigma">Lean Six Sigma</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#testimonials">Testimonials</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link btn btn-light text-primary ms-2 px-3" href="{% url 'login' %}">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link btn btn-outline-light ms-2 px-3" href="{% url 'register' %}">Register</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6 hero-content">
+                <h1 class="hero-title">Streamline Your Workflow with TaskFlow</h1>
+                <p class="hero-subtitle">A modern Kanban board with powerful Lean Six Sigma features to optimize your processes and eliminate waste.</p>
+                <div class="d-flex flex-wrap">
+                    <a href="{% url 'register' %}" class="btn btn-light btn-hero me-3 mb-3">Get Started <i class="fas fa-arrow-right ms-2"></i></a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-light btn-hero mb-3">Sign In</a>
+                </div>
+            </div>
+            <div class="col-md-6 d-none d-md-block">
+                <img src="{% static 'img/taskflow-hero.svg' %}" alt="TaskFlow Dashboard" class="img-fluid" 
+                     onerror="this.src='https://via.placeholder.com/600x400/8f94fb/FFFFFF?text=TaskFlow';this.onerror='';">
+            </div>
+        </div>
+    </div>
+    <div class="hero-pattern"></div>
+</section>
+
+<!-- Features Section -->
+<section class="feature-section" id="features">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Powerful Features</h2>
+            <p class="text-muted">Everything you need to manage projects efficiently</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card feature-card p-4 text-center">
+                    <div class="feature-icon text-primary">
+                        <i class="fas fa-columns"></i>
+                    </div>
+                    <h3 class="feature-title">Flexible Kanban Boards</h3>
+                    <p>Create customizable boards with drag-and-drop functionality to visualize your workflow.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card feature-card p-4 text-center">
+                    <div class="feature-icon text-success">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="feature-title">Analytics Dashboard</h3>
+                    <p>Track performance metrics and gain insights with detailed analytics and visual reports.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card feature-card p-4 text-center">
+                    <div class="feature-icon text-info">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="feature-title">Team Collaboration</h3>
+                    <p>Seamlessly collaborate with team members and assign tasks within your organization.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card feature-card p-4 text-center">
+                    <div class="feature-icon text-warning">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    <h3 class="feature-title">Smart Labeling System</h3>
+                    <p>Organize tasks with color-coded labels and custom categories for effective filtration.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card feature-card p-4 text-center">
+                    <div class="feature-icon text-danger">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3 class="feature-title">Progress Tracking</h3>
+                    <p>Monitor task progress with visual indicators and completion percentages.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card feature-card p-4 text-center">
+                    <div class="feature-icon text-secondary">
+                        <i class="fas fa-file-export"></i>
+                    </div>
+                    <h3 class="feature-title">Import/Export</h3>
+                    <p>Easily import and export boards for data portability and sharing.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Lean Six Sigma Section -->
+<section class="lean-six-sigma-section" id="lean-six-sigma">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h2 class="fw-bold mb-4">Enhanced with Lean Six Sigma</h2>
+                <p class="lead">Identify and eliminate waste in your processes with integrated Lean Six Sigma features.</p>
+                
+                <div class="d-flex align-items-start mt-4">
+                    <div class="bg-success rounded p-2 me-3 text-white">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div>
+                        <h5>Value-Added (VA) Tagging</h5>
+                        <p class="text-muted">Identify activities that directly contribute to customer value.</p>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-start mt-3">
+                    <div class="bg-warning rounded p-2 me-3">
+                        <i class="fas fa-exclamation"></i>
+                    </div>
+                    <div>
+                        <h5>Necessary Non-Value-Added (NNVA)</h5>
+                        <p class="text-muted">Track necessary activities that don't directly add customer value.</p>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-start mt-3">
+                    <div class="bg-danger rounded p-2 me-3 text-white">
+                        <i class="fas fa-times"></i>
+                    </div>
+                    <div>
+                        <h5>Waste Identification</h5>
+                        <p class="text-muted">Highlight waste activities for elimination or reduction.</p>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-start mt-3">
+                    <div class="bg-info rounded p-2 me-3 text-white">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div>
+                        <h5>Process Efficiency Metrics</h5>
+                        <p class="text-muted">Track value-added percentage and other key process metrics.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mt-4 mt-md-0">
+                <img src="{% static 'img/lean-six-sigma.svg' %}" alt="Lean Six Sigma" class="img-fluid rounded shadow-lg"
+                     onerror="this.src='https://via.placeholder.com/600x400/e9ecef/4e54c8?text=Lean+Six+Sigma+Features';this.onerror='';">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="testimonial-section" id="testimonials">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">What Our Users Say</h2>
+            <p class="text-muted">Trusted by professionals across various industries</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card testimonial-card p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Sarah J." class="testimonial-img me-3">
+                        <div>
+                            <h5 class="mb-0">Sarah Johnson</h5>
+                            <small class="text-muted">Project Manager</small>
+                        </div>
+                    </div>
+                    <p class="mb-0">"TaskFlow has transformed how our team manages projects. The Lean Six Sigma features have helped us identify and eliminate waste in our processes."</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card testimonial-card p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="https://randomuser.me/api/portraits/men/46.jpg" alt="Michael R." class="testimonial-img me-3">
+                        <div>
+                            <h5 class="mb-0">Michael Rodriguez</h5>
+                            <small class="text-muted">Product Owner</small>
+                        </div>
+                    </div>
+                    <p class="mb-0">"The analytics dashboard gives us incredible insights into our team's productivity. We've increased our value-added activities by 40% since implementing TaskFlow."</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card testimonial-card p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Emily T." class="testimonial-img me-3">
+                        <div>
+                            <h5 class="mb-0">Emily Thompson</h5>
+                            <small class="text-muted">Scrum Master</small>
+                        </div>
+                    </div>
+                    <p class="mb-0">"As an Agile practitioner, I love how TaskFlow combines Kanban principles with Lean Six Sigma methodologies. It's truly the best of both worlds for process improvement."</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Section -->
+<section class="cta-section">
+    <div class="container text-center">
+        <h2 class="fw-bold mb-4">Ready to Optimize Your Workflow?</h2>
+        <p class="lead mb-4">Join TaskFlow today and start transforming how your team manages tasks and processes.</p>
+        <div class="d-flex justify-content-center flex-wrap">
+            <a href="{% url 'register' %}" class="btn btn-light btn-hero me-md-3 mb-3 mb-md-0">Create Free Account</a>
+            <a href="#features" class="btn btn-outline-light btn-hero">Learn More</a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <h4 class="mb-3">TaskFlow</h4>
+                <p class="mb-3">A modern Kanban board with Lean Six Sigma features for optimized workflow management.</p>
+                <div class="footer-links">
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                    <a href="#"><i class="fab fa-github"></i></a>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <h6 class="mb-3">Product</h6>
+                <ul class="list-unstyled">
+                    <li><a href="#features" class="text-decoration-none text-muted">Features</a></li>
+                    <li><a href="#lean-six-sigma" class="text-decoration-none text-muted">Lean Six Sigma</a></li>
+                    <li><a href="#testimonials" class="text-decoration-none text-muted">Testimonials</a></li>
+                </ul>
+            </div>
+            <div class="col-md-2">
+                <h6 class="mb-3">Support</h6>
+                <ul class="list-unstyled">
+                    <li><a href="#" class="text-decoration-none text-muted">Help Center</a></li>
+                    <li><a href="#" class="text-decoration-none text-muted">Documentation</a></li>
+                    <li><a href="#" class="text-decoration-none text-muted">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="col-md-2">
+                <h6 class="mb-3">Legal</h6>
+                <ul class="list-unstyled">
+                    <li><a href="#" class="text-decoration-none text-muted">Privacy Policy</a></li>
+                    <li><a href="#" class="text-decoration-none text-muted">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+        <hr class="mt-4 mb-3">
+        <div class="row">
+            <div class="col-12 text-center">
+                <p class="small text-muted mb-0">© 2025 TaskFlow. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+{% endblock %}
