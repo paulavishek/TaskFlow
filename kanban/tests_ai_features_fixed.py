@@ -15,7 +15,7 @@ from kanban.api_views import (
     generate_task_description_api, 
     summarize_comments_api,
     board_analytics_insights_api,
-    suggest_lss_classification_api as suggest_lean_classification_api
+    suggest_lss_classification_api
 )
 from kanban.utils.ai_utils import (
     generate_task_description,
@@ -115,25 +115,18 @@ class AIUtilsTestCase(TestCase):
         mock_response = MagicMock()
         mock_response.text = json.dumps({
             "classification": "Value-Added",
-            "explanation": "This task directly contributes to customer value."
+            "justification": "This task directly contributes to customer value."
         })
         mock_model.generate_content.return_value = mock_response
         mock_get_model.return_value = mock_model
         
-        # Test data
-        task_data = {
-            'title': 'Implement user authentication',
-            'description': 'Add secure login functionality to the application',
-            'priority': 'High'
-        }
-        
         # Call function
-        result = suggest_lean_classification(task_data)
+        result = suggest_lean_classification("Test title", "Test description")
         
         # Assertions
         self.assertIsNotNone(result)
         self.assertIn('classification', result)
-        self.assertIn('explanation', result)
+        self.assertIn('justification', result)
         self.assertEqual(result['classification'], 'Value-Added')
         mock_model.generate_content.assert_called_once()
     
@@ -147,7 +140,7 @@ class AIUtilsTestCase(TestCase):
         self.assertIsNone(generate_task_description("Test Task"))
         self.assertIsNone(summarize_comments([{'user': 'test', 'content': 'content', 'created_at': 'now'}]))
         self.assertIsNone(generate_analytics_insights({'total_tasks': 10}))
-        self.assertIsNone(suggest_lean_classification({'title': 'Test'}))
+        self.assertIsNone(suggest_lean_classification("Test title", "Test description"))
 
 
 class AIAPIViewsTestCase(TestCase):
@@ -217,7 +210,7 @@ class AIAPIViewsTestCase(TestCase):
         mock_generate.return_value = "**Objective:** Test objective\n\n**Checklist:**\n- [ ] Step 1\n- [ ] Step 2"
         
         # Create request
-        url = reverse('generate_task_description')
+        url = reverse('generate_task_description_api')
         request = self.factory.post(
             url,
             data=json.dumps({'title': 'Test Task'}),
@@ -242,7 +235,7 @@ class AIAPIViewsTestCase(TestCase):
         mock_summarize.return_value = "Summary of comments"
         
         # Create request
-        url = reverse('summarize_comments', kwargs={'task_id': self.task.id})
+        url = reverse('summarize_comments_api', kwargs={'task_id': self.task.id})
         request = self.factory.get(url)
         request.user = self.user
         
@@ -263,7 +256,7 @@ class AIAPIViewsTestCase(TestCase):
         mock_insights.return_value = "Analytics insights: Workflow is efficient."
         
         # Create request
-        url = reverse('board_analytics_insights', kwargs={'board_id': self.board.id})
+        url = reverse('board_analytics_insights_api', kwargs={'board_id': self.board.id})
         request = self.factory.get(url)
         request.user = self.user
         
@@ -283,30 +276,29 @@ class AIAPIViewsTestCase(TestCase):
         # Setup mock
         mock_classify.return_value = {
             "classification": "Value-Added",
-            "explanation": "This task directly contributes to customer value."
+            "justification": "This task directly contributes to customer value."
         }
         
         # Create request
-        url = reverse('suggest_lss_classification')
+        url = reverse('suggest_lss_classification_api')
         request = self.factory.post(
             url,
             data=json.dumps({
                 'title': 'Test Task',
-                'description': 'Test description',
-                'priority': 'High'
+                'description': 'Test description'
             }),
             content_type='application/json'
         )
         request.user = self.user
         
         # Call the API view
-        response = suggest_lean_classification_api(request)
+        response = suggest_lss_classification_api(request)
         
         # Assertions
         self.assertEqual(response.status_code, 200)
         content = json.loads(response.content)
         self.assertIn('classification', content)
-        self.assertIn('explanation', content)
+        self.assertIn('justification', content)
         mock_classify.assert_called_once()
     
     def test_api_authentication_required(self):
@@ -316,7 +308,7 @@ class AIAPIViewsTestCase(TestCase):
         anonymous = AnonymousUser()
         
         # Test task description API
-        url = reverse('generate_task_description')
+        url = reverse('generate_task_description_api')
         request = self.factory.post(
             url,
             data=json.dumps({'title': 'Test Task'}),
@@ -338,7 +330,7 @@ class AIAPIViewsTestCase(TestCase):
         )
         
         # Create request from the other user
-        url = reverse('board_analytics_insights', kwargs={'board_id': self.board.id})
+        url = reverse('board_analytics_insights_api', kwargs={'board_id': self.board.id})
         request = self.factory.get(url)
         request.user = other_user
         
@@ -405,7 +397,7 @@ class JavaScriptIntegrationTestCase(TestCase):
         
         # Login the user
         self.client.login(username='testuser', password='testpass123')
-
+    
     @patch('kanban.api_views.generate_task_description')
     def test_task_description_endpoint(self, mock_generate):
         """Test that the task description API endpoint is accessible via HTTP."""
@@ -424,6 +416,7 @@ class JavaScriptIntegrationTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         content = json.loads(response.content)
         self.assertIn('description', content)
+    
     @patch('kanban.api_views.summarize_comments')
     def test_comments_summary_endpoint(self, mock_summarize):
         """Test that the comments summary API endpoint is accessible via HTTP."""
@@ -446,7 +439,7 @@ class JavaScriptIntegrationTestCase(TestCase):
         mock_insights.return_value = "Analytics insights: All good!"
         
         # Make the request
-        url = reverse('board_analytics_insights', kwargs={'board_id': self.board.id})
+        url = reverse('board_analytics_insights_api', kwargs={'board_id': self.board.id})
         response = self.client.get(url)
         
         # Assertions
@@ -460,17 +453,16 @@ class JavaScriptIntegrationTestCase(TestCase):
         # Setup mock
         mock_classify.return_value = {
             "classification": "Value-Added",
-            "explanation": "This task directly contributes to customer value."
+            "justification": "This task directly contributes to customer value."
         }
         
         # Make the request
-        url = reverse('suggest_lss_classification')
+        url = reverse('suggest_lss_classification_api')
         response = self.client.post(
             url,
             data=json.dumps({
                 'title': 'Test Task',
-                'description': 'Test description',
-                'priority': 'High'
+                'description': 'Test description'
             }),
             content_type='application/json'
         )
@@ -479,4 +471,4 @@ class JavaScriptIntegrationTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         content = json.loads(response.content)
         self.assertIn('classification', content)
-        self.assertIn('explanation', content)
+        self.assertIn('justification', content)

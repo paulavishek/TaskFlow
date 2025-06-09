@@ -21,10 +21,10 @@ django.setup()
 
 # Custom test runner that only runs AI feature tests
 class AITestRunner(DiscoverRunner):
-    def build_suite(self, test_labels=None, extra_tests=None, **kwargs):
+    def build_suite(self, test_labels=None, **kwargs):
         if not test_labels:
             test_labels = ['kanban.tests_ai_features']
-        return super().build_suite(test_labels, extra_tests, **kwargs)
+        return super().build_suite(test_labels, **kwargs)
 
 if __name__ == "__main__":
     print("\n🤖 Running AI Feature Tests for TaskFlow 🤖\n")
