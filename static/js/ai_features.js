@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // AI LSS Classification Suggestion
     initAILssClassification();
+    
+    // AI Board Analytics Insights
+    initBoardAnalyticsInsights();
 });
 
 /**
@@ -212,6 +215,61 @@ function initAILssClassification() {
                 // Hide spinner
                 if (classifySpinner) classifySpinner.classList.add('d-none');
                 classifyButton.disabled = false;
+            });
+        });
+    }
+}
+
+/**
+ * Initialize AI Board Analytics Insights
+ */
+function initBoardAnalyticsInsights() {
+    const insightsButton = document.getElementById('generate-insights');
+    const insightsContainer = document.getElementById('insights-container');
+    const insightsText = document.getElementById('insights-text');
+    const insightsSpinner = document.getElementById('insights-spinner');
+    const noInsights = document.getElementById('no-insights');
+    
+    if (insightsButton && insightsContainer && insightsText) {
+        insightsButton.addEventListener('click', function() {
+            const boardId = insightsButton.getAttribute('data-board-id');
+            
+            if (!boardId) return;
+            
+            // Show spinner
+            if (insightsSpinner) insightsSpinner.classList.remove('d-none');
+            if (noInsights) noInsights.classList.add('d-none');
+            insightsButton.disabled = true;
+            
+            // Make API call
+            fetch(`/kanban/api/board-analytics-insights/${boardId}/`, {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.insights) {
+                    insightsText.innerHTML = data.insights;
+                    insightsContainer.classList.remove('d-none');
+                } else {
+                    alert('Could not generate insights. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while generating insights.');
+            })
+            .finally(() => {
+                // Hide spinner
+                if (insightsSpinner) insightsSpinner.classList.add('d-none');
+                insightsButton.disabled = false;
             });
         });
     }
