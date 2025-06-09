@@ -134,6 +134,40 @@
                     </div>
                 </div>
             </div>
+        </div>    </div>
+</div>
+
+<!-- AI Insights Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">AI-Powered Insights</h6>
+                <button id="generate-insights" class="btn btn-sm btn-outline-primary" data-board-id="{{ board.id }}">
+                    <i class="fas fa-robot me-1"></i> Generate Insights
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="insights-spinner" class="text-center my-3 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Analyzing data and generating insights...</p>
+                </div>
+                <div id="insights-container" class="d-none">
+                    <div class="insights-header mb-3">
+                        <i class="fas fa-lightbulb text-warning me-2"></i>
+                        <h5 class="mb-0">Analysis Results</h5>
+                    </div>
+                    <div class="alert alert-primary">
+                        <p id="insights-text" class="mb-0"></p>
+                    </div>
+                </div>
+                <div id="no-insights" class="text-center">
+                    <i class="fas fa-robot mb-2" style="font-size: 2rem; color: #ccc;"></i>
+                    <p class="text-muted">Click the "Generate Insights" button to get AI-powered analysis of your board data.</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -910,9 +944,66 @@
                     const modalInstance = new bootstrap.Modal(modalElement);
                     modalInstance.show();
                 }
+            });        });
+        
+        // Initialize AI insights
+        const generateInsightsButton = document.getElementById('generate-insights');
+        const insightsSpinner = document.getElementById('insights-spinner');
+        const insightsContainer = document.getElementById('insights-container');
+        const insightsText = document.getElementById('insights-text');
+        const noInsights = document.getElementById('no-insights');
+        
+        if (generateInsightsButton && insightsSpinner && insightsContainer && insightsText && noInsights) {
+            generateInsightsButton.addEventListener('click', function() {
+                const boardId = this.getAttribute('data-board-id');
+                
+                if (!boardId) return;
+                
+                // Show spinner and hide other elements
+                insightsSpinner.classList.remove('d-none');
+                insightsContainer.classList.add('d-none');
+                noInsights.classList.add('d-none');
+                generateInsightsButton.disabled = true;
+                
+                // Make API call
+                fetch(`/kanban/api/board-analytics-insights/${boardId}/`, {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.insights) {
+                        insightsText.textContent = data.insights;
+                        insightsContainer.classList.remove('d-none');
+                        noInsights.classList.add('d-none');
+                    } else {
+                        alert('Could not generate insights. Please try again.');
+                        noInsights.classList.remove('d-none');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while generating insights.');
+                    noInsights.classList.remove('d-none');
+                })
+                .finally(() => {
+                    // Hide spinner
+                    insightsSpinner.classList.add('d-none');
+                    generateInsightsButton.disabled = false;
+                });
             });
-        });
+        }
     });
 </script>
+
+{% load static %}
+<script src="{% static 'js/ai_features.js' %}"></script>
 {% endblock %}
-{% endblock %
+{% endblock %}

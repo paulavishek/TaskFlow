@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import api_views
 
 urlpatterns = [
     path('', views.welcome, name='welcome'),
@@ -25,6 +26,11 @@ urlpatterns = [
     path('columns/<int:column_id>/move/left/', views.move_column, {'direction': 'left'}, name='move_column_left'),    path('columns/<int:column_id>/move/right/', views.move_column, {'direction': 'right'}, name='move_column_right'),
     path('columns/reorder/', views.reorder_columns, name='reorder_columns'),
     path('columns/reorder-multiple/', views.reorder_multiple_columns, name='reorder_multiple_columns'),
-    path('columns/<int:column_id>/delete/', views.delete_column, name='delete_column'),
-    path('boards/<int:board_id>/add-lean-labels/', views.add_lean_labels, name='add_lean_labels'),
+    path('columns/<int:column_id>/delete/', views.delete_column, name='delete_column'),    path('boards/<int:board_id>/add-lean-labels/', views.add_lean_labels, name='add_lean_labels'),
+    
+    # AI API Endpoints
+    path('api/generate-task-description/', api_views.generate_task_description_api, name='generate_task_description_api'),
+    path('api/summarize-comments/<int:task_id>/', api_views.summarize_comments_api, name='summarize_comments_api'),
+    path('api/board-analytics-insights/<int:board_id>/', api_views.board_analytics_insights_api, name='board_analytics_insights_api'),
+    path('api/suggest-lss-classification/', api_views.suggest_lss_classification_api, name='suggest_lss_classification_api'),
 ]

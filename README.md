@@ -44,6 +44,13 @@ Digital Kanban Board is a modern project management tool built on the principles
 - **Productivity Metrics**: Track team and individual productivity
 - **Completion Trends**: Monitor how task completion evolves over time
 - **User Performance**: See who completes the most tasks and at what rate
+- **AI-Powered Insights**: Get natural language insights and risk identification from your board data
+
+### AI-Powered Features
+- **Smart Task Assistant**: Generate detailed task descriptions and checklists from simple task titles
+- **Comment Summarization**: Quickly understand long comment threads through AI-generated summaries
+- **Lean Six Sigma Classification**: Get AI suggestions for proper LSS classification of tasks
+- **Analytics Insights**: Receive human-readable analysis of your board metrics and potential risks
 
 ### Import/Export
 - **Data Portability**: Export boards as JSON or CSV
@@ -55,6 +62,12 @@ Digital Kanban Board is a modern project management tool built on the principles
 ### System Requirements
 - Web browser (Chrome, Firefox, Safari, Edge recommended)
 - Internet connection
+- Gemini API key for AI features (obtain from https://makersuite.google.com/app/apikey)
+
+### Setting Up AI Features
+1. Create a `.env` file in the project root (use `.env-example` as a template)
+2. Add your Gemini API key to the `.env` file: `GEMINI_API_KEY=your_api_key_here`
+3. Test your API key by running `python test_gemini_api.py`
 
 ### User Registration
 1. Navigate to the application login page
@@ -93,6 +106,30 @@ The application organizes work into boards, columns, and tasks:
 ### Exporting and Importing Boards
 - **Export**: Click the "Export" button on a board and choose JSON or CSV format
 - **Import**: On the boards list page, click "Import Board" and select a previously exported JSON file
+
+### Using AI Features
+
+#### Task Assistant
+1. Start creating a new task by entering a title
+2. Click "Generate with AI" next to the description field
+3. Review and edit the AI-generated description and checklist as needed
+
+#### Comment Summarization
+1. On a task with several comments, locate the "Summarize with AI" button
+2. Click the button to generate a concise summary of the comment thread
+3. The summary will appear at the top of the comments section
+
+#### Lean Six Sigma Classification
+1. When creating or editing a task, click "Suggest LSS Classification"
+2. The AI will analyze your task's title and description
+3. It will suggest the most appropriate classification (Value-Added, Necessary Non-Value-Added, or Waste)
+4. Use this suggestion to help select the appropriate LSS label
+
+#### Analytics Insights
+1. Navigate to a board's Analytics page
+2. Click "Generate Insights" in the AI-Powered Insights section
+3. The AI will analyze your board's metrics and provide human-readable insights
+4. Pay special attention to any risks or improvement opportunities identified
 
 ## Productivity Tracking
 
