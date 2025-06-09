@@ -1,6 +1,6 @@
+# filepath: c:\Users\Avishek Paul\TaskFlow\kanban\tests.py
 import json
 from datetime import datetime, timedelta
-from decimal import Decimal
 from django.test import TestCase, TransactionTestCase
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -10,17 +10,13 @@ from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from unittest.mock import patch, MagicMock
 
-# Import kanban app models
-from .models import (
-    KanbanBoard, Column, Card, Comment, Attachment,
-    CardHistory, Label, CardLabel, BoardMember
-)
-# Import from other apps as needed
-from accounts.models import UserProfile
+# Import models from kanban app
+from .models import Board, Column, Task, Comment, TaskLabel, TaskActivity
+from accounts.models import Organization, UserProfile
 
 
-class KanbanBoardTestCase(TestCase):
-    """Test kanban board functionality"""
+class BoardTestCase(TestCase):
+    """Test board functionality"""
     
     def setUp(self):
         self.user = User.objects.create_user(
@@ -33,754 +29,764 @@ class KanbanBoardTestCase(TestCase):
             email='collab@example.com',
             password='testpass123'
         )
+        
+        # Create organization
+        self.organization = Organization.objects.create(
+            name='Test Org',
+            domain='testorg.com',
+            created_by=self.user
+        )
+        
+        # Create user profiles
+        self.user_profile = UserProfile.objects.create(
+            user=self.user,
+            organization=self.organization
+        )
+        self.collaborator_profile = UserProfile.objects.create(
+            user=self.collaborator,
+            organization=self.organization
+        )
     
     def test_board_creation(self):
-        """Test creating a new kanban board"""
-        board = KanbanBoard.objects.create(
+        """Test creating a new board"""
+        board = Board.objects.create(
             name='Project Alpha',
             description='Main project board',
-            owner=self.user
+            organization=self.organization,
+            created_by=self.user
         )
         
         self.assertEqual(board.name, 'Project Alpha')
-        self.assertEqual(board.owner, self.user)
+        self.assertEqual(board.created_by, self.user)
+        self.assertEqual(board.organization, self.organization)
         self.assertTrue(board.created_at)
-        self.assertFalse(board.is_archived)
-        self.assertEqual(board.visibility, 'private')  # Default visibility
     
     def test_board_name_validation(self):
-        """Test board name validation"""
-        # Test empty name
+        """Test board name cannot be empty"""
         with self.assertRaises(ValidationError):
-            board = KanbanBoard(name='', owner=self.user)
-            board.full_clean()
-        
-        # Test name too long (assuming max_length=100)
-        with self.assertRaises(ValidationError):
-            board = KanbanBoard(name='x' * 101, owner=self.user)
+            board = Board(
+                name='',
+                organization=self.organization,
+                created_by=self.user
+            )
             board.full_clean()
     
-    def test_board_slug_generation(self):
-        """Test automatic slug generation"""
-        board = KanbanBoard.objects.create(
-            name='Project Alpha Board',
-            owner=self.user
-        )
-        
-        self.assertEqual(board.slug, 'project-alpha-board')
-    
-    def test_board_member_management(self):
+    def test_board_members(self):
         """Test adding and removing board members"""
-        board = KanbanBoard.objects.create(
+        board = Board.objects.create(
             name='Team Board',
-            owner=self.user
+            organization=self.organization,
+            created_by=self.user
         )
         
         # Add collaborator
-        member = BoardMember.objects.create(
-            board=board,
-            user=self.collaborator,
-            role='member'
-        )
+        board.members.add(self.collaborator)
+        self.assertIn(self.collaborator, board.members.all())
         
-        self.assertEqual(member.role, 'member')
-        self.assertTrue(board.members.filter(user=self.collaborator).exists())
-        
-        # Test member permissions
-        self.assertTrue(board.can_view(self.collaborator))
-        self.assertTrue(board.can_edit(self.collaborator))
-        self.assertFalse(board.can_admin(self.collaborator))
-    
-    def test_board_archiving(self):
-        """Test board archiving functionality"""
-        board = KanbanBoard.objects.create(
-            name='Old Project',
-            owner=self.user
-        )
-        
-        board.archive()
-        
-        self.assertTrue(board.is_archived)
-        self.assertIsNotNone(board.archived_at)
+        # Remove member
+        board.members.remove(self.collaborator)
+        self.assertNotIn(self.collaborator, board.members.all())
     
     def test_board_deletion_cascade(self):
         """Test that deleting a board cascades properly"""
-        board = KanbanBoard.objects.create(
-            name='Test Board',
-            owner=self.user
+        board = Board.objects.create(
+            name='Temp Board',
+            organization=self.organization,
+            created_by=self.user
         )
-        
-        column = Column.objects.create(
-            board=board,
-            name='To Do',
-            position=1
-        )
-        
-        card = Card.objects.create(
-            column=column,
-            title='Test Card'
-        )
-        
         board_id = board.id
+        
+        # Create related objects
+        column = Column.objects.create(board=board, name='Test Column')
+        task = Task.objects.create(column=column, title='Test Task', created_by=self.user)
+        
         board.delete()
         
-        self.assertFalse(KanbanBoard.objects.filter(id=board_id).exists())
+        # Verify cascade
+        self.assertFalse(Board.objects.filter(id=board_id).exists())
         self.assertFalse(Column.objects.filter(board_id=board_id).exists())
-        self.assertFalse(Card.objects.filter(column__board_id=board_id).exists())
+        self.assertFalse(Task.objects.filter(column__board_id=board_id).exists())
 
 
-class ColumnManagementTestCase(TestCase):
-    """Test column/stage management"""
+class ColumnTestCase(TestCase):
+    """Test column functionality"""
     
     def setUp(self):
         self.user = User.objects.create_user(username='testuser', password='pass123')
-        self.board = KanbanBoard.objects.create(
+        self.organization = Organization.objects.create(name='Test Org', domain='test.com', created_by=self.user)
+        self.board = Board.objects.create(
             name='Test Board',
-            owner=self.user
+            organization=self.organization,
+            created_by=self.user
         )
     
     def test_column_creation(self):
         """Test creating columns with proper ordering"""
-        col1 = Column.objects.create(
-            board=self.board,
-            name='Backlog',
-            position=1,
-            wip_limit=10
-        )
-        col2 = Column.objects.create(
-            board=self.board,
-            name='In Progress',
-            position=2,
-            wip_limit=5
-        )
+        column1 = Column.objects.create(board=self.board, name='To Do', position=1)
+        column2 = Column.objects.create(board=self.board, name='In Progress', position=2)
+        column3 = Column.objects.create(board=self.board, name='Done', position=3)
         
-        self.assertEqual(col1.position, 1)
-        self.assertEqual(col2.position, 2)
-        self.assertEqual(col1.wip_limit, 10)
-        self.assertEqual(col2.wip_limit, 5)
+        columns = list(Column.objects.filter(board=self.board))
+        self.assertEqual(len(columns), 3)
+        self.assertEqual(columns[0].name, 'To Do')
+        self.assertEqual(columns[1].name, 'In Progress')
+        self.assertEqual(columns[2].name, 'Done')
     
-    def test_column_ordering(self):
-        """Test column position management"""
-        col1 = Column.objects.create(board=self.board, name='Col1', position=1)
-        col2 = Column.objects.create(board=self.board, name='Col2', position=2)
-        col3 = Column.objects.create(board=self.board, name='Col3', position=3)
+    def test_column_position_ordering(self):
+        """Test columns are ordered by position"""
+        column_c = Column.objects.create(board=self.board, name='Column C', position=3)
+        column_a = Column.objects.create(board=self.board, name='Column A', position=1)
+        column_b = Column.objects.create(board=self.board, name='Column B', position=2)
         
-        # Get columns in order
-        columns = Column.objects.filter(board=self.board).order_by('position')
-        self.assertEqual(list(columns), [col1, col2, col3])
-    
-    def test_column_reordering(self):
-        """Test reordering columns"""
-        col1 = Column.objects.create(board=self.board, name='Col1', position=1)
-        col2 = Column.objects.create(board=self.board, name='Col2', position=2)
-        col3 = Column.objects.create(board=self.board, name='Col3', position=3)
-        
-        # Move col3 to position 1
-        col3.move_to_position(1)
-        
-        col1.refresh_from_db()
-        col2.refresh_from_db()
-        col3.refresh_from_db()
-        
-        # Check new positions
-        self.assertEqual(col3.position, 1)
-        self.assertEqual(col1.position, 2)
-        self.assertEqual(col2.position, 3)
-    
-    def test_wip_limit_enforcement(self):
-        """Test Work In Progress limit enforcement"""
-        column = Column.objects.create(
-            board=self.board,
-            name='In Progress',
-            position=1,
-            wip_limit=2
-        )
-        
-        # Create cards up to WIP limit
-        card1 = Card.objects.create(column=column, title='Card 1')
-        card2 = Card.objects.create(column=column, title='Card 2')
-        
-        # Verify WIP limit check
-        self.assertTrue(column.is_at_wip_limit())
-        self.assertFalse(column.can_add_card())
-        
-        # Attempt to exceed WIP limit should raise validation error
-        with self.assertRaises(ValidationError):
-            card3 = Card.objects.create(column=column, title='Card 3')
-            column.validate_wip_limit()
-    
-    def test_column_deletion_with_cards(self):
-        """Test column deletion behavior when it contains cards"""
-        column = Column.objects.create(board=self.board, name='Test Column', position=1)
-        card = Card.objects.create(column=column, title='Test Card')
-        
-        # Should not be able to delete column with cards
-        with self.assertRaises(ValidationError):
-            column.delete()
-        
-        # After moving cards, deletion should work
-        card.delete()
-        column.delete()
-        
-        self.assertFalse(Column.objects.filter(id=column.id).exists())
+        ordered_columns = Column.objects.filter(board=self.board)
+        self.assertEqual(ordered_columns[0].name, 'Column A')
+        self.assertEqual(ordered_columns[1].name, 'Column B')
+        self.assertEqual(ordered_columns[2].name, 'Column C')
 
 
-class CardManagementTestCase(TestCase):
-    """Test card/task management functionality"""
+class TaskTestCase(TestCase):
+    """Test task functionality"""
     
     def setUp(self):
         self.user = User.objects.create_user(username='testuser', password='pass123')
         self.assignee = User.objects.create_user(username='assignee', password='pass123')
-        self.board = KanbanBoard.objects.create(name='Test Board', owner=self.user)
-        self.column = Column.objects.create(
-            board=self.board,
-            name='To Do',
-            position=1
+        self.organization = Organization.objects.create(name='Test Org', domain='test.com', created_by=self.user)
+        self.board = Board.objects.create(
+            name='Test Board',
+            organization=self.organization,
+            created_by=self.user
         )
+        self.column = Column.objects.create(board=self.board, name='Test Column', position=1)
     
-    def test_card_creation(self):
-        """Test creating cards with all fields"""
-        card = Card.objects.create(
+    def test_task_creation(self):
+        """Test creating tasks with all fields"""
+        due_date = datetime.now() + timedelta(days=7)
+        task = Task.objects.create(
+            title='Test Task',
+            description='This is a test task',
             column=self.column,
-            title='Implement Feature X',
-            description='Detailed description of the feature',
-            assignee=self.assignee,
+            created_by=self.user,
+            assigned_to=self.assignee,
+            due_date=due_date,
             priority='high',
-            story_points=8,
-            due_date=datetime.now() + timedelta(days=7)
+            progress=25
         )
         
-        self.assertEqual(card.title, 'Implement Feature X')
-        self.assertEqual(card.assignee, self.assignee)
-        self.assertEqual(card.priority, 'high')
-        self.assertEqual(card.story_points, 8)
-        self.assertTrue(card.created_at)
-        self.assertIsNone(card.started_at)
-        self.assertIsNone(card.completed_at)
+        self.assertEqual(task.title, 'Test Task')
+        self.assertEqual(task.assigned_to, self.assignee)
+        self.assertEqual(task.priority, 'high')
+        self.assertEqual(task.progress, 25)
+        self.assertTrue(task.created_at)
+        self.assertTrue(task.updated_at)
     
-    def test_card_validation(self):
-        """Test card field validation"""
-        # Test invalid priority
+    def test_task_title_validation(self):
+        """Test task title cannot be empty"""
         with self.assertRaises(ValidationError):
-            card = Card(
+            task = Task(
+                title='',
                 column=self.column,
-                title='Invalid Priority Card',
-                priority='invalid_priority'
+                created_by=self.user
             )
-            card.full_clean()
-        
-        # Test negative story points
+            task.full_clean()
+    
+    def test_task_progress_validation(self):
+        """Test task progress must be between 0-100"""
         with self.assertRaises(ValidationError):
-            card = Card(
+            task = Task(
+                title='Test Task',
                 column=self.column,
-                title='Invalid Story Points',
-                story_points=-1
+                created_by=self.user,
+                progress=150
             )
-            card.full_clean()
+            task.full_clean()
         
-        # Test empty title
         with self.assertRaises(ValidationError):
-            card = Card(
+            task = Task(
+                title='Test Task',
                 column=self.column,
-                title=''
+                created_by=self.user,
+                progress=-10
             )
-            card.full_clean()
+            task.full_clean()
     
-    def test_card_movement_tracking(self):
-        """Test tracking card movement through columns"""
-        card = Card.objects.create(
-            column=self.column,
-            title='Moving Card'
-        )
+    def test_task_position_ordering(self):
+        """Test task position within columns"""
+        task1 = Task.objects.create(column=self.column, title='Task 1', position=1, created_by=self.user)
+        task2 = Task.objects.create(column=self.column, title='Task 2', position=2, created_by=self.user)
+        task3 = Task.objects.create(column=self.column, title='Task 3', position=3, created_by=self.user)
         
-        # Create next column
-        next_column = Column.objects.create(
-            board=self.board,
-            name='In Progress',
-            position=2
-        )
-        
-        # Move card
-        card.move_to_column(next_column, moved_by=self.user)
-        
-        self.assertEqual(card.column, next_column)
-        self.assertIsNotNone(card.started_at)
-        
-        # Check history was created
-        history = CardHistory.objects.filter(card=card).first()
-        self.assertIsNotNone(history)
-        self.assertEqual(history.action, 'moved')
-        self.assertEqual(history.user, self.user)
-    
-    def test_card_lifecycle_timestamps(self):
-        """Test card lifecycle timestamp management"""
-        card = Card.objects.create(column=self.column, title='Lifecycle Card')
-        
-        # Initially no timestamps except created_at
-        self.assertIsNotNone(card.created_at)
-        self.assertIsNone(card.started_at)
-        self.assertIsNone(card.completed_at)
-        
-        # Move to "In Progress" column
-        progress_column = Column.objects.create(
-            board=self.board,
-            name='In Progress',
-            position=2,
-            is_start_column=True
-        )
-        card.move_to_column(progress_column, self.user)
-        
-        self.assertIsNotNone(card.started_at)
-        self.assertIsNone(card.completed_at)
-        
-        # Move to "Done" column
-        done_column = Column.objects.create(
-            board=self.board,
-            name='Done',
-            position=3,
-            is_done_column=True
-        )
-        card.move_to_column(done_column, self.user)
-        
-        self.assertIsNotNone(card.completed_at)
-    
-    def test_card_blocking(self):
-        """Test card blocking functionality"""
-        card = Card.objects.create(
-            column=self.column,
-            title='Potentially Blocked Card'
-        )
-        
-        # Block the card
-        card.set_blocked(True, 'Waiting for external API', self.user)
-        
-        self.assertTrue(card.is_blocked)
-        self.assertEqual(card.blocked_reason, 'Waiting for external API')
-        self.assertIsNotNone(card.blocked_at)
-        self.assertEqual(card.blocked_by, self.user)
-        
-        # Unblock the card
-        card.set_blocked(False, reason='Issue resolved', user=self.user)
-        
-        self.assertFalse(card.is_blocked)
-        self.assertIsNone(card.blocked_reason)
-        self.assertIsNone(card.blocked_at)
-    
-    def test_card_time_calculations(self):
-        """Test card time metric calculations"""
-        # Create card with specific timestamps
-        start_time = datetime.now() - timedelta(days=5)
-        end_time = datetime.now()
-        
-        card = Card.objects.create(
-            column=self.column,
-            title='Timed Card',
-            started_at=start_time,
-            completed_at=end_time
-        )
-        
-        # Test cycle time calculation
-        cycle_time = card.calculate_cycle_time()
-        self.assertEqual(cycle_time.days, 5)
-        
-        # Test lead time calculation (from creation to completion)
-        lead_time = card.calculate_lead_time()
-        self.assertIsNotNone(lead_time)
-    
-    def test_card_position_management(self):
-        """Test card position within columns"""
-        card1 = Card.objects.create(column=self.column, title='Card 1', position=1)
-        card2 = Card.objects.create(column=self.column, title='Card 2', position=2)
-        card3 = Card.objects.create(column=self.column, title='Card 3', position=3)
-        
-        # Move card3 to position 1
-        card3.move_to_position(1)
-        
-        card1.refresh_from_db()
-        card2.refresh_from_db()
-        card3.refresh_from_db()
-        
-        self.assertEqual(card3.position, 1)
-        self.assertEqual(card1.position, 2)
-        self.assertEqual(card2.position, 3)
+        ordered_tasks = Task.objects.filter(column=self.column)
+        self.assertEqual(ordered_tasks[0].title, 'Task 1')
+        self.assertEqual(ordered_tasks[1].title, 'Task 2')
+        self.assertEqual(ordered_tasks[2].title, 'Task 3')
 
 
-class CardLabelsTestCase(TestCase):
-    """Test card labeling functionality"""
+class TaskLabelTestCase(TestCase):
+    """Test task label functionality"""
     
     def setUp(self):
         self.user = User.objects.create_user(username='testuser', password='pass123')
-        self.board = KanbanBoard.objects.create(name='Test Board', owner=self.user)
+        self.organization = Organization.objects.create(name='Test Org', domain='test.com', created_by=self.user)
+        self.board = Board.objects.create(
+            name='Test Board',
+            organization=self.organization,
+            created_by=self.user
+        )
         self.column = Column.objects.create(board=self.board, name='Test', position=1)
-        self.card = Card.objects.create(column=self.column, title='Test Card')
+        self.task = Task.objects.create(column=self.column, title='Test Task', created_by=self.user)
     
     def test_label_creation(self):
         """Test creating labels for boards"""
-        label = Label.objects.create(
+        label = TaskLabel.objects.create(
             board=self.board,
             name='Bug',
             color='#ff0000',
-            description='Bug reports'
+            category='regular'
         )
         
         self.assertEqual(label.name, 'Bug')
         self.assertEqual(label.color, '#ff0000')
-        self.assertEqual(label.board, self.board)
+        self.assertEqual(label.category, 'regular')
     
-    def test_card_label_assignment(self):
-        """Test assigning labels to cards"""
-        bug_label = Label.objects.create(board=self.board, name='Bug', color='#ff0000')
-        urgent_label = Label.objects.create(board=self.board, name='Urgent', color='#ff9900')
+    def test_lean_six_sigma_labels(self):
+        """Test creating Lean Six Sigma specific labels"""
+        lean_label = TaskLabel.objects.create(
+            board=self.board,
+            name='Value Stream',
+            color='#00ff00',
+            category='lean'
+        )
         
-        # Assign labels to card
-        CardLabel.objects.create(card=self.card, label=bug_label)
-        CardLabel.objects.create(card=self.card, label=urgent_label)
+        self.assertEqual(lean_label.category, 'lean')
+        self.assertEqual(lean_label.name, 'Value Stream')
+    
+    def test_task_label_assignment(self):
+        """Test assigning labels to tasks"""
+        bug_label = TaskLabel.objects.create(board=self.board, name='Bug', color='#ff0000')
+        feature_label = TaskLabel.objects.create(board=self.board, name='Feature', color='#00ff00')
         
-        # Check labels are assigned
-        self.assertEqual(self.card.labels.count(), 2)
-        self.assertTrue(self.card.labels.filter(name='Bug').exists())
-        self.assertTrue(self.card.labels.filter(name='Urgent').exists())
+        # Assign labels to task
+        self.task.labels.add(bug_label, feature_label)
+        
+        self.assertEqual(self.task.labels.count(), 2)
+        self.assertIn(bug_label, self.task.labels.all())
+        self.assertIn(feature_label, self.task.labels.all())
     
     def test_label_filtering(self):
-        """Test filtering cards by labels"""
-        bug_label = Label.objects.create(board=self.board, name='Bug', color='#ff0000')
-        feature_label = Label.objects.create(board=self.board, name='Feature', color='#00ff00')
+        """Test filtering tasks by labels"""
+        bug_label = TaskLabel.objects.create(board=self.board, name='Bug', color='#ff0000')
+        feature_label = TaskLabel.objects.create(board=self.board, name='Feature', color='#00ff00')
         
-        card1 = Card.objects.create(column=self.column, title='Bug Card')
-        card2 = Card.objects.create(column=self.column, title='Feature Card')
+        task1 = Task.objects.create(column=self.column, title='Bug Task', created_by=self.user)
+        task1.labels.add(bug_label)
         
-        CardLabel.objects.create(card=card1, label=bug_label)
-        CardLabel.objects.create(card=card2, label=feature_label)
+        task2 = Task.objects.create(column=self.column, title='Feature Task', created_by=self.user)
+        task2.labels.add(feature_label)
         
         # Filter by bug label
-        bug_cards = Card.objects.filter(cardlabel__label=bug_label)
-        self.assertEqual(bug_cards.count(), 1)
-        self.assertEqual(bug_cards.first(), card1)
+        bug_tasks = Task.objects.filter(labels=bug_label)
+        self.assertEqual(bug_tasks.count(), 1)
+        self.assertEqual(bug_tasks.first().title, 'Bug Task')
 
 
-class CommentAndAttachmentTestCase(TestCase):
-    """Test card comments and attachments"""
+class CommentTestCase(TestCase):
+    """Test comment functionality"""
     
     def setUp(self):
         self.user = User.objects.create_user(username='testuser', password='pass123')
         self.other_user = User.objects.create_user(username='other', password='pass123')
-        self.board = KanbanBoard.objects.create(name='Test Board', owner=self.user)
+        self.organization = Organization.objects.create(name='Test Org', domain='test.com', created_by=self.user)
+        self.board = Board.objects.create(
+            name='Test Board',
+            organization=self.organization,
+            created_by=self.user
+        )
         self.column = Column.objects.create(board=self.board, name='Test', position=1)
-        self.card = Card.objects.create(column=self.column, title='Test Card')
+        self.task = Task.objects.create(column=self.column, title='Test Task', created_by=self.user)
     
     def test_comment_creation(self):
-        """Test adding comments to cards"""
+        """Test creating comments on tasks"""
         comment = Comment.objects.create(
-            card=self.card,
-            author=self.user,
+            task=self.task,
+            user=self.user,
             content='This is a test comment'
         )
         
         self.assertEqual(comment.content, 'This is a test comment')
-        self.assertEqual(comment.author, self.user)
-        self.assertEqual(comment.card, self.card)
+        self.assertEqual(comment.user, self.user)
+        self.assertEqual(comment.task, self.task)
         self.assertTrue(comment.created_at)
     
-    def test_comment_editing(self):
-        """Test editing comments"""
-        comment = Comment.objects.create(
-            card=self.card,
-            author=self.user,
-            content='Original comment'
-        )
+    def test_comment_ordering(self):
+        """Test comments are ordered by creation date (newest first)"""
+        from django.utils import timezone
+        from datetime import timedelta
         
-        # Edit comment
-        comment.content = 'Edited comment'
-        comment.save()
+        # Create comments with explicit timestamps to ensure proper ordering
+        now = timezone.now()
+        comment1 = Comment.objects.create(task=self.task, user=self.user, content='First comment')
+        comment1.created_at = now - timedelta(minutes=2)
+        comment1.save()
         
-        comment.refresh_from_db()
-        self.assertEqual(comment.content, 'Edited comment')
-        self.assertIsNotNone(comment.updated_at)
-    
-    def test_comment_permissions(self):
-        """Test comment editing permissions"""
-        comment = Comment.objects.create(
-            card=self.card,
-            author=self.user,
-            content='User comment'
-        )
+        comment2 = Comment.objects.create(task=self.task, user=self.other_user, content='Second comment')
+        comment2.created_at = now - timedelta(minutes=1)
+        comment2.save()
         
-        # Author should be able to edit
-        self.assertTrue(comment.can_edit(self.user))
+        comment3 = Comment.objects.create(task=self.task, user=self.user, content='Third comment')
+        comment3.created_at = now
+        comment3.save()
         
-        # Other users should not be able to edit
-        self.assertFalse(comment.can_edit(self.other_user))
-    
-    def test_attachment_upload(self):
-        """Test file attachment to cards"""
-        attachment = Attachment.objects.create(
-            card=self.card,
-            filename='test_document.pdf',
-            file_size=1024000,  # 1MB
-            uploaded_by=self.user,
-            file_path='/uploads/test_document.pdf'
-        )
-        
-        self.assertEqual(attachment.filename, 'test_document.pdf')
-        self.assertEqual(attachment.file_size, 1024000)
-        self.assertEqual(attachment.uploaded_by, self.user)
-    
-    def test_attachment_validation(self):
-        """Test file attachment validation"""
-        # Test file size limit (assuming 10MB limit)
-        with self.assertRaises(ValidationError):
-            attachment = Attachment(
-                card=self.card,
-                filename='large_file.zip',
-                file_size=11 * 1024 * 1024,  # 11MB
-                uploaded_by=self.user
-            )
-            attachment.full_clean()
+        comments = list(Comment.objects.filter(task=self.task))
+        self.assertEqual(comments[0].content, 'Third comment')  # Newest first
+        self.assertEqual(comments[1].content, 'Second comment')
+        self.assertEqual(comments[2].content, 'First comment')
 
 
-class KanbanAPITestCase(APITestCase):
-    """Test kanban REST API endpoints"""
-    
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username='apiuser',
-            password='apipass123'
-        )
-        self.client = APIClient()
-        self.client.force_authenticate(user=self.user)
-        
-        self.board = KanbanBoard.objects.create(
-            name='API Test Board',
-            owner=self.user
-        )
-    
-    def test_boards_list_api(self):
-        """Test boards list API endpoint"""
-        response = self.client.get('/api/kanban/boards/')
-        
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['name'], 'API Test Board')
-    
-    def test_board_creation_api(self):
-        """Test board creation via API"""
-        data = {
-            'name': 'New API Board',
-            'description': 'Created via API',
-            'visibility': 'public'
-        }
-        
-        response = self.client.post('/api/kanban/boards/', data)
-        
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['name'], 'New API Board')
-        self.assertEqual(response.data['visibility'], 'public')
-    
-    def test_column_creation_api(self):
-        """Test column creation via API"""
-        data = {
-            'name': 'API Column',
-            'board': self.board.id,
-            'position': 1,
-            'wip_limit': 5
-        }
-        
-        response = self.client.post('/api/kanban/columns/', data)
-        
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['name'], 'API Column')
-        self.assertEqual(response.data['wip_limit'], 5)
-    
-    def test_card_creation_api(self):
-        """Test card creation via API"""
-        column = Column.objects.create(
-            board=self.board,
-            name='Test Column',
-            position=1
-        )
-        
-        data = {
-            'title': 'API Created Card',
-            'description': 'Created via API',
-            'column': column.id,
-            'priority': 'medium',
-            'story_points': 5
-        }
-        
-        response = self.client.post('/api/kanban/cards/', data)
-        
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['title'], 'API Created Card')
-        self.assertEqual(response.data['priority'], 'medium')
-    
-    def test_card_movement_api(self):
-        """Test moving cards via API"""
-        column1 = Column.objects.create(board=self.board, name='Col1', position=1)
-        column2 = Column.objects.create(board=self.board, name='Col2', position=2)
-        
-        card = Card.objects.create(column=column1, title='Moving Card')
-        
-        # Move card to column2
-        response = self.client.patch(
-            f'/api/kanban/cards/{card.id}/move/',
-            {'column': column2.id, 'position': 1}
-        )
-        
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
-        card.refresh_from_db()
-        self.assertEqual(card.column, column2)
-    
-    def test_unauthorized_access(self):
-        """Test unauthorized access to boards"""
-        other_user = User.objects.create_user(username='other', password='pass123')
-        private_board = KanbanBoard.objects.create(
-            name='Private Board',
-            owner=other_user,
-            visibility='private'
-        )
-        
-        response = self.client.get(f'/api/kanban/boards/{private_board.id}/')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-
-class KanbanIntegrationTestCase(TestCase):
-    """Integration tests for complete kanban workflows"""
+class TaskActivityTestCase(TestCase):
+    """Test task activity tracking"""
     
     def setUp(self):
         self.user = User.objects.create_user(username='testuser', password='pass123')
-        self.team_lead = User.objects.create_user(username='teamlead', password='pass123')
-        
-        self.board = KanbanBoard.objects.create(
-            name='Integration Board',
-            owner=self.team_lead
+        self.organization = Organization.objects.create(name='Test Org', domain='test.com', created_by=self.user)
+        self.board = Board.objects.create(
+            name='Test Board',
+            organization=self.organization,
+            created_by=self.user
         )
-        
-        # Add user as board member
-        BoardMember.objects.create(
-            board=self.board,
+        self.column = Column.objects.create(board=self.board, name='Test', position=1)
+        self.task = Task.objects.create(column=self.column, title='Test Task', created_by=self.user)
+    
+    def test_activity_creation(self):
+        """Test creating task activities"""
+        activity = TaskActivity.objects.create(
+            task=self.task,
             user=self.user,
-            role='member'
+            activity_type='created',
+            description='Task was created'
         )
         
-        self.setup_workflow()
+        self.assertEqual(activity.activity_type, 'created')
+        self.assertEqual(activity.description, 'Task was created')
+        self.assertEqual(activity.user, self.user)
+        self.assertTrue(activity.created_at)
     
-    def setup_workflow(self):
-        """Setup a complete kanban workflow"""
-        self.backlog = Column.objects.create(
-            board=self.board, 
-            name='Backlog', 
-            position=1
-        )
-        self.todo = Column.objects.create(
-            board=self.board, 
-            name='To Do', 
-            position=2
-        )
-        self.progress = Column.objects.create(
-            board=self.board, 
-            name='In Progress', 
-            position=3, 
-            wip_limit=3,
-            is_start_column=True
-        )
-        self.review = Column.objects.create(
-            board=self.board, 
-            name='Review', 
-            position=4
-        )
-        self.done = Column.objects.create(
-            board=self.board, 
-            name='Done', 
-            position=5,
-            is_done_column=True
-        )
+    def test_activity_types(self):
+        """Test different activity types"""
+        activities = [
+            ('created', 'Task was created'),
+            ('moved', 'Task moved to Done'),
+            ('assigned', 'Task assigned to user'),
+            ('updated', 'Task updated'),
+            ('commented', 'Comment added'),
+            ('label_added', 'Bug label added'),
+            ('label_removed', 'Bug label removed'),
+        ]
+        
+        for activity_type, description in activities:
+            activity = TaskActivity.objects.create(
+                task=self.task,
+                user=self.user,
+                activity_type=activity_type,
+                description=description
+            )
+            self.assertEqual(activity.activity_type, activity_type)
     
-    def test_complete_card_workflow(self):
-        """Test complete card workflow from creation to completion"""
-        # Create card in backlog
-        card = Card.objects.create(
-            column=self.backlog,
-            title='Feature Implementation',
-            description='Implement new feature',
-            story_points=8,
+    def test_activity_ordering(self):
+        """Test activities are ordered by creation date (newest first)"""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Create activities with explicit timestamps to ensure proper ordering
+        now = timezone.now()
+        activity1 = TaskActivity.objects.create(
+            task=self.task, user=self.user, activity_type='created', description='First'
+        )
+        activity1.created_at = now - timedelta(minutes=2)
+        activity1.save()
+        
+        activity2 = TaskActivity.objects.create(
+            task=self.task, user=self.user, activity_type='updated', description='Second'
+        )
+        activity2.created_at = now - timedelta(minutes=1)
+        activity2.save()
+        
+        activity3 = TaskActivity.objects.create(
+            task=self.task, user=self.user, activity_type='moved', description='Third'
+        )
+        activity3.created_at = now
+        activity3.save()
+        
+        activities = list(TaskActivity.objects.filter(task=self.task))
+        self.assertEqual(activities[0].description, 'Third')  # Newest first
+        self.assertEqual(activities[1].description, 'Second')
+        self.assertEqual(activities[2].description, 'First')
+
+
+class LeanSixSigmaTestCase(TestCase):
+    """Test Lean Six Sigma specific functionality"""
+    
+    def setUp(self):
+        self.user = User.objects.create_user(username='leanuser', password='pass123')
+        self.organization = Organization.objects.create(name='Lean Org', domain='lean.com', created_by=self.user)
+        self.board = Board.objects.create(
+            name='Value Stream Board',
+            organization=self.organization,
+            created_by=self.user
+        )
+        
+        # Create Lean Six Sigma columns
+        self.define_column = Column.objects.create(board=self.board, name='Define', position=1)
+        self.measure_column = Column.objects.create(board=self.board, name='Measure', position=2)
+        self.analyze_column = Column.objects.create(board=self.board, name='Analyze', position=3)
+        self.improve_column = Column.objects.create(board=self.board, name='Improve', position=4)
+        self.control_column = Column.objects.create(board=self.board, name='Control', position=5)
+    
+    def test_dmaic_workflow(self):
+        """Test DMAIC (Define, Measure, Analyze, Improve, Control) workflow"""
+        # Create a task that moves through DMAIC phases
+        task = Task.objects.create(
+            title='Process Improvement Initiative',
+            description='Reduce customer wait time',
+            column=self.define_column,
+            created_by=self.user,
             priority='high'
         )
         
-        self.assertEqual(card.column, self.backlog)
-        self.assertIsNone(card.started_at)
+        # Define phase
+        self.assertEqual(task.column.name, 'Define')
+        TaskActivity.objects.create(
+            task=task,
+            user=self.user,
+            activity_type='created',
+            description='Problem defined: Customer wait time too long'
+        )
         
-        # Move through workflow
-        card.move_to_column(self.todo, self.user)
-        self.assertEqual(card.column, self.todo)
+        # Move to Measure
+        task.column = self.measure_column
+        task.save()
+        TaskActivity.objects.create(
+            task=task,
+            user=self.user,
+            activity_type='moved',
+            description='Moved to Measure phase'
+        )
         
-        card.move_to_column(self.progress, self.user)
-        self.assertEqual(card.column, self.progress)
-        self.assertIsNotNone(card.started_at)
-        
-        card.move_to_column(self.review, self.user)
-        self.assertEqual(card.column, self.review)
-        
-        card.move_to_column(self.done, self.team_lead)
-        self.assertEqual(card.column, self.done)
-        self.assertIsNotNone(card.completed_at)
-        
-        # Verify complete history
-        history_count = CardHistory.objects.filter(card=card).count()
-        self.assertEqual(history_count, 4)  # 4 moves
+        # Verify task progression
+        self.assertEqual(task.column.name, 'Measure')
+        self.assertEqual(task.activities.count(), 2)
     
-    def test_wip_limit_workflow(self):
-        """Test WIP limit enforcement in workflow"""
-        # Fill progress column to WIP limit
-        for i in range(3):
-            card = Card.objects.create(
-                column=self.progress,
-                title=f'Card {i+1}'
+    def test_lean_labels(self):
+        """Test Lean Six Sigma specific labels"""
+        lean_labels = [
+            ('Value Stream', '#00ff00'),
+            ('Waste Elimination', '#ff9900'),
+            ('Process Improvement', '#0099ff'),
+            ('Quality Control', '#9900ff'),
+            ('Customer Voice', '#ff0099'),
+        ]
+        
+        created_labels = []
+        for name, color in lean_labels:
+            label = TaskLabel.objects.create(
+                board=self.board,
+                name=name,
+                color=color,
+                category='lean'
+            )
+            created_labels.append(label)
+        
+        # Verify all lean labels were created
+        lean_board_labels = TaskLabel.objects.filter(board=self.board, category='lean')
+        self.assertEqual(lean_board_labels.count(), 5)
+        
+        # Test label assignment to tasks
+        task = Task.objects.create(
+            title='Identify Value Stream',
+            column=self.define_column,
+            created_by=self.user
+        )
+        
+        value_stream_label = TaskLabel.objects.get(name='Value Stream')
+        task.labels.add(value_stream_label)
+        
+        self.assertIn(value_stream_label, task.labels.all())
+        self.assertEqual(value_stream_label.category, 'lean')
+
+
+class BoardAnalyticsTestCase(TestCase):
+    """Test board analytics and reporting functionality"""
+    
+    def setUp(self):
+        self.user = User.objects.create_user(username='analyst', password='pass123')
+        self.organization = Organization.objects.create(name='Analytics Org', domain='analytics.com', created_by=self.user)
+        self.board = Board.objects.create(
+            name='Analytics Board',
+            organization=self.organization,
+            created_by=self.user
+        )
+        
+        # Create columns
+        self.todo_column = Column.objects.create(board=self.board, name='To Do', position=1)
+        self.progress_column = Column.objects.create(board=self.board, name='In Progress', position=2)
+        self.done_column = Column.objects.create(board=self.board, name='Done', position=3)
+        
+        # Create sample tasks
+        self.create_sample_tasks()
+    
+    def create_sample_tasks(self):
+        """Create sample tasks for analytics testing"""
+        # Tasks in different columns with different priorities
+        Task.objects.create(
+            title='High Priority Task 1',
+            column=self.todo_column,
+            created_by=self.user,
+            priority='high',
+            progress=0
+        )
+        
+        Task.objects.create(
+            title='Medium Priority Task 1',
+            column=self.progress_column,
+            created_by=self.user,
+            priority='medium',
+            progress=50
+        )
+        
+        Task.objects.create(
+            title='Completed Task 1',
+            column=self.done_column,
+            created_by=self.user,
+            priority='low',
+            progress=100
+        )
+        
+        Task.objects.create(
+            title='Completed Task 2',
+            column=self.done_column,
+            created_by=self.user,
+            priority='high',
+            progress=100
+        )
+    
+    def test_task_distribution_analytics(self):
+        """Test analyzing task distribution across columns"""
+        # Count tasks per column
+        todo_count = Task.objects.filter(column=self.todo_column).count()
+        progress_count = Task.objects.filter(column=self.progress_column).count()
+        done_count = Task.objects.filter(column=self.done_column).count()
+        
+        self.assertEqual(todo_count, 1)
+        self.assertEqual(progress_count, 1)
+        self.assertEqual(done_count, 2)
+        
+        # Verify total tasks
+        total_tasks = Task.objects.filter(column__board=self.board).count()
+        self.assertEqual(total_tasks, 4)
+    
+    def test_priority_distribution_analytics(self):
+        """Test analyzing task distribution by priority"""
+        high_priority = Task.objects.filter(column__board=self.board, priority='high').count()
+        medium_priority = Task.objects.filter(column__board=self.board, priority='medium').count()
+        low_priority = Task.objects.filter(column__board=self.board, priority='low').count()
+        
+        self.assertEqual(high_priority, 2)
+        self.assertEqual(medium_priority, 1)
+        self.assertEqual(low_priority, 1)
+    
+    def test_completion_rate_analytics(self):
+        """Test calculating task completion rates"""
+        total_tasks = Task.objects.filter(column__board=self.board).count()
+        completed_tasks = Task.objects.filter(column__board=self.board, progress=100).count()
+        
+        completion_rate = (completed_tasks / total_tasks) * 100 if total_tasks > 0 else 0
+        
+        self.assertEqual(total_tasks, 4)
+        self.assertEqual(completed_tasks, 2)
+        self.assertEqual(completion_rate, 50.0)
+
+
+class TaskProgressTestCase(TestCase):
+    """Test task progress tracking and analytics"""
+    
+    def setUp(self):
+        self.user = User.objects.create_user(username='progressuser', password='pass123')
+        self.organization = Organization.objects.create(name='Progress Org', domain='progress.com', created_by=self.user)
+        self.board = Board.objects.create(
+            name='Progress Board',
+            organization=self.organization,
+            created_by=self.user
+        )
+        self.column = Column.objects.create(board=self.board, name='In Progress', position=1)
+    
+    def test_progress_validation(self):
+        """Test progress field validation (0-100)"""
+        # Valid progress values
+        for progress in [0, 25, 50, 75, 100]:
+            task = Task.objects.create(
+                title=f'Task {progress}%',
+                column=self.column,
+                created_by=self.user,
+                progress=progress
+            )
+            self.assertEqual(task.progress, progress)
+    
+    def test_progress_tracking_workflow(self):
+        """Test tracking task progress through activities"""
+        task = Task.objects.create(
+            title='Progress Tracking Task',
+            column=self.column,
+            created_by=self.user,
+            progress=0
+        )
+        
+        # Track progress updates
+        progress_updates = [
+            (25, 'Initial progress made'),
+            (50, 'Halfway complete'),
+            (75, 'Almost finished'),
+            (100, 'Task completed'),
+        ]
+        
+        for progress, description in progress_updates:
+            task.progress = progress
+            task.save()
+            
+            TaskActivity.objects.create(
+                task=task,
+                user=self.user,
+                activity_type='updated',
+                description=f'Progress updated to {progress}%: {description}'
             )
         
-        # Try to add another card
-        with self.assertRaises(ValidationError):
-            card = Card.objects.create(
-                column=self.progress,
-                title='Exceeding Card'
-            )
-            self.progress.validate_wip_limit()
+        # Verify final state
+        self.assertEqual(task.progress, 100)
+        self.assertEqual(task.activities.count(), 4)
+        
+        # Verify progress history through activities
+        progress_activities = task.activities.filter(
+            description__icontains='Progress updated'
+        )
+        self.assertEqual(progress_activities.count(), 4)
+
+
+class LeanSixSigmaIntegrationTestCase(TestCase):
+    """Test complete Lean Six Sigma integration workflow"""
     
-    def test_collaboration_workflow(self):
-        """Test team collaboration on cards"""
-        card = Card.objects.create(
-            column=self.todo,
-            title='Collaboration Card',
-            assignee=self.user
+    def setUp(self):
+        self.user = User.objects.create_user(username='leanmaster', password='pass123')
+        self.team_member = User.objects.create_user(username='teammate', password='pass123')
+        
+        self.organization = Organization.objects.create(
+            name='Lean Enterprise',
+            domain='leanenterprise.com',
+            created_by=self.user
         )
         
-        # Team lead adds comment
-        comment = Comment.objects.create(
-            card=card,
-            author=self.team_lead,
-            content='Please prioritize this task'
+        # Create user profiles
+        UserProfile.objects.create(user=self.user, organization=self.organization)
+        UserProfile.objects.create(user=self.team_member, organization=self.organization)
+        
+        # Create Value Stream Mapping board
+        self.vsm_board = Board.objects.create(
+            name='Value Stream Mapping',
+            description='End-to-end process improvement',
+            organization=self.organization,
+            created_by=self.user
+        )
+        self.vsm_board.members.add(self.team_member)
+        
+        # Create DMAIC columns
+        self.setup_dmaic_columns()
+        self.setup_lean_labels()
+    
+    def setup_dmaic_columns(self):
+        """Setup DMAIC methodology columns"""
+        self.define_col = Column.objects.create(board=self.vsm_board, name='Define', position=1)
+        self.measure_col = Column.objects.create(board=self.vsm_board, name='Measure', position=2)
+        self.analyze_col = Column.objects.create(board=self.vsm_board, name='Analyze', position=3)
+        self.improve_col = Column.objects.create(board=self.vsm_board, name='Improve', position=4)
+        self.control_col = Column.objects.create(board=self.vsm_board, name='Control', position=5)
+    
+    def setup_lean_labels(self):
+        """Setup Lean Six Sigma labels"""
+        self.lean_labels = {}
+        lean_label_data = [
+            ('Value Stream', '#1f77b4'),
+            ('Waste Elimination', '#ff7f0e'),
+            ('Process Improvement', '#2ca02c'),
+            ('Quality Control', '#d62728'),
+            ('Customer Voice', '#9467bd'),
+            ('Kaizen', '#8c564b'),
+            ('Poka-Yoke', '#e377c2'),
+            ('5S', '#7f7f7f'),
+        ]
+        
+        for name, color in lean_label_data:
+            label = TaskLabel.objects.create(
+                board=self.vsm_board,
+                name=name,
+                color=color,
+                category='lean'
+            )
+            self.lean_labels[name.lower().replace(' ', '_')] = label
+    
+    def test_complete_dmaic_workflow(self):
+        """Test complete DMAIC process workflow"""
+        # Define Phase - Create improvement initiative
+        improvement_task = Task.objects.create(
+            title='Reduce Order Processing Time',
+            description='Current order processing takes 3 days, target is 1 day',
+            column=self.define_col,
+            created_by=self.user,
+            priority='high',
+            progress=10
         )
         
-        # User responds
-        response = Comment.objects.create(
-            card=card,
-            author=self.user,
-            content='Will work on this next'
+        # Add relevant labels
+        improvement_task.labels.add(
+            self.lean_labels['value_stream'],
+            self.lean_labels['process_improvement']
         )
         
-        # Move card and add attachment
-        card.move_to_column(self.progress, self.user)
-        
-        attachment = Attachment.objects.create(
-            card=card,
-            filename='implementation_plan.pdf',
-            uploaded_by=self.user
+        # Log define activities
+        TaskActivity.objects.create(
+            task=improvement_task,
+            user=self.user,
+            activity_type='created',
+            description='Problem statement: Order processing takes too long'
         )
         
-        # Verify collaboration elements
-        self.assertEqual(card.comments.count(), 2)
-        self.assertEqual(card.attachments.count(), 1)
-        self.assertTrue(CardHistory.objects.filter(card=card).exists())
+        # Measure Phase - Move task and update progress
+        improvement_task.column = self.measure_col
+        improvement_task.progress = 30
+        improvement_task.save()
+        
+        TaskActivity.objects.create(
+            task=improvement_task,
+            user=self.user,
+            activity_type='moved',
+            description='Moved to Measure phase'
+        )
+        
+        # Control Phase
+        improvement_task.column = self.control_col
+        improvement_task.progress = 100
+        improvement_task.save()
+        
+        improvement_task.labels.add(self.lean_labels['quality_control'])
+        
+        TaskActivity.objects.create(
+            task=improvement_task,
+            user=self.user,
+            activity_type='moved',
+            description='Moved to Control phase'
+        )
+        
+        # Verify complete workflow
+        self.assertEqual(improvement_task.column, self.control_col)
+        self.assertEqual(improvement_task.progress, 100)
+        self.assertEqual(improvement_task.activities.count(), 3)
+        self.assertEqual(improvement_task.labels.filter(category='lean').count(), 3)
 
 
 if __name__ == '__main__':
