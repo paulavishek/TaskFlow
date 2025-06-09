@@ -19,6 +19,8 @@ automatic_scaling:
   max_concurrent_requests: 80
 
 # Optional: If you have environment variables to set
-# env_variables:
-#   DJANGO_SETTINGS_MODULE: 'kanban_board.settings'
-#   SECRET_KEY: 'your-secret-key' # It's better to use Secret Manager for secrets
+env_variables:
+  DJANGO_SETTINGS_MODULE: 'kanban_board.settings'
+  DEBUG: 'False'
+  SECRET_KEY: 'yhj1u7b0_^(b-%5t#n^p!8pzy&%nabpd0*=$7xvfwby&_5_4@c'  # Replace with your actual secret key
+  ALLOWED_HOSTS: 'your-app-id.appspot.com,*.appspot.com'
