@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/lean-six-sigma.css' %}">
 <link rel="stylesheet" href="{% static 'css/lean-six-sigma-animations.css' %}">
+<link rel="stylesheet" href="{% static 'css/icon-fix.css' %}">
 <style>
     /* Welcome page specific styling */
     body {
@@ -156,7 +157,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container">
         <a class="navbar-brand" href="{% url 'welcome' %}">
-            <i class="fas fa-tasks me-2"></i>TaskFlow
+            <i class="fas fa-tasks me-2" style="filter: brightness(1.2); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);"></i>TaskFlow
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -212,11 +213,10 @@
             <p class="text-muted">Everything you need to manage projects efficiently</p>
         </div>
         
-        <div class="row g-4">
-            <div class="col-md-4">
+        <div class="row g-4">            <div class="col-md-4">
                 <div class="card feature-card p-4 text-center">
-                    <div class="feature-icon text-primary">
-                        <i class="fas fa-columns"></i>
+                    <div class="feature-icon bg-primary rounded-circle p-3 mx-auto">
+                        <i class="fas fa-columns text-white"></i>
                     </div>
                     <h3 class="feature-title">Flexible Kanban Boards</h3>
                     <p>Create customizable boards with drag-and-drop functionality to visualize your workflow.</p>
@@ -225,8 +225,8 @@
             
             <div class="col-md-4">
                 <div class="card feature-card p-4 text-center">
-                    <div class="feature-icon text-success">
-                        <i class="fas fa-chart-line"></i>
+                    <div class="feature-icon bg-success rounded-circle p-3 mx-auto">
+                        <i class="fas fa-chart-line text-white"></i>
                     </div>
                     <h3 class="feature-title">Analytics Dashboard</h3>
                     <p>Track performance metrics and gain insights with detailed analytics and visual reports.</p>
@@ -235,8 +235,8 @@
             
             <div class="col-md-4">
                 <div class="card feature-card p-4 text-center">
-                    <div class="feature-icon text-info">
-                        <i class="fas fa-users"></i>
+                    <div class="feature-icon bg-info rounded-circle p-3 mx-auto">
+                        <i class="fas fa-users text-white"></i>
                     </div>
                     <h3 class="feature-title">Team Collaboration</h3>
                     <p>Seamlessly collaborate with team members and assign tasks within your organization.</p>
@@ -245,8 +245,8 @@
             
             <div class="col-md-4">
                 <div class="card feature-card p-4 text-center">
-                    <div class="feature-icon text-warning">
-                        <i class="fas fa-tags"></i>
+                    <div class="feature-icon bg-warning rounded-circle p-3 mx-auto">
+                        <i class="fas fa-tags text-dark"></i>
                     </div>
                     <h3 class="feature-title">Smart Labeling System</h3>
                     <p>Organize tasks with color-coded labels and custom categories for effective filtration.</p>
@@ -255,8 +255,8 @@
             
             <div class="col-md-4">
                 <div class="card feature-card p-4 text-center">
-                    <div class="feature-icon text-danger">
-                        <i class="fas fa-clock"></i>
+                    <div class="feature-icon bg-danger rounded-circle p-3 mx-auto">
+                        <i class="fas fa-clock text-white"></i>
                     </div>
                     <h3 class="feature-title">Progress Tracking</h3>
                     <p>Monitor task progress with visual indicators and completion percentages.</p>
@@ -265,8 +265,8 @@
             
             <div class="col-md-4">
                 <div class="card feature-card p-4 text-center">
-                    <div class="feature-icon text-secondary">
-                        <i class="fas fa-file-export"></i>
+                    <div class="feature-icon bg-secondary rounded-circle p-3 mx-auto">
+                        <i class="fas fa-file-export text-white"></i>
                     </div>
                     <h3 class="feature-title">Import/Export</h3>
                     <p>Easily import and export boards for data portability and sharing.</p>
@@ -283,8 +283,7 @@
             <div class="col-md-6">
                 <h2 class="fw-bold mb-4">Enhanced with Lean Six Sigma</h2>
                 <p class="lead">Identify and eliminate waste in your processes with integrated Lean Six Sigma features.</p>
-                
-                <div class="d-flex align-items-start mt-4">
+                  <div class="d-flex align-items-start mt-4">
                     <div class="bg-success rounded p-2 me-3 text-white feature-icon">
                         <i class="fas fa-check"></i>
                     </div>
@@ -295,7 +294,7 @@
                 </div>
                 
                 <div class="d-flex align-items-start mt-3">
-                    <div class="bg-warning rounded p-2 me-3 feature-icon">
+                    <div class="bg-warning rounded p-2 me-3 text-dark feature-icon">
                         <i class="fas fa-exclamation"></i>
                     </div>
                     <div>
@@ -303,8 +302,7 @@
                         <p class="text-muted">Track necessary activities that don't directly add customer value.</p>
                     </div>
                 </div>
-                
-                <div class="d-flex align-items-start mt-3">
+                  <div class="d-flex align-items-start mt-3">
                     <div class="bg-danger rounded p-2 me-3 text-white feature-icon">
                         <i class="fas fa-times"></i>
                     </div>
@@ -341,11 +339,10 @@
             <p class="text-muted">Bridging the gap between task management and process improvement</p>
         </div>
         
-        <div class="row g-4">
-            <div class="col-md-4">
+        <div class="row g-4">            <div class="col-md-4">
                 <div class="card feature-card p-4 h-100">
                     <div class="d-flex align-items-center mb-3">
-                        <div class="feature-icon me-3">
+                        <div class="feature-icon bg-danger rounded-circle p-2 me-3 text-white">
                             <i class="fas fa-exclamation-triangle"></i>
                         </div>
                         <div>
@@ -359,7 +356,7 @@
             <div class="col-md-4">
                 <div class="card feature-card p-4 h-100">
                     <div class="d-flex align-items-center mb-3">
-                        <div class="feature-icon me-3">
+                        <div class="feature-icon bg-primary rounded-circle p-2 me-3 text-white">
                             <i class="fas fa-lightbulb"></i>
                         </div>
                         <div>
@@ -373,7 +370,7 @@
             <div class="col-md-4">
                 <div class="card feature-card p-4 h-100">
                     <div class="d-flex align-items-center mb-3">
-                        <div class="feature-icon me-3">
+                        <div class="feature-icon bg-success rounded-circle p-2 me-3 text-white">
                             <i class="fas fa-chart-line"></i>
                         </div>
                         <div>

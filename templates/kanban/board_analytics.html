@@ -964,9 +964,8 @@
                 insightsContainer.classList.add('d-none');
                 noInsights.classList.add('d-none');
                 generateInsightsButton.disabled = true;
-                
-                // Make API call
-                fetch(`/kanban/api/board-analytics-insights/${boardId}/`, {
+                  // Make API call
+                fetch(`/api/board-analytics-insights/${boardId}/`, {
                     method: 'GET',
                     headers: {
                         'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
@@ -1004,6 +1003,6 @@
 </script>
 
 {% load static %}
-<script src="{% static 'js/ai_features.js' %}"></script>
+<script src="{% static 'js/ai_features.js' %}?v={{ STATIC_VERSION|default:'2' }}"></script>
 {% endblock %}
 {% endblock %}

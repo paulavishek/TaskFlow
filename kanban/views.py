@@ -1138,3 +1138,8 @@ def welcome(request):
     return render(request, 'kanban/welcome.html', {
         'cache_buster': cache_buster
     })
+
+@login_required
+def test_ai_features(request):
+    """Test page for AI features debugging"""
+    return render(request, 'kanban/test_ai_features.html')

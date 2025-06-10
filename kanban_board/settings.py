@@ -87,12 +87,12 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
+        'OPTIONS': {            'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'kanban_board.context_processors.static_version',
             ],
         },
     },
@@ -154,6 +154,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # WhiteNoise configuration for static files
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Static files cache busting
+STATIC_VERSION = "3"  # Increment this when updating JS/CSS files
 
 # Media files
 MEDIA_URL = '/media/'

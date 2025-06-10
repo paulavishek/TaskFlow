@@ -39,7 +39,7 @@ function initAITaskDescription() {
             generateButton.disabled = true;
             
             // Make API call to our backend endpoint
-            fetch('/kanban/api/generate-task-description/', {
+            fetch('/api/generate-task-description/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -68,8 +68,9 @@ function initAITaskDescription() {
                 // Hide spinner
                 aiSpinner.classList.add('d-none');
                 generateButton.disabled = false;
+            });
         });
-    });
+    }
 }
 
 /**
@@ -92,7 +93,7 @@ function initAICommentSummarizer() {
             summarizeButton.disabled = true;
             
             // Make API call
-            fetch(`/kanban/api/summarize-comments/${taskId}/`, {
+            fetch(`/api/summarize-comments/${taskId}/`, {
                 method: 'GET',
                 headers: {
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
@@ -173,51 +174,50 @@ function initAILssClassification() {
                 return;
             }
         }
-            
-            // Show spinner
-            if (classifySpinner) classifySpinner.classList.remove('d-none');
-            classifyButton.disabled = true;
-            
-            // Make API call
-            fetch('/kanban/api/suggest-lss-classification/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                },
-                body: JSON.stringify({ 
-                    title: title,
-                    description: description
-                })
+        
+        // Show spinner
+        if (classifySpinner) classifySpinner.classList.remove('d-none');
+        classifyButton.disabled = true;
+        
+        // Make API call
+        fetch('/api/suggest-lss-classification/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ 
+                title: title,
+                description: description
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.classification && data.justification) {
-                    let suggestionHtml = `This activity is likely <strong>${data.classification}</strong>. `;
-                    suggestionHtml += data.justification;
-                    
-                    suggestionText.innerHTML = suggestionHtml;
-                    suggestionContainer.classList.remove('d-none');
-                } else {
-                    alert('Could not generate LSS classification. Please try again.');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while generating LSS classification.');
-            })
-            .finally(() => {
-                // Hide spinner
-                if (classifySpinner) classifySpinner.classList.add('d-none');
-                classifyButton.disabled = false;
-            });
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.classification && data.justification) {
+                let suggestionHtml = `This activity is likely <strong>${data.classification}</strong>. `;
+                suggestionHtml += data.justification;
+                
+                suggestionText.innerHTML = suggestionHtml;
+                suggestionContainer.classList.remove('d-none');
+            } else {
+                alert('Could not generate LSS classification. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while generating LSS classification.');
+        })
+        .finally(() => {
+            // Hide spinner
+            if (classifySpinner) classifySpinner.classList.add('d-none');
+            classifyButton.disabled = false;
         });
-    }
+    });
 }
 
 /**
@@ -242,7 +242,7 @@ function initBoardAnalyticsInsights() {
             insightsButton.disabled = true;
             
             // Make API call
-            fetch(`/kanban/api/board-analytics-insights/${boardId}/`, {
+            fetch(`/api/board-analytics-insights/${boardId}/`, {
                 method: 'GET',
                 headers: {
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value

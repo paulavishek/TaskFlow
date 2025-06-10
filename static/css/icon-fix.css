@@ -1,0 +1,67 @@
+/* Icon visibility fixes */
+.feature-icon {
+    color: white !important; /* Ensure text is white for better contrast */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); /* Add subtle text shadow for better readability */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Enhanced shadow for better depth */
+}
+
+/* Make icons larger and more visible */
+.feature-icon i {
+    font-size: 1.5rem; /* Larger icon size */
+    filter: contrast(1.1) brightness(1.2); /* Enhance contrast and brightness */
+}
+
+/* Specific overrides for feature cards */
+.feature-card:nth-child(1) .feature-icon,
+.feature-card:nth-child(2) .feature-icon,
+.feature-card:nth-child(3) .feature-icon,
+.feature-card:nth-child(4) .feature-icon,
+.feature-card:nth-child(5) .feature-icon,
+.feature-card:nth-child(6) .feature-icon {
+    color: white !important;
+    min-width: 60px; /* Ensure consistent size */
+    min-height: 60px;
+}
+
+/* Ensure all icons in colored backgrounds have good contrast */
+.bg-danger .fas, 
+.bg-success .fas,
+.bg-primary .fas,
+.bg-info .fas,
+.bg-secondary .fas {
+    color: white !important;
+}
+
+/* Special case for warning background which may be bright */
+.bg-warning .fas {
+    color: #212529 !important; /* Darker color on yellow backgrounds */
+}
+
+/* Add styles for the feature icons on cards */
+.card .feature-icon {
+    margin: 0 auto 20px;
+    width: 70px;
+    height: 70px;
+    transition: all 0.3s ease;
+}
+
+/* Add hover effect to feature icons */
+.feature-icon:hover {
+    transform: scale(1.1) translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Specific styles for the "Why TaskFlow Exists" section */
+#why-taskflow .feature-icon {
+    width: 50px;
+    height: 50px;
+}
+
+/* Extra fix for icon visibility on red backgrounds */
+.bg-danger.feature-icon {
+    background-color: #dc3545 !important;
+}
+.bg-danger.feature-icon i {
+    color: white !important;
+    filter: brightness(1.2) contrast(1.2);
+}

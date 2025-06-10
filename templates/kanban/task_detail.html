@@ -494,5 +494,5 @@
 </script>
 
 {% load static %}
-<script src="{% static 'js/ai_features.js' %}"></script>
+<script src="{% static 'js/ai_features.js' %}?v={{ STATIC_VERSION|default:'2' }}"></script>
 {% endblock %}

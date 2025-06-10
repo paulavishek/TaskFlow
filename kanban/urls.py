@@ -28,6 +28,9 @@ urlpatterns = [
     path('columns/reorder-multiple/', views.reorder_multiple_columns, name='reorder_multiple_columns'),
     path('columns/<int:column_id>/delete/', views.delete_column, name='delete_column'),    path('boards/<int:board_id>/add-lean-labels/', views.add_lean_labels, name='add_lean_labels'),
     
+    # Test page for AI features
+    path('test-ai-features/', views.test_ai_features, name='test_ai_features'),
+    
     # AI API Endpoints
     path('api/generate-task-description/', api_views.generate_task_description_api, name='generate_task_description_api'),
     path('api/summarize-comments/<int:task_id>/', api_views.summarize_comments_api, name='summarize_comments_api'),

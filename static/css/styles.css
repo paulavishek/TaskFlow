@@ -362,27 +362,46 @@ body {
 }
 
 .feature-icon {
-    width: 50px;
-    height: 50px;
-    background-color: #4e54c8;
+    width: 70px;
+    height: 70px;
+    background-color: rgba(245, 247, 250, 0.9);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    margin: 0 auto 20px;
+    transition: all 0.3s ease;
+}
+
+.feature-icon:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 .feature-card:nth-child(1) .feature-icon {
-    background-color: #dc3545; /* Red for problem */
+    color: #dc3545; /* Red for problem */
 }
 
 .feature-card:nth-child(2) .feature-icon {
-    background-color: #0d6efd; /* Blue for solution */
+    color: #0d6efd; /* Blue for solution */
 }
 
 .feature-card:nth-child(3) .feature-icon {
-    background-color: #198754; /* Green for impact */
+    color: #198754; /* Green for impact */
+}
+
+.feature-card:nth-child(4) .feature-icon {
+    color: #ffc107; /* Yellow for warning */
+}
+
+.feature-card:nth-child(5) .feature-icon {
+    color: #dc3545; /* Red for danger */
+}
+
+.feature-card:nth-child(6) .feature-icon {
+    color: #6c757d; /* Gray for secondary */
 }
 
 /* Footer styles */

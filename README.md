@@ -111,6 +111,8 @@ The application organizes work into boards, columns, and tasks:
 
 #### Task Assistant
 1. Start creating a new task by entering a title
+   - **Pro Tip:** Use specific, detailed titles for better AI-generated content
+   - Example: Instead of "Add a feature", use "Add user profile picture upload"
 2. Click "Generate with AI" next to the description field
 3. Review and edit the AI-generated description and checklist as needed
 
