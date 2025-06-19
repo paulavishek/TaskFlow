@@ -5,6 +5,14 @@ from . import api_views
 urlpatterns = [
     path('', views.welcome, name='welcome'),
     path('dashboard/', views.dashboard, name='dashboard'),
+    
+    # Getting Started Wizard
+    path('getting-started/', views.getting_started_wizard, name='getting_started_wizard'),
+    path('getting-started/complete/', views.complete_wizard, name='complete_wizard'),
+    path('getting-started/reset/', views.reset_wizard, name='reset_wizard'),
+    path('api/wizard/create-board/', views.wizard_create_board, name='wizard_create_board'),
+    path('api/wizard/create-task/', views.wizard_create_task, name='wizard_create_task'),
+    
     path('boards/', views.board_list, name='board_list'),
     path('boards/create/', views.create_board, name='create_board'),    path('boards/<int:board_id>/', views.board_detail, name='board_detail'),
     path('boards/<int:board_id>/analytics/', views.board_analytics, name='board_analytics'),

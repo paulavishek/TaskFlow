@@ -81,8 +81,7 @@ class UserProfile(models.Model):
         blank=True,
         help_text="Hours when user is most productive (e.g., ['09:00-11:00', '14:00-16:00'])"
     )
-    
-    # AI Analysis Metadata
+      # AI Analysis Metadata
     last_resource_analysis = models.DateTimeField(
         blank=True, 
         null=True,
@@ -92,6 +91,17 @@ class UserProfile(models.Model):
         default=list,
         blank=True,
         help_text="AI-identified risk factors for this resource"
+    )
+    
+    # Getting Started Wizard
+    completed_wizard = models.BooleanField(
+        default=False,
+        help_text="Whether user has completed the getting started wizard"
+    )
+    wizard_completed_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="When user completed the getting started wizard"
     )
     
     def __str__(self):

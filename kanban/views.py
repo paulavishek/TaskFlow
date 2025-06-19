@@ -23,6 +23,24 @@ def dashboard(request):
     try:
         profile = request.user.profile
         organization = profile.organization
+        
+        # Check if user needs the getting started wizard (only for brand new users)
+        if not profile.completed_wizard:
+            # Check if this is a truly new user (no boards created, no tasks assigned)
+            user_boards = Board.objects.filter(
+                Q(organization=organization) & 
+                (Q(created_by=request.user) | Q(members=request.user))
+            ).distinct()
+            
+            user_tasks = Task.objects.filter(
+                column__board__organization=organization,
+                assigned_to=request.user
+            )
+            
+            # Only show wizard for completely new users
+            if user_boards.count() == 0 and user_tasks.count() == 0:
+                return redirect('getting_started_wizard')
+        
         boards = Board.objects.filter(
             Q(organization=organization) & 
             (Q(created_by=request.user) | Q(members=request.user))
@@ -1384,41 +1402,7 @@ def edit_board(request, board_id):
         'board': board
     })
 
-@login_required
-def meeting_transcript_extraction(request, board_id):
-    """
-    View for extracting tasks from meeting transcripts using AI
-    """
-    try:
-        # Verify board access
-        board = get_object_or_404(Board, id=board_id)
-        if not (board.created_by == request.user or request.user in board.members.all()):
-            return HttpResponseForbidden("You don't have access to this board.")
-        
-        # Get previous meeting transcripts for this board
-        from kanban.models import MeetingTranscript
-        previous_extractions = MeetingTranscript.objects.filter(
-            board=board,
-            created_by=request.user
-        ).order_by('-created_at')[:10]
-        
-        context = {
-            'board': board,
-            'today': timezone.now().date(),
-            'previous_extractions': previous_extractions,
-            'board_members': board.members.all(),
-        }
-        
-        return render(request, 'kanban/meeting_transcript.html', context)
-        
-    except Exception as e:
-        logger.error(f"Error in meeting transcript extraction view: {str(e)}")
-        messages.error(request, 'Error loading meeting transcript page. Please try again.')
-        return redirect('board_detail', board_id=board_id)
-
-# Advanced AI Features Views
-
-@login_required
+@login_required  
 def ai_resource_analysis(request, board_id):
     """
     Advanced AI Resource Analysis page
@@ -1479,7 +1463,6 @@ def ai_resource_analysis(request, board_id):
         messages.error(request, 'Error loading AI resource analysis. Please try again.')
         return redirect('board_detail', board_id=board_id)
 
-
 @login_required  
 def ai_timeline_management(request, board_id):
     """
@@ -1495,47 +1478,33 @@ def ai_timeline_management(request, board_id):
                 request.user == board.organization.created_by):
             return HttpResponseForbidden("You don't have access to this board.")
         
-        # Get tasks with dates for timeline analysis
+        # Get tasks with relationships for timeline analysis
         tasks = Task.objects.filter(column__board=board).select_related(
             'assigned_to', 'column'
         ).prefetch_related('labels')
         
-        # Get tasks with due dates
-        tasks_with_dates = tasks.filter(due_date__isnull=False).order_by('due_date')
-        
-        # Get overdue tasks
+        # Get project statistics
+        total_tasks = tasks.count()
+        completed_tasks = tasks.filter(column__name__icontains='done').count()
+        in_progress_tasks = tasks.filter(column__name__icontains='progress').count()
         overdue_tasks = tasks.filter(
-            due_date__lt=timezone.now(),
-            column__name__icontains='done'
-        ).exclude(column__name__icontains='done')
+            due_date__lt=timezone.now().date()
+        ).exclude(column__name__icontains='done').count()
         
-        # Get upcoming tasks (next 7 days)
-        upcoming_tasks = tasks.filter(
-            due_date__range=[timezone.now(), timezone.now() + timedelta(days=7)]
-        ).exclude(column__name__icontains='done')
-        
-        # Calculate timeline metrics
-        total_estimated_hours = sum([
-            task.estimated_hours or 0 for task in tasks
-        ])
-        
-        completed_hours = sum([
-            task.estimated_hours or 0 for task in tasks.filter(column__name__icontains='done')
-        ])
-        
-        progress_percentage = 0
-        if total_estimated_hours > 0:
-            progress_percentage = (completed_hours / total_estimated_hours) * 100
+        # Calculate project completion percentage
+        completion_percentage = 0
+        if total_tasks > 0:
+            completion_percentage = (completed_tasks / total_tasks) * 100
         
         context = {
             'board': board,
             'tasks': tasks,
-            'tasks_with_dates': tasks_with_dates,
+            'total_tasks': total_tasks,
+            'completed_tasks': completed_tasks,
+            'in_progress_tasks': in_progress_tasks,
             'overdue_tasks': overdue_tasks,
-            'upcoming_tasks': upcoming_tasks,
-            'total_estimated_hours': total_estimated_hours,
-            'completed_hours': completed_hours,
-            'progress_percentage': progress_percentage,
+            'completion_percentage': round(completion_percentage, 1),
+            'today': timezone.now().date(),
         }
         
         return render(request, 'kanban/ai_timeline_management.html', context)
@@ -1544,3 +1513,245 @@ def ai_timeline_management(request, board_id):
         logger.error(f"Error in AI timeline management view: {str(e)}")
         messages.error(request, 'Error loading AI timeline management. Please try again.')
         return redirect('board_detail', board_id=board_id)
+
+@login_required
+def meeting_transcript_extraction(request, board_id):
+    """
+    View for extracting tasks from meeting transcripts using AI
+    """
+    try:
+        # Verify board access
+        board = get_object_or_404(Board, id=board_id)
+        if not (board.created_by == request.user or request.user in board.members.all()):
+            return HttpResponseForbidden("You don't have access to this board.")
+        
+        # Get previous meeting transcripts for this board (if model exists)
+        try:
+            from kanban.models import MeetingTranscript
+            previous_extractions = MeetingTranscript.objects.filter(
+                board=board,
+                created_by=request.user
+            ).order_by('-created_at')[:10]
+        except:
+            previous_extractions = []
+        
+        context = {
+            'board': board,
+            'today': timezone.now().date(),
+            'previous_extractions': previous_extractions,
+            'board_members': board.members.all(),
+        }
+        
+        return render(request, 'kanban/meeting_transcript.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in meeting transcript extraction view: {str(e)}")
+        messages.error(request, 'Error loading meeting transcript page. Please try again.')
+        return redirect('board_detail', board_id=board_id)
+
+# Getting Started Wizard Views
+@login_required
+def getting_started_wizard(request):
+    """
+    Getting Started Wizard for new users
+    """
+    try:
+        profile = request.user.profile
+        organization = profile.organization
+        
+        # Get user's basic info for personalization
+        context = {
+            'user': request.user,
+            'organization': organization,
+            'profile': profile,
+            'is_repeat_visitor': profile.completed_wizard,  # Show different messaging for repeat visitors
+        }
+        
+        return render(request, 'kanban/getting_started_wizard.html', context)
+        
+    except UserProfile.DoesNotExist:
+        return redirect('organization_choice')
+
+@login_required
+def complete_wizard(request):
+    """
+    Mark the wizard as completed for the user
+    """
+    if request.method == 'POST':
+        try:
+            profile = request.user.profile
+            profile.completed_wizard = True
+            profile.wizard_completed_at = timezone.now()
+            profile.save()
+            
+            messages.success(request, 'Welcome to TaskFlow! You\'re all set to start managing your projects.')
+            return redirect('dashboard')
+            
+        except UserProfile.DoesNotExist:
+            return redirect('organization_choice')
+    
+    return redirect('getting_started_wizard')
+
+@login_required
+def wizard_create_board(request):
+    """
+    Create a board during the getting started wizard
+    """
+    if request.method == 'POST':
+        try:
+            profile = request.user.profile
+            organization = profile.organization
+            
+            # Get board data from the request
+            board_name = request.POST.get('board_name', '').strip()
+            board_description = request.POST.get('board_description', '').strip()
+            use_ai_columns = request.POST.get('use_ai_columns') == 'true'
+            
+            if not board_name:
+                return JsonResponse({'error': 'Board name is required'}, status=400)
+            
+            # Create the board
+            board = Board.objects.create(
+                name=board_name,
+                description=board_description,
+                organization=organization,
+                created_by=request.user
+            )
+            board.members.add(request.user)
+            
+            # If AI columns are requested, get AI recommendations
+            if use_ai_columns:
+                from .utils.ai_utils import recommend_board_columns
+                
+                board_data = {
+                    'name': board_name,
+                    'description': board_description,
+                    'team_size': 1,
+                    'project_type': 'general',
+                    'organization_type': 'general',
+                    'existing_columns': []
+                }
+                
+                recommendation = recommend_board_columns(board_data)
+                
+                if recommendation and recommendation.get('recommended_columns'):
+                    # Create AI-recommended columns
+                    for i, column_data in enumerate(recommendation['recommended_columns']):
+                        Column.objects.create(
+                            name=column_data['name'],
+                            board=board,
+                            position=i
+                        )
+                else:
+                    # Fallback to default columns
+                    default_columns = ['To Do', 'In Progress', 'Done']
+                    for i, name in enumerate(default_columns):
+                        Column.objects.create(name=name, board=board, position=i)
+            else:
+                # Create default columns
+                default_columns = ['To Do', 'In Progress', 'Done']
+                for i, name in enumerate(default_columns):
+                    Column.objects.create(name=name, board=board, position=i)
+            
+            return JsonResponse({
+                'success': True,
+                'board_id': board.id,
+                'board_name': board.name,
+                'message': 'Board created successfully!'
+            })
+            
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'error': 'User profile not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+@login_required
+def wizard_create_task(request):
+    """
+    Create a task during the getting started wizard
+    """
+    if request.method == 'POST':
+        try:
+            profile = request.user.profile
+            
+            # Get task data from the request
+            board_id = request.POST.get('board_id')
+            task_title = request.POST.get('task_title', '').strip()
+            task_description = request.POST.get('task_description', '').strip()
+            use_ai_description = request.POST.get('use_ai_description') == 'true'
+            
+            if not board_id or not task_title:
+                return JsonResponse({'error': 'Board ID and task title are required'}, status=400)
+            
+            # Get the board and verify access
+            board = get_object_or_404(Board, id=board_id)
+            if not (board.created_by == request.user or request.user in board.members.all()):
+                return JsonResponse({'error': 'Access denied'}, status=403)
+            
+            # Get the first column (To Do column)
+            first_column = board.columns.first()
+            if not first_column:
+                return JsonResponse({'error': 'No columns found in board'}, status=404)
+            
+            # If AI description is requested, enhance the description
+            if use_ai_description and not task_description:
+                from .utils.ai_utils import enhance_task_description
+                
+                task_data = {
+                    'title': task_title,
+                    'description': task_description,
+                    'board_context': board.name,
+                    'column_context': first_column.name
+                }
+                
+                enhanced = enhance_task_description(task_data)
+                if enhanced and enhanced.get('enhanced_description'):
+                    task_description = enhanced['enhanced_description']
+            
+            # Create the task
+            task = Task.objects.create(
+                title=task_title,
+                description=task_description,
+                column=first_column,
+                created_by=request.user,
+                assigned_to=request.user,
+                priority='medium'
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'task_id': task.id,
+                'task_title': task.title,
+                'task_description': task.description,
+                'board_id': board.id,
+                'message': 'Task created successfully!'
+            })
+            
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'error': 'User profile not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+@login_required
+def reset_wizard(request):
+    """
+    Reset the wizard for a user (admin feature or for testing)
+    """
+    if request.method == 'POST':
+        try:
+            profile = request.user.profile
+            profile.completed_wizard = False
+            profile.wizard_completed_at = None
+            profile.save()
+            
+            messages.success(request, 'Getting Started Wizard has been reset. You will see it on your next dashboard visit.')
+            return redirect('dashboard')
+            
+        except UserProfile.DoesNotExist:
+            return redirect('organization_choice')
+    
+    return redirect('dashboard')

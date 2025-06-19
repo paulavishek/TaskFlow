@@ -1391,3 +1391,89 @@ def extract_text_from_file(file_path: str, file_type: str) -> Optional[str]:
     except Exception as e:
         logger.error(f"Error extracting text from file {file_path}: {str(e)}")
         return None
+
+def enhance_task_description(task_data: Dict) -> Optional[Dict]:
+    """
+    Enhance a task description using AI to provide detailed context and checklist.
+    
+    Args:
+        task_data: Dictionary containing task information
+        
+    Returns:
+        A dictionary with enhanced task description or None if enhancement fails
+    """
+    try:
+        model = get_model()
+        if not model:
+            return None
+            
+        title = task_data.get('title', '')
+        description = task_data.get('description', '')
+        board_context = task_data.get('board_context', '')
+        column_context = task_data.get('column_context', '')
+        
+        prompt = f"""
+        Enhance this task with a detailed description and actionable checklist.
+        
+        ## Task Information:
+        - Title: {title}
+        - Current Description: {description or 'None provided'}
+        - Board Context: {board_context}
+        - Column Context: {column_context}
+        
+        Please create a comprehensive task description that includes:
+        1. Clear objective and scope
+        2. Detailed requirements and acceptance criteria
+        3. Actionable checklist items
+        4. Potential considerations or dependencies
+        
+        Make it professional, specific, and actionable for a project management context.
+        
+        Format your response as JSON:
+        {{
+            "enhanced_description": "Detailed description with clear objectives, requirements, and scope",
+            "checklist_items": [
+                "Specific actionable item 1",
+                "Specific actionable item 2",
+                "Specific actionable item 3"
+            ],
+            "acceptance_criteria": [
+                "Clear criteria for task completion",
+                "Measurable outcomes expected"
+            ],
+            "considerations": [
+                "Important factors to consider",
+                "Potential dependencies or blockers"
+            ],
+            "estimated_duration": "rough time estimate (e.g., '2-4 hours', '1-2 days')",
+            "skill_requirements": ["skill1", "skill2"],
+            "priority_suggestion": "low|medium|high|urgent"
+        }}
+        """
+        
+        response = model.generate_content(prompt)
+        if response:
+            response_text = response.text.strip()
+            
+            # Handle code block formatting
+            if "```json" in response_text:
+                response_text = response_text.split("```json")[1].split("```")[0].strip()
+            elif "```" in response_text:
+                response_text = response_text.split("```")[1].strip()
+            
+            # Try to find JSON in the response
+            json_start = response_text.find('{')
+            json_end = response_text.rfind('}')
+            
+            if json_start != -1 and json_end != -1 and json_end > json_start:
+                response_text = response_text[json_start:json_end + 1]
+            
+            try:
+                return json.loads(response_text)
+            except json.JSONDecodeError as e:
+                logger.error(f"Error parsing JSON response: {str(e)}")
+                return None
+        return None
+    except Exception as e:
+        logger.error(f"Error enhancing task description: {str(e)}")
+        return None

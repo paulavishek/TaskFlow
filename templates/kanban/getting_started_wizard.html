@@ -1,0 +1,639 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Getting Started - TaskFlow{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Wizard-specific styles */
+.wizard-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.wizard-step {
+    display: none;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease-in-out;
+}
+
+.wizard-step.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.wizard-progress {
+    height: 8px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.wizard-progress-bar {
+    height: 100%;
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    transition: width 0.5s ease-in-out;
+    border-radius: 4px;
+}
+
+.wizard-nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.welcome-illustration {
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.welcome-illustration i {
+    font-size: 4rem;
+    color: #007bff;
+    margin-bottom: 1rem;
+}
+
+.feature-highlight {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.ai-showcase {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    color: white;
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.step-counter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #007bff;
+    color: white;
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
+.board-preview {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    background: #f8f9fa;
+}
+
+.board-preview.ai-enhanced {
+    border-color: #007bff;
+    background: linear-gradient(145deg, #e3f2fd, #f8f9fa);
+}
+
+.task-preview {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.success-animation {
+    text-align: center;
+    padding: 2rem;
+}
+
+.success-animation i {
+    font-size: 5rem;
+    color: #28a745;
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-20px);
+    }
+    60% {
+        transform: translateY(-10px);
+    }
+}
+
+.btn-wizard-primary {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 25px;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-wizard-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+}
+
+.ai-glow {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border: none;
+    color: white;
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+    }
+    to {
+        box-shadow: 0 0 30px rgba(102, 126, 234, 0.8);
+    }
+}
+
+.loading-spinner {
+    display: none;
+    margin: 0 0.5rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Add Skip Tutorial button to navbar -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add Skip Tutorial button to the navbar
+    const navbar = document.querySelector('.navbar-nav.me-auto');
+    if (navbar) {
+        const skipBtn = document.createElement('li');
+        skipBtn.className = 'nav-item';
+        skipBtn.innerHTML = `
+            <a class="nav-link text-warning fw-bold" href="{% url 'complete_wizard' %}" onclick="return confirmSkip()" style="border: 1px solid #ffc107; border-radius: 20px; padding: 0.3rem 1rem; margin-left: 1rem;">
+                <i class="fas fa-forward me-1"></i> Skip Tutorial
+            </a>
+        `;
+        navbar.appendChild(skipBtn);
+    }
+});
+</script>
+
+<div class="wizard-container">
+    <!-- Progress Bar -->
+    <div class="wizard-progress">
+        <div class="wizard-progress-bar" id="wizard-progress" style="width: 25%;"></div>
+    </div>
+
+    <!-- Step 1: Personal Welcome -->
+    <div class="wizard-step active" id="step-1">
+        <div class="card shadow-lg border-0">
+            <div class="card-body text-center">                <div class="welcome-illustration">
+                    <i class="fas fa-hand-wave"></i>
+                    {% if is_repeat_visitor %}
+                        <h1 class="display-4 mb-3">Welcome back, {{ user.first_name|default:user.username }}!</h1>
+                        <p class="lead text-muted">Let's refresh your knowledge and explore TaskFlow's features again.</p>
+                    {% else %}
+                        <h1 class="display-4 mb-3">Welcome, {{ user.first_name|default:user.username }}!</h1>
+                        <p class="lead text-muted">Let's get your first project set up in under 60 seconds.</p>
+                    {% endif %}
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="feature-highlight">
+                            <i class="fas fa-robot fa-2x mb-2"></i>
+                            <h5>AI-Powered</h5>
+                            <p class="mb-0">Smart recommendations for your workflow</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-highlight">
+                            <i class="fas fa-users fa-2x mb-2"></i>
+                            <h5>Team Collaboration</h5>
+                            <p class="mb-0">Work seamlessly with your {{ organization.name }} team</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-highlight">
+                            <i class="fas fa-chart-line fa-2x mb-2"></i>
+                            <h5>Real-time Analytics</h5>
+                            <p class="mb-0">Track progress and optimize performance</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: Create Your First Board -->
+    <div class="wizard-step" id="step-2">
+        <div class="card shadow-lg border-0">
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <span class="step-counter">2</span>
+                    <h2>Create Your First Board</h2>
+                    <p class="text-muted">First, let's create a board. Give your project a specific name, and our AI will suggest the best columns for your workflow.</p>
+                </div>
+
+                <div class="ai-showcase">
+                    <h4><i class="fas fa-magic"></i> AI-Powered Board Setup</h4>
+                    <p class="mb-0">Our AI analyzes your project type and recommends the perfect column structure!</p>
+                </div>
+
+                <form id="board-creation-form" class="mt-4">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="board-name" class="form-label">Project Name *</label>
+                                <input type="text" class="form-control form-control-lg" id="board-name" 
+                                       placeholder="e.g., Website Redesign with User Testing" required>
+                                <div class="form-text">💡 Be specific for better AI recommendations!</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">AI Recommendations</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="use-ai-columns" checked>
+                                    <label class="form-check-label" for="use-ai-columns">
+                                        <i class="fas fa-robot text-primary"></i> Get AI Column Suggestions
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="board-description" class="form-label">Project Description (Optional)</label>
+                        <textarea class="form-control" id="board-description" rows="3" 
+                                  placeholder="Describe your project goals and requirements..."></textarea>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-wizard-primary btn-lg ai-glow">
+                            <i class="fas fa-magic"></i> Create Board with AI
+                            <div class="loading-spinner spinner-border spinner-border-sm" role="status"></div>
+                        </button>
+                    </div>
+                </form>                <div id="board-creation-result" class="mt-4" style="display: none;">
+                    <div class="board-preview ai-enhanced">
+                        <h5><i class="fas fa-check-circle text-success"></i> Board Created Successfully!</h5>
+                        <p id="board-name-display" class="mb-2"></p>
+                        <div id="ai-columns-display"></div>
+                        <div class="text-center mt-3">
+                            <button type="button" class="btn btn-success btn-lg" onclick="nextStep()">
+                                <i class="fas fa-arrow-right"></i> Continue to Add Task
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3: Add Your First Task -->
+    <div class="wizard-step" id="step-3">
+        <div class="card shadow-lg border-0">
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <span class="step-counter">3</span>
+                    <h2>Add Your First Task</h2>
+                    <p class="text-muted">Great! Now add your first task. Just type a title, and our AI assistant can write a detailed description and checklist for you.</p>
+                </div>
+
+                <div class="ai-showcase">
+                    <h4><i class="fas fa-brain"></i> AI Task Enhancement</h4>
+                    <p class="mb-0">Let AI generate detailed descriptions, checklists, and requirements for your tasks!</p>
+                </div>
+
+                <form id="task-creation-form" class="mt-4">
+                    {% csrf_token %}
+                    <input type="hidden" id="task-board-id" value="">
+                    
+                    <div class="mb-3">
+                        <label for="task-title" class="form-label">Task Title *</label>
+                        <input type="text" class="form-control form-control-lg" id="task-title" 
+                               placeholder="e.g., Design homepage mockup" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="task-description" class="form-label">Task Description (Optional)</label>
+                                <textarea class="form-control" id="task-description" rows="4" 
+                                          placeholder="Leave blank to let AI generate a detailed description..."></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">AI Enhancement</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="use-ai-description" checked>
+                                    <label class="form-check-label" for="use-ai-description">
+                                        <i class="fas fa-robot text-primary"></i> Generate with AI
+                                    </label>
+                                </div>
+                                <div class="form-text">AI will create a detailed description if you leave it blank</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-wizard-primary btn-lg ai-glow">
+                            <i class="fas fa-plus"></i> Create Task with AI
+                            <div class="loading-spinner spinner-border spinner-border-sm" role="status"></div>
+                        </button>
+                    </div>
+                </form>                <div id="task-creation-result" class="mt-4" style="display: none;">
+                    <div class="task-preview">
+                        <h5><i class="fas fa-check-circle text-success"></i> Task Added Successfully!</h5>
+                        <h6 id="task-title-display" class="mb-2"></h6>
+                        <p id="task-description-display" class="text-muted"></p>
+                        <div class="text-center mt-3">
+                            <button type="button" class="btn btn-success btn-lg" onclick="nextStep()">
+                                <i class="fas fa-arrow-right"></i> Complete Setup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 4: You're All Set -->
+    <div class="wizard-step" id="step-4">
+        <div class="card shadow-lg border-0">
+            <div class="card-body">
+                <div class="success-animation">
+                    <i class="fas fa-trophy"></i>
+                    <h1 class="display-4 mt-3">You're All Set!</h1>
+                    <p class="lead text-muted">That's it! You're ready to start managing your projects with TaskFlow.</p>
+                </div>                <div class="row mt-4">
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-primary h-100">
+                            <div class="card-body text-center d-flex flex-column">
+                                <i class="fas fa-arrows-alt fa-3x text-primary mb-3"></i>
+                                <h5>Drag & Drop Tasks</h5>
+                                <p class="text-muted flex-grow-1">Move tasks between columns to track progress</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-success h-100">
+                            <div class="card-body text-center d-flex flex-column">
+                                <i class="fas fa-robot fa-3x text-success mb-3"></i>
+                                <h5>AI Assistance</h5>
+                                <p class="text-muted flex-grow-1">Use AI features for smart recommendations and insights</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <p class="text-muted mb-4">Ready to explore your new board?</p>
+                    <form method="post" action="{% url 'complete_wizard' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-wizard-primary btn-lg">
+                            <i class="fas fa-rocket"></i> Go to My Dashboard
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="wizard-nav-buttons">
+        <button type="button" class="btn btn-outline-secondary" id="prev-btn" onclick="previousStep()" style="display: none;">
+            <i class="fas fa-chevron-left"></i> Previous
+        </button>
+        <div class="text-center flex-grow-1">
+            <span id="step-indicator">Step 1 of 4</span>
+        </div>
+        <button type="button" class="btn btn-primary" id="next-btn" onclick="nextStep()">
+            Next <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentStep = 1;
+const totalSteps = 4;
+let createdBoardId = null;
+
+// Initialize wizard
+document.addEventListener('DOMContentLoaded', function() {
+    updateStepDisplay();
+    
+    // Setup form handlers
+    setupBoardCreationForm();
+    setupTaskCreationForm();
+});
+
+function updateStepDisplay() {
+    // Update progress bar
+    const progress = (currentStep / totalSteps) * 100;
+    document.getElementById('wizard-progress').style.width = progress + '%';
+    
+    // Update step indicator
+    document.getElementById('step-indicator').textContent = `Step ${currentStep} of ${totalSteps}`;
+    
+    // Show/hide navigation buttons
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    
+    prevBtn.style.display = currentStep > 1 ? 'block' : 'none';
+    nextBtn.style.display = currentStep < totalSteps ? 'block' : 'none';
+    
+    // Show current step
+    document.querySelectorAll('.wizard-step').forEach((step, index) => {
+        step.classList.toggle('active', index + 1 === currentStep);
+    });
+}
+
+function nextStep() {
+    if (currentStep === 2 && !createdBoardId) {
+        alert('Please create a board first before proceeding.');
+        return;
+    }
+    
+    if (currentStep < totalSteps) {
+        currentStep++;
+        updateStepDisplay();
+    }
+}
+
+function previousStep() {
+    if (currentStep > 1) {
+        currentStep--;
+        updateStepDisplay();
+    }
+}
+
+function setupBoardCreationForm() {
+    const form = document.getElementById('board-creation-form');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const boardName = document.getElementById('board-name').value.trim();
+        const boardDescription = document.getElementById('board-description').value.trim();
+        const useAiColumns = document.getElementById('use-ai-columns').checked;
+        
+        if (!boardName) {
+            alert('Please enter a board name.');
+            return;
+        }
+        
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const spinner = submitBtn.querySelector('.loading-spinner');
+        submitBtn.disabled = true;
+        spinner.style.display = 'inline-block';
+        
+        // Create board via AJAX
+        fetch('{% url "wizard_create_board" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: new URLSearchParams({
+                'board_name': boardName,
+                'board_description': boardDescription,
+                'use_ai_columns': useAiColumns
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                createdBoardId = data.board_id;
+                document.getElementById('task-board-id').value = data.board_id;
+                
+                // Show success result
+                const resultDiv = document.getElementById('board-creation-result');
+                document.getElementById('board-name-display').textContent = `📋 ${data.board_name}`;
+                  if (useAiColumns) {
+                    document.getElementById('ai-columns-display').innerHTML = 
+                        '<small class="text-success"><i class="fas fa-magic"></i> AI-optimized columns created!</small>';
+                }
+                
+                resultDiv.style.display = 'block';
+                
+                // Success message is now shown with manual continue button
+                // No automatic timeout - user controls when to proceed
+            } else {
+                alert('Error creating board: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error creating board. Please try again.');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            spinner.style.display = 'none';
+        });
+    });
+}
+
+function setupTaskCreationForm() {
+    const form = document.getElementById('task-creation-form');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const taskTitle = document.getElementById('task-title').value.trim();
+        const taskDescription = document.getElementById('task-description').value.trim();
+        const useAiDescription = document.getElementById('use-ai-description').checked;
+        const boardId = document.getElementById('task-board-id').value;
+        
+        if (!taskTitle) {
+            alert('Please enter a task title.');
+            return;
+        }
+        
+        if (!boardId) {
+            alert('Board ID is missing. Please go back and create a board first.');
+            return;
+        }
+        
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const spinner = submitBtn.querySelector('.loading-spinner');
+        submitBtn.disabled = true;
+        spinner.style.display = 'inline-block';
+        
+        // Create task via AJAX
+        fetch('{% url "wizard_create_task" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: new URLSearchParams({
+                'board_id': boardId,
+                'task_title': taskTitle,
+                'task_description': taskDescription,
+                'use_ai_description': useAiDescription
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success result
+                const resultDiv = document.getElementById('task-creation-result');
+                document.getElementById('task-title-display').textContent = `✅ ${data.task_title}`;
+                document.getElementById('task-description-display').textContent = 
+                    data.task_description || 'Task created successfully!';
+                  resultDiv.style.display = 'block';
+                
+                // Success message is now shown with manual continue button
+                // No automatic timeout - user controls when to proceed
+            } else {
+                alert('Error creating task: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error creating task. Please try again.');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            spinner.style.display = 'none';
+        });
+    });
+}
+
+function confirmSkip() {
+    return confirm('Are you sure you want to skip the tutorial? You can always create boards and tasks from the dashboard.');
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft' && currentStep > 1) {
+        previousStep();
+    } else if (e.key === 'ArrowRight' && currentStep < totalSteps) {
+        nextStep();
+    }
+});
+</script>
+{% endblock %}
