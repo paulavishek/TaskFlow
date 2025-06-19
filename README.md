@@ -16,6 +16,9 @@ TaskFlow isn't just another project management tool - it's your **Gemini-powered
 - AI Analytics Summarization powered by advanced language understanding
 - Smart Comment Summarization through natural language processing
 - Lean Six Sigma Classification with intelligent process analysis
+- AI Resource Analysis for optimal team allocation and capacity planning
+- AI Timeline Management with critical path analysis and milestone planning
+- Meeting Transcript Analysis for automatic task extraction from documents
 
 🎯 **Core Productivity Features**
 - Drag-and-drop Kanban boards with real-time collaboration
@@ -169,7 +172,44 @@ Gemini Output: Detailed description with checklist including:
 2. Gemini recommends: Value-Added, Necessary Non-Value-Added, or Waste
 3. Use these AI-powered insights to optimize your workflow
 
-## 📋 Core Kanban Features
+### 📊 **AI Resource Analysis** *(Powered by Gemini)*
+
+**What it does:** Advanced AI-powered analysis of team resources, workload distribution, and capacity planning to optimize project allocation.
+
+**How to use it:**
+1. Navigate to the Resource Analysis section in your dashboard
+2. Click "Generate Resource Analysis"
+3. Get comprehensive insights about:
+   - Team member workload and availability
+   - Skill-based task allocation recommendations
+   - Capacity planning and bottleneck identification
+   - Optimal resource distribution strategies
+
+### ⏱️ **AI Timeline Management** *(Powered by Gemini)*
+
+**What it does:** Intelligent project timeline generation and critical path analysis using AI to predict project completion and identify dependencies.
+
+**How to use it:**
+1. Access the Timeline feature from your board
+2. Let AI analyze task dependencies and complexity
+3. Get automated timeline suggestions with:
+   - Critical path identification
+   - Milestone recommendations
+   - Risk assessment and mitigation strategies
+   - Resource scheduling optimization
+
+### 🎙️ **Meeting Transcript Analysis** *(Powered by Gemini)*
+
+**What it does:** Upload meeting transcripts and let AI extract actionable tasks, decisions, and follow-up items automatically.
+
+**How to use it:**
+1. Upload meeting transcripts (text, DOCX, or PDF files)
+2. AI processes the content and identifies:
+   - Action items and task assignments
+   - Key decisions and outcomes
+   - Follow-up requirements
+   - Priority levels for each item
+3. Automatically create tasks from extracted information
 
 ## 📋 Core Kanban Features
 
@@ -211,15 +251,16 @@ Gemini Output: Detailed description with checklist including:
 ### ⚡ Installation
 
 #### Prerequisites
-- Python 3.8 or higher
-- pip (Python package installer)
+- Python 3.8 or higher (Python 3.11+ recommended)
+- pip (Python package installer)  
 - Git (for cloning the repository)
+- Internet connection for AI features
 
 #### Step 1: Clone and Setup
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/taskflow.git
-cd taskflow
+git clone https://github.com/avishekpaul1310/TaskFlow.git
+cd TaskFlow
 
 # Create virtual environment
 python -m venv taskflow_env
@@ -241,7 +282,7 @@ cp .env.example .env
 
 # Edit .env file with your configuration:
 # - SECRET_KEY: Generate a secure secret key
-# - GEMINI_API_KEY: Get from https://makersuite.google.com/app/apikey
+# - GEMINI_API_KEY: Get from https://aistudio.google.com/app/apikey
 # - GOOGLE_OAUTH_CLIENT_ID & SECRET: (Optional) For Google login
 # - EMAIL_HOST settings: (Optional) For password reset emails
 ```
@@ -285,7 +326,7 @@ python manage.py runserver
 ### System Requirements
 - Web browser (Chrome, Firefox, Safari, Edge recommended)
 - Internet connection
-- Gemini API key for AI features (obtain from https://makersuite.google.com/app/apikey)
+- Gemini API key for AI features (obtain from [Google AI Studio](https://aistudio.google.com/app/apikey))
 - Google OAuth credentials for social login (optional but recommended)
 - SMTP email configuration for password reset functionality
 
@@ -647,14 +688,14 @@ Filter tasks intelligently by:
 - Google account (optional, but recommended for quick login)
 
 **For Administrators:**
-- Gemini AI API key (get free key at [Google AI Studio](https://makersuite.google.com/app/apikey))
+- Gemini AI API key (get free key at [Google AI Studio](https://aistudio.google.com/app/apikey))
 - Email server access (for password reset functionality)
 - Google OAuth credentials (optional, for social login)
 
 ### 🎯 AI Setup Guide (Simple!)
 
 1. **Get Your AI Key** (Free!):
-   - Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Visit [Google AI Studio](https://aistudio.google.com/app/apikey)
    - Sign in with Google account
    - Click "Create API Key"
    - Copy the key
@@ -947,7 +988,7 @@ TaskFlow prioritizes the security of your team's data and AI-powered insights.
 
 **📋 Before Reporting Issues:**
 1. Check this troubleshooting section
-2. Search existing [GitHub Issues](https://github.com/yourusername/taskflow/issues)
+2. Search existing [GitHub Issues](https://github.com/avishekpaul1310/TaskFlow/issues)
 3. Try the suggested solutions above
 4. Test with a fresh installation if possible
 
