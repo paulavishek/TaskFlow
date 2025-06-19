@@ -1,0 +1,358 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ board.name }} - AI Timeline Management{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/analytics.css' %}">
+<meta name="csrf-token" content="{{ csrf_token }}">
+<style>
+    .timeline-card {
+        transition: transform 0.2s;
+    }
+    .timeline-card:hover {
+        transform: translateY(-2px);
+    }
+    .progress-timeline {
+        height: 20px;
+        border-radius: 10px;
+        overflow: hidden;
+        background-color: #e9ecef;
+    }
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #28a745, #20c997);
+        transition: width 0.5s ease;
+    }
+    .task-timeline-item {
+        border-left: 3px solid #007bff;
+        padding-left: 15px;
+        margin-bottom: 15px;
+        position: relative;
+    }
+    .task-timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -6px;
+        top: 5px;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background-color: #007bff;
+    }
+    .overdue-item {
+        border-left-color: #dc3545;
+    }
+    .overdue-item::before {
+        background-color: #dc3545;
+    }
+    .upcoming-item {
+        border-left-color: #ffc107;
+    }
+    .upcoming-item::before {
+        background-color: #ffc107;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-chart-gantt me-2 text-success"></i>AI Timeline Management
+        </h1>
+        <p class="text-muted">{{ board.name }} - Intelligent project timeline analysis and optimization</p>
+    </div>
+    <div>
+        <a href="{% url 'board_detail' board.id %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Board
+        </a>
+    </div>
+</div>
+
+<!-- Timeline Analysis Control Panel -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow border-left-success">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="fas fa-magic me-2"></i>AI Timeline Analysis Controls
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-2">
+                        <button id="analyze-critical-path-btn" class="btn btn-success btn-block" data-board-id="{{ board.id }}">
+                            <span id="critical-path-spinner" class="spinner-border spinner-border-sm d-none me-1"></span>
+                            <i class="fas fa-route me-1"></i> Analyze Critical Path
+                        </button>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <button id="generate-timeline-btn" class="btn btn-outline-success btn-block" data-board-id="{{ board.id }}">
+                            <span id="timeline-spinner" class="spinner-border spinner-border-sm d-none me-1"></span>
+                            <i class="fas fa-clock me-1"></i> Generate Timeline
+                        </button>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <button id="predict-completion-btn" class="btn btn-info btn-block" data-board-id="{{ board.id }}">
+                            <span id="prediction-spinner" class="spinner-border spinner-border-sm d-none me-1"></span>
+                            <i class="fas fa-crystal-ball me-1"></i> Predict Completion
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Timeline Analysis Results Container -->
+<div id="timeline-results-container" class="d-none">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-line me-2"></i>Timeline Analysis Results
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div id="timeline-results-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Project Progress Overview -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-chart-pie me-2"></i>Project Progress Overview
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <h6 class="text-secondary">Overall Progress</h6>
+                        <div class="progress-timeline">
+                            <div class="progress-fill" style="width: {{ progress_percentage|floatformat:1 }}%;"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <small class="text-muted">{{ completed_hours|floatformat:0 }}h completed</small>
+                            <small class="text-muted">{{ total_estimated_hours|floatformat:0 }}h total</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <h3 class="text-info">{{ progress_percentage|floatformat:1 }}%</h3>
+                        <small class="text-muted">Complete</small>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h4 class="text-primary">{{ tasks.count }}</h4>
+                            <small class="text-muted">Total Tasks</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h4 class="text-warning">{{ overdue_tasks.count }}</h4>
+                            <small class="text-muted">Overdue Tasks</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h4 class="text-info">{{ upcoming_tasks.count }}</h4>
+                            <small class="text-muted">Due This Week</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Timeline Views -->
+<div class="row mb-4">
+    <!-- Overdue Tasks -->
+    <div class="col-md-6">
+        <div class="card timeline-card shadow h-100">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Overdue Tasks
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for task in overdue_tasks|slice:":5" %}
+                <div class="task-timeline-item overdue-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">{{ task.title }}</h6>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>Due {{ task.due_date|date:"M d, Y" }}
+                            </small>
+                            {% if task.assigned_to %}
+                            <br><small class="text-muted">
+                                <i class="fas fa-user me-1"></i>{{ task.assigned_to.first_name }} {{ task.assigned_to.last_name }}
+                            </small>
+                            {% endif %}
+                        </div>
+                        <span class="badge badge-{{ task.priority }}">{{ task.get_priority_display }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <p class="mb-0">No overdue tasks!</p>
+                </div>
+                {% endfor %}
+                
+                {% if overdue_tasks.count > 5 %}
+                <div class="text-center mt-3">
+                    <small class="text-muted">... and {{ overdue_tasks.count|add:"-5" }} more</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Upcoming Tasks -->
+    <div class="col-md-6">
+        <div class="card timeline-card shadow h-100">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-warning">
+                    <i class="fas fa-clock me-2"></i>Due This Week
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for task in upcoming_tasks|slice:":5" %}
+                <div class="task-timeline-item upcoming-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">{{ task.title }}</h6>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>Due {{ task.due_date|date:"M d, Y" }}
+                            </small>
+                            {% if task.assigned_to %}
+                            <br><small class="text-muted">
+                                <i class="fas fa-user me-1"></i>{{ task.assigned_to.first_name }} {{ task.assigned_to.last_name }}
+                            </small>
+                            {% endif %}
+                        </div>
+                        <span class="badge badge-{{ task.priority }}">{{ task.get_priority_display }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-calendar-check fa-2x mb-2"></i>
+                    <p class="mb-0">No tasks due this week</p>
+                </div>
+                {% endfor %}
+                
+                {% if upcoming_tasks.count > 5 %}
+                <div class="text-center mt-3">
+                    <small class="text-muted">... and {{ upcoming_tasks.count|add:"-5" }} more</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Timeline Metrics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card shadow h-100">
+            <div class="card-body text-center">
+                <div class="row no-gutters align-items-center">
+                    <div class="col">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Estimated Hours</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_estimated_hours|floatformat:0 }}h</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card shadow h-100">
+            <div class="card-body text-center">
+                <div class="row no-gutters align-items-center">
+                    <div class="col">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Completed Hours</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ completed_hours|floatformat:0 }}h</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card shadow h-100">
+            <div class="card-body text-center">
+                <div class="row no-gutters align-items-center">
+                    <div class="col">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">With Dates</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ tasks_with_dates.count }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card shadow h-100">
+            <div class="card-body text-center">
+                <div class="row no-gutters align-items-center">
+                    <div class="col">
+                        <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Progress Rate</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ progress_percentage|floatformat:1 }}%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Getting Started Guide -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow border-left-success">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="fas fa-lightbulb me-2"></i>AI Timeline Management Features
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-success">🎯 Analysis Capabilities</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i><strong>Critical Path Analysis:</strong> Identify tasks that affect project completion</li>
+                            <li><i class="fas fa-check text-success me-2"></i><strong>Timeline Generation:</strong> AI-powered project timeline optimization</li>
+                            <li><i class="fas fa-check text-success me-2"></i><strong>Completion Prediction:</strong> Forecast project delivery dates</li>
+                            <li><i class="fas fa-check text-success me-2"></i><strong>Risk Assessment:</strong> Identify potential timeline risks</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-info">📈 Optimization Tips</h6>
+                        <ol class="list-unstyled">
+                            <li><strong>1.</strong> Add due dates and estimated hours to all tasks</li>
+                            <li><strong>2.</strong> Define task dependencies and relationships</li>
+                            <li><strong>3.</strong> Use AI analysis to identify bottlenecks</li>
+                            <li><strong>4.</strong> Apply recommendations to optimize timeline</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/ai_timeline.js' %}"></script>
+{% endblock %}

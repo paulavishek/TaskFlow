@@ -134,6 +134,24 @@
     .quick-add-task-btn i {
         font-size: 0.9rem;
     }
+    
+    .hide-lean-features .task-label[data-category="lean"] {
+        display: none !important;
+    }
+    .hide-lean-features .lean-sigma-element {
+        display: none !important;
+    }
+    .advanced-features-header {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: #6c757d;
+    }
+    .advanced-features-item {
+        padding-left: 2rem;
+    }
+    .advanced-features-item:hover {
+        background-color: #f8f9fa;
+    }
 </style>
 {% endblock %}
 
@@ -147,12 +165,6 @@
     </div>    <div class="btn-group">
         <a href="{% url 'board_analytics' board.id %}" class="btn btn-outline-primary">
             <i class="fas fa-chart-pie me-1"></i> Analytics
-        </a>
-        <a href="{% url 'meeting_transcript_extraction' board.id %}" class="btn btn-outline-success">
-            <i class="fas fa-microphone-alt me-1"></i> Extract from Meeting
-        </a>
-        <a href="{% url 'meeting_transcript_extraction' board.id %}" class="btn btn-outline-success">
-            <i class="fas fa-microphone-alt me-1"></i> Meeting Tasks
         </a>
         <div class="btn-group">
             <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -170,11 +182,57 @@
             <li><a class="dropdown-item" href="{% url 'create_label' board.id %}">Manage Labels</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="{% url 'edit_board' board.id %}">Edit Board</a></li>
-            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#boardSettingsModal">Board Settings</a></li>            {% if board.created_by == request.user or request.user.profile.is_admin or request.user == board.organization.created_by %}
+            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#boardSettingsModal">Board Settings</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li class="dropdown-item-text">
+                <small class="text-muted"><i class="fas fa-magic me-1"></i><strong>Advanced Features</strong></small>
+            </li>
+            <li><a class="dropdown-item" href="{% url 'ai_resource_analysis' board.id %}">
+                <i class="fas fa-users-cog me-2 text-info"></i>AI Resource Analysis
+            </a></li>
+            <li><a class="dropdown-item" href="{% url 'ai_timeline_management' board.id %}">
+                <i class="fas fa-chart-gantt me-2 text-success"></i>AI Timeline Management
+            </a></li>
+            <li><a class="dropdown-item" href="{% url 'meeting_transcript_extraction' board.id %}">
+                <i class="fas fa-microphone-alt me-2 text-warning"></i>Meeting Transcript Analysis
+            </a></li>
+            <li><a class="dropdown-item" href="#" onclick="toggleLeanSixSigmaFeatures()">
+                <i class="fas fa-industry me-2 text-secondary"></i>Lean Six Sigma Tools
+            </a></li>
+            <li><hr class="dropdown-divider"></li>
+            {% if board.created_by == request.user or request.user.profile.is_admin or request.user == board.organization.created_by %}
             <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteBoardModal">Delete Board</a></li>
             {% endif %}
         </ul>
     </div>
+</div>
+
+<!-- Advanced Features Notification -->
+<div class="alert alert-info alert-dismissible fade show" role="alert" id="advanced-features-alert">
+    <div class="d-flex align-items-center">
+        <i class="fas fa-magic fa-2x me-3 text-info"></i>
+        <div>
+            <h6 class="alert-heading mb-1">
+                <i class="fas fa-sparkles me-1"></i>Advanced AI Features Now Available!
+            </h6>
+            <p class="mb-2">
+                We've reorganized our AI-powered features into an <strong>Advanced Features</strong> section. 
+                Access them through the settings dropdown (<i class="fas fa-cog"></i>) to keep your main interface clean and focused.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'ai_resource_analysis' board.id %}" class="btn btn-sm btn-outline-info">
+                    <i class="fas fa-users-cog me-1"></i>Resource Analysis
+                </a>
+                <a href="{% url 'ai_timeline_management' board.id %}" class="btn btn-sm btn-outline-success">
+                    <i class="fas fa-chart-gantt me-1"></i>Timeline Management
+                </a>
+                <a href="{% url 'meeting_transcript_extraction' board.id %}" class="btn btn-sm btn-outline-warning">
+                    <i class="fas fa-microphone-alt me-1"></i>Meeting Analysis
+                </a>
+            </div>
+        </div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 
 <!-- Search Panel -->
@@ -647,11 +705,48 @@
                 const taskTitle = this.dataset.taskTitle;
                 const deleteForm = document.getElementById('deleteTaskForm');
                 const deleteTaskTitleSpan = document.getElementById('deleteTaskTitle');
-                
-                deleteForm.action = `/tasks/${taskId}/delete/`;
+                  deleteForm.action = `/tasks/${taskId}/delete/`;
                 deleteTaskTitleSpan.textContent = taskTitle;
             });
         });
+    });
+    
+    // Lean Six Sigma Tools Toggle Function
+    function toggleLeanSixSigmaFeatures() {
+        // Show/hide Lean Six Sigma related elements
+        const leanElements = document.querySelectorAll('.lean-sigma-element, .task-label[data-category="lean"]');
+        const isHidden = document.body.classList.contains('hide-lean-features');
+        
+        if (isHidden) {
+            document.body.classList.remove('hide-lean-features');
+            leanElements.forEach(el => el.style.display = '');
+            localStorage.setItem('leanSigmaVisible', 'true');
+        } else {
+            document.body.classList.add('hide-lean-features');
+            leanElements.forEach(el => el.style.display = 'none');
+            localStorage.setItem('leanSigmaVisible', 'false');
+        }
+        
+        // Update button text or icon if needed
+        const toggleBtn = document.querySelector('[onclick="toggleLeanSixSigmaFeatures()"]');
+        if (toggleBtn) {
+            const icon = toggleBtn.querySelector('i');
+            if (isHidden) {
+                icon.className = 'fas fa-industry me-2 text-secondary';
+                toggleBtn.innerHTML = '<i class="fas fa-industry me-2 text-secondary"></i>Hide Lean Six Sigma Tools';
+            } else {
+                icon.className = 'fas fa-eye-slash me-2 text-secondary';
+                toggleBtn.innerHTML = '<i class="fas fa-eye-slash me-2 text-secondary"></i>Show Lean Six Sigma Tools';
+            }
+        }
+    }
+    
+    // Initialize Lean Six Sigma visibility on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const leanSigmaVisible = localStorage.getItem('leanSigmaVisible');
+        if (leanSigmaVisible === 'false') {
+            toggleLeanSixSigmaFeatures();
+        }
     });
 </script>
 {% endblock %}

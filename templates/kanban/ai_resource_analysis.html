@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ board.name }} - AI Resource Analysis{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/analytics.css' %}">
+<meta name="csrf-token" content="{{ csrf_token }}">
+<style>
+    .resource-card {
+        transition: transform 0.2s;
+        cursor: pointer;
+    }
+    .resource-card:hover {
+        transform: translateY(-2px);
+    }
+    .utilization-bar {
+        height: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .skill-badge {
+        font-size: 0.75rem;
+        margin: 2px;
+    }
+    .metric-card {
+        border-left: 4px solid #007bff;
+    }
+    .metric-card.warning {
+        border-left-color: #ffc107;
+    }
+    .metric-card.danger {
+        border-left-color: #dc3545;
+    }
+    .metric-card.success {
+        border-left-color: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-users-cog me-2 text-info"></i>AI Resource Analysis
+        </h1>
+        <p class="text-muted">{{ board.name }} - Advanced resource optimization and workload management</p>
+    </div>
+    <div>
+        <a href="{% url 'board_detail' board.id %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Board
+        </a>
+    </div>
+</div>
+
+<!-- Resource Analysis Control Panel -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow border-left-info">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-magic me-2"></i>AI Analysis Controls
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <button id="analyze-bottlenecks-btn" class="btn btn-warning btn-block" data-board-id="{{ board.id }}">
+                            <span id="bottlenecks-spinner" class="spinner-border spinner-border-sm d-none me-1"></span>
+                            <i class="fas fa-exclamation-triangle me-1"></i> Analyze Bottlenecks
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button id="optimize-assignments-btn" class="btn btn-success btn-block" data-board-id="{{ board.id }}">
+                            <span id="optimization-spinner" class="spinner-border spinner-border-sm d-none me-1"></span>
+                            <i class="fas fa-magic me-1"></i> Optimize Assignments
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button id="balance-workload-btn" class="btn btn-info btn-block" data-board-id="{{ board.id }}">
+                            <span id="balance-spinner" class="spinner-border spinner-border-sm d-none me-1"></span>
+                            <i class="fas fa-balance-scale me-1"></i> Balance Workload
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button id="forecast-needs-btn" class="btn btn-secondary btn-block" data-board-id="{{ board.id }}">
+                            <span id="forecast-spinner" class="spinner-border spinner-border-sm d-none me-1"></span>
+                            <i class="fas fa-chart-line me-1"></i> Forecast Needs
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analysis Results Container -->
+<div id="analysis-results-container" class="d-none">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-bar me-2"></i>Analysis Results
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div id="analysis-results-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Team Resource Overview -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-users me-2"></i>Team Resource Overview
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for member_data in workload_data %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card resource-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="card-title mb-0">
+                                        {{ member_data.user.first_name }} {{ member_data.user.last_name }}
+                                        {% if not member_data.user.first_name and not member_data.user.last_name %}
+                                            {{ member_data.user.username }}
+                                        {% endif %}
+                                    </h6>
+                                    <span class="badge badge-{% if member_data.utilization > 80 %}danger{% elif member_data.utilization > 60 %}warning{% else %}success{% endif %}">
+                                        {{ member_data.utilization|floatformat:0 }}%
+                                    </span>
+                                </div>
+                                
+                                <div class="utilization-bar bg-light mb-2">
+                                    <div class="bg-{% if member_data.utilization > 80 %}danger{% elif member_data.utilization > 60 %}warning{% else %}success{% endif %}" 
+                                         style="width: {{ member_data.utilization }}%; height: 100%;"></div>
+                                </div>
+                                
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <small class="text-muted">Total</small>
+                                        <div class="font-weight-bold">{{ member_data.total_tasks }}</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <small class="text-muted">Active</small>
+                                        <div class="font-weight-bold text-warning">{{ member_data.in_progress }}</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <small class="text-muted">Done</small>
+                                        <div class="font-weight-bold text-success">{{ member_data.completed }}</div>
+                                    </div>
+                                </div>
+                                
+                                {% if member_data.profile and member_data.profile.skills %}
+                                <div class="mt-2">
+                                    <small class="text-muted">Skills:</small>
+                                    <div class="mt-1">
+                                        {% for skill, level in member_data.profile.skills.items %}
+                                            <span class="badge badge-secondary skill-badge">{{ skill }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12">
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-users fa-3x mb-3"></i>
+                            <p>No team members found. Add members to this board to see resource analysis.</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resource Metrics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card metric-card shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Tasks</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_tasks }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tasks fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card metric-card success shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Assigned Tasks</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ assigned_tasks }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card metric-card warning shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Unassigned</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ unassigned_tasks }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-times fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card metric-card shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Team Size</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ team_members.count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Getting Started Guide -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow border-left-primary">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-lightbulb me-2"></i>Getting Started with AI Resource Analysis
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">📊 Analysis Features</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i><strong>Bottleneck Analysis:</strong> Identify resource constraints and overutilization</li>
+                            <li><i class="fas fa-check text-success me-2"></i><strong>Assignment Optimization:</strong> AI-powered task assignment recommendations</li>
+                            <li><i class="fas fa-check text-success me-2"></i><strong>Workload Balancing:</strong> Distribute work evenly across team members</li>
+                            <li><i class="fas fa-check text-success me-2"></i><strong>Resource Forecasting:</strong> Predict future resource needs</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-info">🚀 How to Use</h6>
+                        <ol class="list-unstyled">
+                            <li><strong>1.</strong> Ensure team members have updated skill profiles</li>
+                            <li><strong>2.</strong> Assign tasks with estimated hours and skill requirements</li>
+                            <li><strong>3.</strong> Use the analysis buttons above to get AI insights</li>
+                            <li><strong>4.</strong> Apply the AI recommendations to optimize your workflow</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/ai_resource_analysis.js' %}"></script>
+{% endblock %}

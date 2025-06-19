@@ -56,127 +56,7 @@
     </div>
 </div>
 
-<!-- AI Workflow Optimization Section -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow border-left-warning">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-warning">
-                    <i class="fas fa-cogs me-2"></i>Workflow Optimization
-                </h6>
-                <button id="analyze-workflow-btn" class="btn btn-sm btn-warning" data-board-id="{{ board.id }}">
-                    <span id="workflow-ai-spinner" class="spinner-border spinner-border-sm d-none me-1" role="status"></span>
-                    <i class="fas fa-chart-line me-1"></i> Analyze Workflow
-                </button>
-            </div>
-            <div class="card-body">
-                <div id="workflow-optimization-container" class="d-none">
-                    <div id="workflow-optimization-content"></div>
-                </div>
-                <div id="workflow-optimization-placeholder" class="text-center py-4">
-                    <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
-                    <p class="text-muted mb-0">Click "Analyze Workflow" to get AI-powered optimization recommendations</p>
-                    <small class="text-muted">AI will identify bottlenecks, workload imbalances, and suggest process improvements</small>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- AI-Enhanced Timeline & Critical Path Analysis Section -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow border-left-success">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-success">
-                    <i class="fas fa-chart-gantt me-2"></i>AI-Powered Timeline Analysis
-                </h6>
-                <div class="btn-group" role="group">
-                    <button id="analyze-critical-path-btn" class="btn btn-sm btn-success" data-board-id="{{ board.id }}">
-                        <span id="critical-path-spinner" class="spinner-border spinner-border-sm d-none me-1" role="status"></span>
-                        <i class="fas fa-route me-1"></i> Critical Path
-                    </button>
-                    <button id="generate-timeline-btn" class="btn btn-sm btn-outline-success" data-board-id="{{ board.id }}">
-                        <span id="timeline-spinner" class="spinner-border spinner-border-sm d-none me-1" role="status"></span>
-                        <i class="fas fa-clock me-1"></i> Timeline View
-                    </button>
-                </div>
-            </div>
-            <div class="card-body">
-                <!-- Critical Path Analysis Results -->
-                <div id="critical-path-container" class="d-none mb-4">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <h6 class="text-success mb-3"><i class="fas fa-route me-2"></i>Critical Path Analysis</h6>
-                            <div id="critical-path-content"></div>
-                        </div>
-                        <div class="col-md-4">
-                            <h6 class="text-info mb-3"><i class="fas fa-clock me-2"></i>Project Timeline</h6>
-                            <div id="project-insights-content"></div>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="row">
-                        <div class="col-12">
-                            <h6 class="text-warning mb-3"><i class="fas fa-exclamation-triangle me-2"></i>Schedule Recommendations</h6>
-                            <div id="schedule-recommendations-content"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Timeline View Results -->
-                <div id="timeline-container" class="d-none mb-4">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-primary mb-3"><i class="fas fa-tasks me-2"></i>Project Phases</h6>
-                            <div id="timeline-phases-content"></div>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-secondary mb-3"><i class="fas fa-users me-2"></i>Resource Timeline</h6>
-                            <div id="resource-timeline-content"></div>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="row">
-                        <div class="col-12">
-                            <h6 class="text-info mb-3"><i class="fas fa-flag me-2"></i>Critical Milestones</h6>
-                            <div id="milestones-content"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Placeholder when no analysis is done -->
-                <div id="timeline-analysis-placeholder" class="text-center py-5">
-                    <i class="fas fa-chart-gantt fa-4x text-muted mb-3"></i>
-                    <h5 class="text-muted mb-3">AI-Enhanced Timeline Analysis</h5>
-                    <p class="text-muted mb-2">Transform your Kanban board into intelligent Gantt-like insights</p>
-                    <div class="row justify-content-center">
-                        <div class="col-md-8">
-                            <div class="row text-start">
-                                <div class="col-md-6">
-                                    <ul class="list-unstyled small text-muted">
-                                        <li><i class="fas fa-check text-success me-2"></i>Critical Path Identification</li>
-                                        <li><i class="fas fa-check text-success me-2"></i>Slack Time Calculation</li>
-                                        <li><i class="fas fa-check text-success me-2"></i>Schedule Risk Assessment</li>
-                                    </ul>
-                                </div>
-                                <div class="col-md-6">
-                                    <ul class="list-unstyled small text-muted">
-                                        <li><i class="fas fa-check text-success me-2"></i>Resource Bottleneck Detection</li>
-                                        <li><i class="fas fa-check text-success me-2"></i>Milestone Tracking</li>
-                                        <li><i class="fas fa-check text-success me-2"></i>Timeline Optimization</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Analytics Overview Cards -->
+<!-- Basic Analytics Overview Cards -->
 <div class="row mb-4">
     <!-- Total Tasks Card -->
     <div class="col-xl-3 col-md-6 mb-4">
@@ -304,6 +184,52 @@
             <div class="card-body">
                 <div class="chart-container" style="position: relative; height: 300px;">
                     <canvas id="leanChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Advanced Features Navigation -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow border-left-primary">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-magic me-2"></i>Advanced AI Features
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    Access our powerful AI-driven features for advanced project management and optimization.
+                </p>
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'ai_resource_analysis' board.id %}" class="btn btn-outline-info btn-block">
+                            <i class="fas fa-users-cog me-2"></i>Resource Analysis
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'ai_timeline_management' board.id %}" class="btn btn-outline-success btn-block">
+                            <i class="fas fa-chart-gantt me-2"></i>Timeline Management
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'meeting_transcript_extraction' board.id %}" class="btn btn-outline-warning btn-block">
+                            <i class="fas fa-microphone-alt me-2"></i>Meeting Analysis
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-outline-secondary btn-block" onclick="toggleLeanSixSigmaFeatures()">
+                            <i class="fas fa-industry me-2"></i>Lean Six Sigma
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        These features are also available in the board settings dropdown for quick access.
+                    </small>
                 </div>
             </div>
         </div>

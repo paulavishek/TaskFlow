@@ -1247,3 +1247,264 @@ def process_transcript_file_api(request):
     except Exception as e:
         logger.error(f"Error in process_transcript_file_api: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
+
+# AI Resource Analysis API Views
+
+@login_required
+@require_http_methods(["POST"])
+def analyze_resource_bottlenecks_api(request):
+    """
+    API endpoint to analyze resource bottlenecks using AI
+    """
+    try:
+        data = json.loads(request.body)
+        board_id = data.get('board_id')
+        
+        if not board_id:
+            return JsonResponse({'error': 'Board ID is required'}, status=400)
+        
+        board = get_object_or_404(Board, id=board_id)
+        
+        # Check if user has access to the board
+        if not (request.user in board.members.all() or 
+                board.created_by == request.user or 
+                request.user.profile.is_admin or 
+                request.user == board.organization.created_by):
+            return JsonResponse({'error': 'Access denied'}, status=403)
+        
+        from kanban.utils.ai_resource_analysis import analyze_resource_bottlenecks
+        result = analyze_resource_bottlenecks(board_id)
+        
+        if result:
+            return JsonResponse({
+                'success': True,
+                'analysis': result
+            })
+        else:
+            return JsonResponse({'error': 'Failed to analyze resource bottlenecks'}, status=500)
+            
+    except Exception as e:
+        logger.error(f"Error in analyze_resource_bottlenecks_api: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def optimize_task_assignments_api(request):
+    """
+    API endpoint to optimize task assignments using AI
+    """
+    try:
+        data = json.loads(request.body)
+        board_id = data.get('board_id')
+        task_ids = data.get('task_ids', [])
+        
+        if not board_id:
+            return JsonResponse({'error': 'Board ID is required'}, status=400)
+        
+        board = get_object_or_404(Board, id=board_id)
+        
+        # Check if user has access to the board
+        if not (request.user in board.members.all() or 
+                board.created_by == request.user or 
+                request.user.profile.is_admin or 
+                request.user == board.organization.created_by):
+            return JsonResponse({'error': 'Access denied'}, status=403)
+        
+        from kanban.utils.ai_resource_analysis import optimize_task_assignments
+        result = optimize_task_assignments(board_id, task_ids)
+        
+        if result:
+            return JsonResponse({
+                'success': True,
+                'optimization': result
+            })
+        else:
+            return JsonResponse({'error': 'Failed to optimize task assignments'}, status=500)
+            
+    except Exception as e:
+        logger.error(f"Error in optimize_task_assignments_api: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def balance_team_workload_api(request):
+    """
+    API endpoint to balance team workload using AI
+    """
+    try:
+        data = json.loads(request.body)
+        board_id = data.get('board_id')
+        
+        if not board_id:
+            return JsonResponse({'error': 'Board ID is required'}, status=400)
+        
+        board = get_object_or_404(Board, id=board_id)
+        
+        # Check if user has access to the board
+        if not (request.user in board.members.all() or 
+                board.created_by == request.user or 
+                request.user.profile.is_admin or 
+                request.user == board.organization.created_by):
+            return JsonResponse({'error': 'Access denied'}, status=403)
+        
+        from kanban.utils.ai_resource_analysis import balance_team_workload
+        result = balance_team_workload(board_id)
+        
+        if result:
+            return JsonResponse({
+                'success': True,
+                'balance_analysis': result
+            })
+        else:
+            return JsonResponse({'error': 'Failed to balance team workload'}, status=500)
+            
+    except Exception as e:
+        logger.error(f"Error in balance_team_workload_api: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def forecast_resource_needs_api(request):
+    """
+    API endpoint to forecast resource needs using AI
+    """
+    try:
+        data = json.loads(request.body)
+        board_id = data.get('board_id')
+        forecast_weeks = data.get('forecast_weeks', 4)
+        
+        if not board_id:
+            return JsonResponse({'error': 'Board ID is required'}, status=400)
+        
+        board = get_object_or_404(Board, id=board_id)
+        
+        # Check if user has access to the board
+        if not (request.user in board.members.all() or 
+                board.created_by == request.user or 
+                request.user.profile.is_admin or 
+                request.user == board.organization.created_by):
+            return JsonResponse({'error': 'Access denied'}, status=403)
+        
+        from kanban.utils.ai_resource_analysis import forecast_resource_needs
+        result = forecast_resource_needs(board_id, forecast_weeks)
+        
+        if result:
+            return JsonResponse({
+                'success': True,
+                'forecast': result
+            })
+        else:
+            return JsonResponse({'error': 'Failed to forecast resource needs'}, status=500)
+            
+    except Exception as e:
+        logger.error(f"Error in forecast_resource_needs_api: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def suggest_resource_reallocation_api(request):
+    """
+    API endpoint to suggest resource reallocation using AI
+    """
+    try:
+        data = json.loads(request.body)
+        board_id = data.get('board_id')
+        
+        if not board_id:
+            return JsonResponse({'error': 'Board ID is required'}, status=400)
+        
+        board = get_object_or_404(Board, id=board_id)
+        
+        # Check if user has access to the board
+        if not (request.user in board.members.all() or 
+                board.created_by == request.user or 
+                request.user.profile.is_admin or 
+                request.user == board.organization.created_by):
+            return JsonResponse({'error': 'Access denied'}, status=403)
+        
+        from kanban.utils.ai_resource_analysis import suggest_resource_reallocation
+        result = suggest_resource_reallocation(board_id)
+        
+        if result:
+            return JsonResponse({
+                'success': True,
+                'reallocation': result
+            })
+        else:
+            return JsonResponse({'error': 'Failed to suggest resource reallocation'}, status=500)
+            
+    except Exception as e:
+        logger.error(f"Error in suggest_resource_reallocation_api: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def team_resource_overview_api(request, board_id):
+    """
+    API endpoint to get team resource overview
+    """
+    try:
+        board = get_object_or_404(Board, id=board_id)
+        
+        # Check if user has access to the board
+        if not (request.user in board.members.all() or 
+                board.created_by == request.user or 
+                request.user.profile.is_admin or 
+                request.user == board.organization.created_by):
+            return JsonResponse({'error': 'Access denied'}, status=403)
+        
+        # Get team members and their task distribution
+        team_members = board.members.all()
+        team_overview = []
+        
+        for member in team_members:
+            tasks = Task.objects.filter(column__board=board, assigned_to=member)
+            profile = getattr(member, 'profile', None)
+            
+            member_data = {
+                'id': member.id,
+                'username': member.username,
+                'full_name': f"{member.first_name} {member.last_name}".strip(),
+                'email': member.email,
+                'total_tasks': tasks.count(),
+                'in_progress_tasks': tasks.filter(column__name__icontains='progress').count(),
+                'completed_tasks': tasks.filter(column__name__icontains='done').count(),
+                'overdue_tasks': tasks.filter(
+                    due_date__lt=timezone.now()
+                ).exclude(column__name__icontains='done').count(),
+            }
+            
+            if profile:
+                member_data.update({
+                    'skills': profile.skills if hasattr(profile, 'skills') else {},
+                    'capacity_hours': profile.capacity_hours if hasattr(profile, 'capacity_hours') else 40,
+                    'current_workload': profile.current_workload if hasattr(profile, 'current_workload') else 0,
+                    'quality_score': profile.quality_score if hasattr(profile, 'quality_score') else 0,
+                })
+            
+            team_overview.append(member_data)
+        
+        return JsonResponse({
+            'success': True,
+            'team_overview': team_overview,
+            'board_stats': {
+                'total_tasks': Task.objects.filter(column__board=board).count(),
+                'completed_tasks': Task.objects.filter(
+                    column__board=board, 
+                    column__name__icontains='done'
+                ).count(),
+                'in_progress_tasks': Task.objects.filter(
+                    column__board=board, 
+                    column__name__icontains='progress'
+                ).count(),
+            }
+        })
+            
+    except Exception as e:
+        logger.error(f"Error in team_resource_overview_api: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
