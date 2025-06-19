@@ -2,6 +2,42 @@
 
 {% block title %}Dashboard - Digital Kanban Board{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Styles for clickable metric cards */
+.metrics-card {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.metrics-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+/* Badge styles for priorities */
+.badge.priority-low {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge.priority-medium {
+    background-color: #ffc107;
+    color: black;
+}
+
+.badge.priority-high {
+    background-color: #fd7e14;
+    color: white;
+}
+
+.badge.priority-urgent {
+    background-color: #dc3545;
+    color: white;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-12">
@@ -17,7 +53,7 @@
 <!-- Analytics Cards -->
 <div class="row mb-4">
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stats-card primary shadow h-100 py-2">
+        <div class="card stats-card primary shadow h-100 py-2 metrics-card" data-bs-toggle="modal" data-bs-target="#totalTasksModal">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
@@ -33,7 +69,7 @@
     </div>
 
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stats-card success shadow h-100 py-2">
+        <div class="card stats-card success shadow h-100 py-2 metrics-card" data-bs-toggle="modal" data-bs-target="#completedTasksModal">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
@@ -46,10 +82,8 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stats-card warning shadow h-100 py-2">
+    </div>    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card warning shadow h-100 py-2 metrics-card" data-bs-toggle="modal" data-bs-target="#completionRateModal">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
@@ -62,15 +96,28 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stats-card danger shadow h-100 py-2">
+    </div>    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card danger shadow h-100 py-2 metrics-card" data-bs-toggle="modal" data-bs-target="#overdueTasksModal">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Tasks Due Soon</div>
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Overdue Tasks</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ overdue_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle stats-icon text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card info shadow h-100 py-2 metrics-card" data-bs-toggle="modal" data-bs-target="#dueSoonTasksModal">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Tasks Due Soon</div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">{{ due_soon }}</div>
+                        <small class="text-muted">Next 3 days</small>
                     </div>
                     <div class="col-auto">
                         <i class="fas fa-calendar-alt stats-icon text-gray-300"></i>
@@ -101,6 +148,97 @@
                     </div>
                 </div>
             </div>
+        </div>    </div>
+</div>
+
+<!-- My Tasks Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow mb-4">            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary me-3">
+                        <i class="fas fa-user-check me-2"></i>My Tasks
+                    </h6>
+                    <small class="text-muted">
+                        ({{ my_tasks_count }} total{% if my_tasks_count != my_tasks|length %}, showing top 8{% endif %})
+                    </small>
+                </div>
+                <div class="d-flex align-items-center">
+                    <label for="taskSortSelect" class="form-label me-2 mb-0 small text-muted">Sort by:</label>
+                    <select id="taskSortSelect" class="form-select form-select-sm" style="width: auto;" onchange="changeSortOrder(this.value)">
+                        <option value="urgency" {% if my_tasks_sort_by == 'urgency' %}selected{% endif %}>
+                            🚨 Urgency (Overdue First)
+                        </option>
+                        <option value="due_date" {% if my_tasks_sort_by == 'due_date' %}selected{% endif %}>
+                            📅 Due Date (Chronological)
+                        </option>
+                        <option value="priority" {% if my_tasks_sort_by == 'priority' %}selected{% endif %}>
+                            🔥 Priority (High to Low)
+                        </option>
+                        <option value="recent" {% if my_tasks_sort_by == 'recent' %}selected{% endif %}>
+                            🕒 Recent (Latest First)
+                        </option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if my_tasks %}
+                <div class="row">
+                    {% for task in my_tasks %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card h-100 border-left-{% if task.priority == 'urgent' %}danger{% elif task.priority == 'high' %}warning{% elif task.priority == 'medium' %}info{% else %}success{% endif %} shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="card-title mb-0">{{ task.title|truncatechars:40 }}</h6>
+                                    <span class="badge priority-{{ task.priority }}">{{ task.priority|title }}</span>
+                                </div>
+                                
+                                {% if task.description %}
+                                <p class="card-text text-muted small mb-2">{{ task.description|truncatechars:80 }}</p>
+                                {% endif %}
+                                
+                                <div class="mb-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-project-diagram me-1"></i>{{ task.column.board.name }} - {{ task.column.name }}
+                                    </small>
+                                </div>
+                                
+                                {% if task.due_date %}
+                                <div class="mb-2">
+                                    <small class="{% if task.due_date < now %}text-danger{% else %}text-muted{% endif %}">
+                                        <i class="far fa-calendar-alt me-1"></i>{{ task.due_date|date:"M d, Y" }}
+                                        {% if task.due_date < now %}<span class="badge bg-danger ms-1">Overdue</span>{% endif %}
+                                    </small>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="progress mb-2" style="height: 6px;">
+                                    <div class="progress-bar {% if task.progress < 30 %}bg-danger{% elif task.progress < 70 %}bg-warning{% else %}bg-success{% endif %}" 
+                                         role="progressbar" style="width: {{ task.progress }}%"></div>
+                                </div>
+                                <small class="text-muted">{{ task.progress }}% complete</small>
+                                
+                                <div class="text-end mt-2">
+                                    <a href="{% url 'task_detail' task.id %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    <a href="{% url 'board_detail' task.column.board.id %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-project-diagram"></i> Board
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-user-check fa-4x text-gray-300 mb-3"></i>
+                    <p class="mb-4">No tasks are currently assigned to you.</p>
+                    <p class="text-muted">Tasks assigned to you will appear here for quick access.</p>
+                </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
@@ -110,12 +248,11 @@
     <div class="col-12">
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Your Boards</h6>
-                <div>
+                <h6 class="m-0 font-weight-bold text-primary">Your Boards</h6>                <div>
                     <a href="{% url 'organization_boards' %}" class="btn btn-sm btn-outline-primary me-2">
                         <i class="fas fa-building fa-sm me-1"></i> Organization Boards
                     </a>
-                    <a href="{% url 'board_list' %}" class="btn btn-sm btn-primary">
+                    <a href="{% url 'create_board' %}" class="btn btn-sm btn-primary">
                         <i class="fas fa-plus fa-sm"></i> New Board
                     </a>
                 </div>
@@ -158,6 +295,283 @@
                     </a>
                 </div>
                 {% endif %}
+            </div>
+        </div>    </div>
+</div>
+
+<!-- Metric Detail Modals -->
+<!-- Total Tasks Modal -->
+<div class="modal fade" id="totalTasksModal" tabindex="-1" aria-labelledby="totalTasksModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="totalTasksModalLabel">All Tasks</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if all_tasks %}
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Board</th>
+                            <th>Column</th>
+                            <th>Priority</th>
+                            <th>Progress</th>
+                            <th>Assigned To</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in all_tasks %}
+                        <tr>
+                            <td>{{ task.title }}</td>
+                            <td>{{ task.column.board.name }}</td>
+                            <td>{{ task.column.name }}</td>
+                            <td><span class="badge priority-{{ task.priority }}">{{ task.priority|title }}</span></td>
+                            <td>
+                                <div class="progress" style="height: 15px;">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: {{ task.progress }}%">
+                                        <small>{{ task.progress }}%</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ task.assigned_to.username|default:"Unassigned" }}</td>
+                            <td>
+                                <a href="{% url 'task_detail' task.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                    <p class="lead">No tasks found!</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Completed Tasks Modal -->
+<div class="modal fade" id="completedTasksModal" tabindex="-1" aria-labelledby="completedTasksModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="completedTasksModalLabel">Completed Tasks</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if completed_tasks %}
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Board</th>
+                            <th>Priority</th>
+                            <th>Completed On</th>
+                            <th>Assigned To</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in completed_tasks %}
+                        <tr>
+                            <td>{{ task.title }}</td>
+                            <td>{{ task.column.board.name }}</td>
+                            <td><span class="badge priority-{{ task.priority }}">{{ task.priority|title }}</span></td>
+                            <td>{{ task.updated_at|date:"M d, Y" }}</td>
+                            <td>{{ task.assigned_to.username|default:"Unassigned" }}</td>
+                            <td>
+                                <a href="{% url 'task_detail' task.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-check-circle fa-3x text-muted mb-3"></i>
+                    <p class="lead">No completed tasks yet!</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Completion Rate Modal -->
+<div class="modal fade" id="completionRateModal" tabindex="-1" aria-labelledby="completionRateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="completionRateModalLabel">Task Completion Overview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-success bg-opacity-10">
+                            <div class="card-body text-center">
+                                <h3 class="text-success">{{ completed_count }}</h3>
+                                <p>Completed Tasks</p>
+                            </div>
+                        </div>
+                    </div>                    <div class="col-md-6">
+                        <div class="card bg-primary bg-opacity-10">
+                            <div class="card-body text-center">
+                                <h3 class="text-primary">{{ remaining_tasks }}</h3>
+                                <p>Remaining Tasks</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="progress mb-3" style="height: 30px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ completion_rate }}%">
+                        {{ completion_rate }}% Complete
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <h4>Overall Completion Rate: {{ completion_rate }}%</h4>
+                    {% if completion_rate >= 80 %}
+                    <p class="text-success"><i class="fas fa-check-circle"></i> Excellent progress! Keep up the great work!</p>
+                    {% elif completion_rate >= 60 %}
+                    <p class="text-warning"><i class="fas fa-clock"></i> Good progress, but there's room for improvement.</p>
+                    {% else %}
+                    <p class="text-danger"><i class="fas fa-exclamation-triangle"></i> Consider focusing on completing more tasks.</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overdue Tasks Modal -->
+<div class="modal fade" id="overdueTasksModal" tabindex="-1" aria-labelledby="overdueTasksModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="overdueTasksModalLabel">Overdue Tasks</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if overdue_tasks %}
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Board</th>
+                            <th>Due Date</th>
+                            <th>Days Overdue</th>
+                            <th>Priority</th>
+                            <th>Assigned To</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in overdue_tasks %}
+                        <tr>
+                            <td>{{ task.title }}</td>
+                            <td>{{ task.column.board.name }}</td>
+                            <td class="text-danger">{{ task.due_date|date:"M d, Y" }}</td>
+                            <td>
+                                <span class="badge bg-danger">{{ task.due_date|timesince }} ago</span>
+                            </td>
+                            <td><span class="badge priority-{{ task.priority }}">{{ task.priority|title }}</span></td>
+                            <td>{{ task.assigned_to.username|default:"Unassigned" }}</td>
+                            <td>
+                                <a href="{% url 'task_detail' task.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <p class="lead">No overdue tasks!</p>
+                    <p class="text-muted">Great job staying on top of deadlines!</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Due Soon Tasks Modal -->
+<div class="modal fade" id="dueSoonTasksModal" tabindex="-1" aria-labelledby="dueSoonTasksModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="dueSoonTasksModalLabel">Tasks Due Soon</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if due_soon_tasks %}
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Board</th>
+                            <th>Due Date</th>
+                            <th>Days Remaining</th>
+                            <th>Priority</th>
+                            <th>Progress</th>
+                            <th>Assigned To</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in due_soon_tasks %}
+                        <tr>
+                            <td>{{ task.title }}</td>
+                            <td>{{ task.column.board.name }}</td>
+                            <td>{{ task.due_date|date:"M d, Y" }}</td>
+                            <td>
+                                <span class="badge bg-warning">{{ task.due_date|timeuntil }}</span>
+                            </td>
+                            <td><span class="badge priority-{{ task.priority }}">{{ task.priority|title }}</span></td>
+                            <td>
+                                <div class="progress" style="height: 15px;">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: {{ task.progress }}%">
+                                        <small>{{ task.progress }}%</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ task.assigned_to.username|default:"Unassigned" }}</td>
+                            <td>
+                                <a href="{% url 'task_detail' task.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-calendar-check fa-3x text-muted mb-3"></i>
+                    <p class="lead">No tasks due soon!</p>
+                    <p class="text-muted">You're ahead of schedule!</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -261,9 +675,120 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>            </div>        </div>    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<!-- Analytics CSS for clickable metric cards -->
+<link rel="stylesheet" href="{% static 'css/analytics.css' %}">
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize metric cards to open modals when clicked
+    const metricCards = document.querySelectorAll('.metrics-card');
+    metricCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const targetModal = this.getAttribute('data-bs-target');
+            const modalElement = document.querySelector(targetModal);
+            if (modalElement) {
+                const modalInstance = new bootstrap.Modal(modalElement);
+                modalInstance.show();
+            }
+        });
+    });
+    
+    // Enhanced modal cleanup for proper scrolling restoration
+    const allModals = document.querySelectorAll('.modal');
+    allModals.forEach(modal => {
+        // Handle modal hide events
+        modal.addEventListener('hidden.bs.modal', function () {
+            // Ensure body can scroll again
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+            
+            // Remove any orphaned backdrops
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                backdrop.remove();
+            });
+            
+            // Remove aria-hidden and restore focus
+            this.setAttribute('aria-hidden', 'true');
+            document.body.focus();
+        });
+        
+        // Handle modal shown events
+        modal.addEventListener('shown.bs.modal', function () {
+            // Ensure modal is properly visible
+            this.removeAttribute('aria-hidden');
+        });
+    });
+    
+    // Additional cleanup for close buttons
+    document.querySelectorAll('.modal button[data-bs-dismiss="modal"]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) {
+                const modalInstance = bootstrap.Modal.getInstance(modal);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }
+        });
+    });
+    
+    // Global escape key handler for better modal management
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            const openModal = document.querySelector('.modal.show');
+            if (openModal) {
+                const modalInstance = bootstrap.Modal.getInstance(openModal);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }
+        }
+    });
+    
+    // Fix any existing modal state issues on page load
+    setTimeout(function() {
+        // Ensure no modal backdrops are left over
+        document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+            backdrop.remove();
+        });
+        
+    // Ensure body can scroll
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    }, 100);
+});
+
+// Function to handle task sorting preference change
+function changeSortOrder(sortBy) {
+    // Get current URL and update the sort parameter
+    const url = new URL(window.location);
+    url.searchParams.set('sort_tasks', sortBy);
+    
+    // Add a subtle loading indication
+    const selectElement = document.getElementById('taskSortSelect');
+    const originalHtml = selectElement.innerHTML;
+    selectElement.disabled = true;
+    
+    // Show loading state briefly
+    const loadingText = document.createElement('option');
+    loadingText.value = '';
+    loadingText.textContent = '🔄 Updating...';
+    loadingText.selected = true;
+    selectElement.innerHTML = '';
+    selectElement.appendChild(loadingText);
+    
+    // Redirect to update the page with new sort order
+    setTimeout(() => {
+        window.location.href = url.toString();
+    }, 300);
+}
+</script>
 {% endblock %}

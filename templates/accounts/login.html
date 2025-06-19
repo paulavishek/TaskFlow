@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
+{% load socialaccount %}
 
 {% block title %}Login - Digital Kanban Board{% endblock %}
 
@@ -11,9 +12,85 @@
                 <h4 class="mb-0">Login</h4>
             </div>
             <div class="card-body">
+                <!-- Google OAuth Login -->
+                <div class="d-grid gap-2 mb-4">
+                    {% get_providers as socialaccount_providers %}
+                    {% if socialaccount_providers %}
+                        {% for provider in socialaccount_providers %}
+                            {% if provider.id == "google" %}
+                                <a href="{% provider_login_url provider.id %}" class="btn btn-danger btn-lg">
+                                    <i class="fab fa-google me-2"></i>
+                                    Sign in with Google
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="row">
+                    <div class="col">
+                        <hr>
+                    </div>
+                    <div class="col-auto">
+                        <span class="text-muted">or</span>
+                    </div>
+                    <div class="col">
+                        <hr>
+                    </div>
+                </div>
+                
+                <!-- Traditional Login Form -->
                 <form method="post">
                     {% csrf_token %}
-                    {{ form|crispy }}
+                    
+                    <!-- Username Field -->
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">Username</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <div class="text-danger">
+                                {% for error in form.username.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Password Field with Toggle -->
+                    <div class="mb-3">
+                        <label for="id_password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <input type="password" 
+                                   class="form-control" 
+                                   name="password" 
+                                   id="password-field" 
+                                   placeholder="Password" 
+                                   required>
+                            <button class="btn btn-outline-secondary" 
+                                    type="button" 
+                                    id="toggle-password"
+                                    title="Show/Hide Password">
+                                <i class="fas fa-eye" id="password-toggle-icon"></i>
+                            </button>
+                        </div>
+                        {% if form.password.errors %}
+                            <div class="text-danger">
+                                {% for error in form.password.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Non-field errors -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
                     <div class="d-grid gap-2 mt-4">
                         <button type="submit" class="btn btn-primary">Login</button>
                     </div>
@@ -21,9 +98,43 @@
                 <hr>
                 <div class="text-center">
                     <p>Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
+                    <p><a href="{% url 'password_reset' %}">Forgot your password?</a></p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Password Toggle JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const togglePassword = document.getElementById('toggle-password');
+    const passwordField = document.getElementById('password-field');
+    const toggleIcon = document.getElementById('password-toggle-icon');
+    
+    if (togglePassword && passwordField && toggleIcon) {
+        togglePassword.addEventListener('click', function() {
+            // Toggle password visibility
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            
+            // Toggle icon
+            if (type === 'text') {
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+                togglePassword.setAttribute('title', 'Hide Password');
+            } else {
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+                togglePassword.setAttribute('title', 'Show Password');
+            }
+        });
+        
+        // Prevent form submission when clicking the toggle button
+        togglePassword.addEventListener('click', function(e) {
+            e.preventDefault();
+        });
+    }
+});
+</script>
 {% endblock %}

@@ -1,5 +1,92 @@
 /* Analytics specific styles */
 
+/* Animations */
+@keyframes pulseValueInline {
+    0%, 100% { 
+        transform: scale(1.1) !important; 
+        opacity: 1 !important;
+    }
+    50% { 
+        transform: scale(1.2) !important; 
+        opacity: 0.9 !important;
+    }
+}
+
+/* AI Summary Styles */
+.ai-summary-content {
+    background-color: #f8f9fc;
+    border: 1px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 20px;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.ai-summary-content h1, .ai-summary-content h2, .ai-summary-content h3,
+.ai-summary-content h4, .ai-summary-content h5, .ai-summary-content h6 {
+    color: #5a5c69;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.ai-summary-content h1:first-child, .ai-summary-content h2:first-child,
+.ai-summary-content h3:first-child, .ai-summary-content h4:first-child,
+.ai-summary-content h5:first-child, .ai-summary-content h6:first-child {
+    margin-top: 0;
+}
+
+.ai-summary-content ul, .ai-summary-content ol {
+    margin-bottom: 15px;
+    padding-left: 20px;
+}
+
+.ai-summary-content li {
+    margin-bottom: 5px;
+}
+
+.ai-summary-content strong {
+    color: #2c3e50;
+}
+
+.ai-summary-content p {
+    margin-bottom: 12px;
+}
+
+#generate-ai-summary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* AI Timeline Analysis Styles */
+.critical-path-tasks {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.timeline-phase-card {
+    transition: all 0.3s ease;
+}
+
+.timeline-phase-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.resource-utilization-bar {
+    height: 4px;
+    border-radius: 2px;
+    background-color: #e9ecef;
+    overflow: hidden;
+}
+
+.milestone-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
 /* Progress bar styling */
 .task-progress-bar {
     height: 10px;
@@ -17,7 +104,660 @@
     background-color: #28a745;
 }
 
-/* Progress indicator styling */
+/* Enhanced Lean Six Sigma Progress Circle */
+.lean-progress-circle {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: conic-gradient(
+        #28a745 0deg,
+        #28a745 calc(var(--progress-value) * 3.6deg),
+        #f8f9fa calc(var(--progress-value) * 3.6deg),
+        #f8f9fa 360deg
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    box-shadow: 0 8px 32px rgba(40, 167, 69, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.lean-progress-circle::before {
+    content: '';
+    position: absolute;
+    inset: 12px;
+    border-radius: 50%;
+    background: white;
+    z-index: 1;
+}
+
+.progress-inner {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+}
+
+.progress-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #28a745;
+    line-height: 1;
+}
+
+.progress-label {
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+/* Process Flow Visualization */
+.process-flow {
+    background: linear-gradient(135deg, #f0f4f8 0%, #ffffff 100%);
+    border-radius: 16px;
+    padding: 32px;
+    height: 100%;
+    border: 1px solid #e1e8ed;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.process-flow::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 50%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+.process-flow:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.process-flow h6 {
+    color: #2c3e50;
+    font-weight: 700;
+    margin-bottom: 32px;
+    font-size: 18px;
+    text-align: center;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 16px;
+}
+
+.process-flow h6::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(90deg, #3498db, #5daddd);
+    border-radius: 3px;
+}
+
+.flow-item {
+    margin-bottom: 20px;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid #f1f3f4;
+    transition: all 0.3s ease;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.flow-item:last-child {
+    margin-bottom: 0;
+}
+
+.flow-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    border-color: #dee2e6;
+}
+
+.flow-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.flow-label-large {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    min-width: 70px;
+    text-align: center;
+    box-shadow: 0 3px 8px rgba(44, 62, 80, 0.3);
+}
+
+.flow-label-success {
+    background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+    box-shadow: 0 3px 8px rgba(39, 174, 96, 0.3) !important;
+}
+
+.flow-label-warning {
+    background: linear-gradient(135deg, #f39c12, #fdba4d) !important;
+    box-shadow: 0 3px 8px rgba(243, 156, 18, 0.3) !important;
+}
+
+.flow-label-danger {
+    background: linear-gradient(135deg, #e74c3c, #ff6b6b) !important;
+    box-shadow: 0 3px 8px rgba(231, 76, 60, 0.3) !important;
+}
+
+.value-added-summary {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.flow-count-large {
+    background: linear-gradient(135deg, #16a085, #1abc9c);
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 12px;
+    min-width: 50px;
+    text-align: center;
+    box-shadow: 0 3px 8px rgba(22, 160, 133, 0.3);
+}
+
+.flow-bar-container {
+    position: relative;
+    height: 28px;
+    background: #f8f9fa;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.flow-bar {
+    height: 100%;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    min-width: 50px;
+    overflow: hidden;
+}
+
+.flow-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: shimmer 3s infinite;
+}
+
+.flow-bar-success {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.3);
+}
+
+.flow-bar-warning {
+    background: linear-gradient(135deg, #f39c12, #fdba4d);
+    box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.3);
+}
+
+.flow-bar-danger {
+    background: linear-gradient(135deg, #e74c3c, #ff6b6b);
+    box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.3);
+}
+
+.flow-percentage {
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    letter-spacing: 0.3px;
+}
+
+.flow-description {
+    font-size: 13px;
+    color: #6c757d;
+    font-weight: 500;
+    text-align: center;
+    margin-top: 4px;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Responsive adjustments for flow items */
+@media (max-width: 767px) {
+    .process-flow {
+        padding: 20px;
+    }
+    
+    .flow-item-header {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+    
+    .flow-label-large,
+    .flow-count-large {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+}
+
+/* Simplified Flow Items */
+.flow-item-simple {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.flow-item-simple:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    border-color: #dee2e6;
+}
+
+.flow-badge {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 12px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.flow-badge-success {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+.flow-badge-warning {
+    background: linear-gradient(135deg, #f39c12, #fdba4d);
+    box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+}
+
+.flow-badge-danger {
+    background: linear-gradient(135deg, #e74c3c, #ff6b6b);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.flow-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.flow-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 4px;
+}
+
+.flow-subtitle {
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.flow-stats {
+    margin-top: 8px;
+}
+
+.flow-count {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: #495057;
+    line-height: 1.2;
+}
+
+.flow-percentage {
+    display: block;
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+/* Flow Summary */
+.flow-summary {
+    margin-top: 24px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.progress-stacked {
+    height: 20px;
+    background: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    width: 100%;
+}
+
+.progress-segment {
+    height: 100%;
+    transition: width 0.6s ease-in-out;
+}
+
+.progress-segment-success {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+}
+
+.progress-segment-warning {
+    background: linear-gradient(135deg, #f39c12, #fdba4d);
+}
+
+.progress-segment-danger {
+    background: linear-gradient(135deg, #e74c3c, #ff6b6b);
+}
+
+/* Chart Container Simplified */
+.chart-container-simple {
+    position: relative;
+    height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.chart-center-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.chart-center-overlay .chart-center-value {
+    font-size: 42px !important;
+    font-weight: 900 !important;
+    color: #28a745 !important;
+    line-height: 1 !important;
+    text-shadow: 0 3px 6px rgba(40, 167, 69, 0.4) !important;
+    background: linear-gradient(135deg, #28a745, #20c997) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    animation: pulseValue 2s ease-in-out infinite !important;
+    display: block !important;
+}
+
+.chart-center-overlay .chart-center-label {
+    font-size: 16px !important;
+    color: #28a745 !important;
+    font-weight: 700 !important;
+    margin-top: 8px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    text-shadow: 0 1px 2px rgba(40, 167, 69, 0.3) !important;
+}
+
+@keyframes pulseValue {
+    0%, 100% { 
+        transform: scale(1); 
+        opacity: 1;
+    }
+    50% { 
+        transform: scale(1.08); 
+        opacity: 0.9;
+    }
+}
+
+/* Efficiency Summary */
+.efficiency-summary {
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+}
+
+.efficiency-display {
+    margin: 20px 0;
+}
+
+.efficiency-score-large {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 12px;
+}
+
+.efficiency-status {
+    margin-top: 8px;
+}
+
+.efficiency-status .badge {
+    font-size: 12px;
+    padding: 6px 12px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .flow-item-simple {
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .flow-badge {
+        width: 40px;
+        height: 40px;
+        font-size: 12px;
+    }
+    
+    .flow-title {
+        font-size: 14px;
+    }
+    
+    .flow-count {
+        font-size: 20px;
+    }
+    
+    .chart-container-simple {
+        height: 200px;
+    }
+    
+    .chart-center-value {
+        font-size: 24px;
+    }
+    
+    .efficiency-score-large {
+        font-size: 28px;
+    }
+}
+
+/* Enhanced Chart Container */
+.chart-container-enhanced {
+    position: relative;
+    height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-center-info {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.total-tasks {
+    font-size: 32px;
+    font-weight: 700;
+    color: #495057;
+    line-height: 1;
+}
+
+.total-label {
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.total-sublabel {
+    font-size: 10px;
+    color: #9ca3af;
+    font-weight: 400;
+    margin-top: 2px;
+}
+
+/* Metrics Panel */
+.metrics-panel {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e9ecef;
+}
+
+.metric-item {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid #f1f3f4;
+    transition: all 0.3s ease;
+}
+
+.metric-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #dee2e6;
+}
+
+.metric-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.metric-value {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 4px 0;
+}
+
+.metric-progress .progress {
+    height: 6px;
+    border-radius: 3px;
+    background: #f1f3f4;
+}
+
+.metric-progress .progress-bar {
+    border-radius: 3px;
+}
+
+/* Efficiency Score */
+.efficiency-score {
+    background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+    border-radius: 12px;
+    padding: 20px;
+    color: white;
+    text-align: center;
+}
+
+.score-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 12px auto;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.score-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: white !important;
+}
+
+.score-description {
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+.score-description span {
+    color: white !important;
+    font-weight: 600;
+}
+
+/* Quick Actions */
+.quick-actions {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.quick-actions .btn {
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+/* Original Progress indicator styling (keeping for backward compatibility) */
 .progress-indicator {
     position: relative;
     width: 120px;
@@ -155,4 +895,242 @@
 
 .btn-info-lss:hover {
     color: #0a58ca;
+}
+
+/* Compact Flow Items for 4-column layout */
+.flow-item-compact {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    height: 100%;
+    text-align: center;
+}
+
+.flow-item-compact:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #dee2e6;
+}
+
+.flow-badge-compact {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+    margin: 0 auto 12px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.flow-content-compact {
+    text-align: center;
+}
+
+.flow-title-compact {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 4px;
+}
+
+.flow-subtitle-compact {
+    font-size: 11px;
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.flow-stats-compact {
+    margin-top: 8px;
+}
+
+.flow-count-compact {
+    display: block;
+    font-size: 20px;
+    font-weight: 700;
+    color: #495057;
+    line-height: 1.2;
+}
+
+.flow-percentage-compact {
+    display: block;
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+/* Efficiency Compact */
+.efficiency-compact {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid #e9ecef;
+    height: 100%;
+    text-align: center;
+}
+
+.efficiency-header-compact {
+    text-align: center;
+}
+
+.efficiency-title-compact {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 12px;
+}
+
+.efficiency-score-compact {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.efficiency-status-compact {
+    margin-top: 8px;
+}
+
+.badge-compact {
+    font-size: 10px;
+    padding: 4px 8px;
+}
+
+/* Wide Progress Bar */
+.flow-summary-wide {
+    margin-top: 24px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.progress-stacked-wide {
+    height: 16px;
+    background: #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    width: 100%;
+}
+
+/* Chart Container Wide */
+.chart-container-wide {
+    position: relative;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+/* Responsive adjustments for compact layout */
+@media (max-width: 992px) {
+    .flow-item-compact {
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .flow-badge-compact {
+        width: 35px;
+        height: 35px;
+        font-size: 11px;
+    }
+    
+    .flow-title-compact {
+        font-size: 13px;
+    }
+    
+    .flow-count-compact {
+        font-size: 18px;
+    }
+    
+    .efficiency-score-compact {
+        font-size: 20px;
+    }
+    
+    .chart-container-wide {
+        height: 250px;
+    }
+}
+
+@media (max-width: 768px) {
+    .flow-item-compact {
+        padding: 10px;
+    }
+    
+    .flow-badge-compact {
+        width: 30px;
+        height: 30px;
+        font-size: 10px;
+    }
+    
+    .flow-title-compact {
+        font-size: 12px;
+    }
+    
+    .flow-subtitle-compact {
+        font-size: 10px;
+    }
+    
+    .flow-count-compact {
+        font-size: 16px;
+    }
+    
+    .efficiency-score-compact {
+        font-size: 18px;
+    }
+    
+    .chart-container-wide {
+        height: 200px;
+    }
+}
+
+/* Workflow Optimization Cards */
+.border-left-danger {
+    border-left: 4px solid #dc3545 !important;
+}
+
+.border-left-warning {
+    border-left: 4px solid #ffc107 !important;
+}
+
+.border-left-info {
+    border-left: 4px solid #17a2b8 !important;
+}
+
+.border-left-success {
+    border-left: 4px solid #28a745 !important;
+}
+
+.border-left-primary {
+    border-left: 4px solid #007bff !important;
+}
+
+/* Progress bar styling for health score */
+.progress {
+    background-color: #e9ecef;
+    border-radius: 0.375rem;
+}
+
+.progress-bar {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+/* Card enhancements */
+.workflow-optimization-results .card {
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.workflow-optimization-results .card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Enhanced Drag & Drop Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Import the enhanced styles */
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .demo-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .feature-box {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+        
+        .improvement-list {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .improvement-list h4 {
+            color: #495057;
+            margin-bottom: 1rem;
+        }
+        
+        .improvement-list ul {
+            margin-bottom: 0;
+        }
+        
+        .improvement-list li {
+            margin-bottom: 0.5rem;
+            padding-left: 0.5rem;
+        }
+        
+        .improvement-list li i {
+            color: #28a745;
+            margin-right: 0.5rem;
+        }
+        
+        .demo-kanban {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            padding: 1rem;
+            min-height: 500px;
+        }
+        
+        .demo-column {
+            background: #f8f9fa;
+            border-radius: 8px;
+            min-width: 280px;
+            flex: 0 0 280px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .demo-column-header {
+            background: #e9ecef;
+            padding: 1rem;
+            border-radius: 8px 8px 0 0;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .demo-column-tasks {
+            padding: 1rem;
+            min-height: 400px;
+            position: relative;
+        }
+        
+        .demo-task {
+            background: white;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-left: 3px solid #007bff;
+        }
+        
+        .task-count {
+            background: #6c757d;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+        
+        .problem-demo {
+            border: 2px dashed #dc3545;
+            background: rgba(220, 53, 69, 0.1);
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+            text-align: center;
+        }
+        
+        .solution-demo {
+            border: 2px dashed #28a745;
+            background: rgba(40, 167, 69, 0.1);
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 mx-auto text-center">
+                    <h1><i class="fas fa-magic me-2"></i>TaskFlow Enhanced Drag & Drop</h1>
+                    <p class="lead">Solving the Kanban Column Height Problem</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="feature-box">
+                    <h3><i class="fas fa-bug text-danger me-2"></i>The Problem You Described</h3>
+                    <p>When a Kanban column becomes much longer than other columns (like your "Backlog" column), it becomes nearly impossible to drag tasks from the bottom of the long column to shorter columns (like "Review") because:</p>
+                    <ul>
+                        <li>There's no drop zone available at the same vertical level</li>
+                        <li>You can't scroll while holding a dragged task</li>
+                        <li>The shorter columns don't provide enough space to drop tasks</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="problem-demo">
+            <h4><i class="fas fa-exclamation-triangle text-danger me-2"></i>Before: The Problem</h4>
+            <div class="demo-kanban">
+                <div class="demo-column">
+                    <div class="demo-column-header">
+                        <span>Backlog</span>
+                        <span class="task-count">8</span>
+                    </div>
+                    <div class="demo-column-tasks" style="height: 600px;">
+                        <div class="demo-task">Task 1</div>
+                        <div class="demo-task">Task 2</div>
+                        <div class="demo-task">Task 3</div>
+                        <div class="demo-task">Task 4</div>
+                        <div class="demo-task">Task 5</div>
+                        <div class="demo-task">Task 6</div>
+                        <div class="demo-task">Task 7</div>
+                        <div class="demo-task" style="border-left-color: #dc3545;">Task 8 - Can't move this!</div>
+                    </div>
+                </div>
+                <div class="demo-column">
+                    <div class="demo-column-header">
+                        <span>Review</span>
+                        <span class="task-count">0</span>
+                    </div>
+                    <div class="demo-column-tasks" style="height: 200px;">
+                        <p class="text-muted text-center">Empty - no drop zone for bottom tasks!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="improvement-list">
+            <h4><i class="fas fa-tools me-2"></i>Our Enhanced Solutions</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check"></i><strong>Equal Column Heights:</strong> All columns now have consistent minimum heights</li>
+                        <li><i class="fas fa-check"></i><strong>Auto-Scroll:</strong> Page scrolls automatically when dragging near edges</li>
+                        <li><i class="fas fa-check"></i><strong>Extended Drop Zones:</strong> Columns expand during drag operations</li>
+                        <li><i class="fas fa-check"></i><strong>Visual Indicators:</strong> Clear drop zone highlights and scroll indicators</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check"></i><strong>Smart Positioning:</strong> Tasks drop at the exact position you intend</li>
+                        <li><i class="fas fa-check"></i><strong>Keyboard Support:</strong> Arrow keys for accessibility (Left/Right to move between columns)</li>
+                        <li><i class="fas fa-check"></i><strong>Mobile Optimized:</strong> Touch-friendly on mobile devices</li>
+                        <li><i class="fas fa-check"></i><strong>Smooth Animations:</strong> Enhanced visual feedback</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="solution-demo">
+            <h4><i class="fas fa-check-circle text-success me-2"></i>After: The Solution</h4>
+            <div class="demo-kanban">
+                <div class="demo-column">
+                    <div class="demo-column-header">
+                        <span>Backlog</span>
+                        <span class="task-count">7</span>
+                    </div>
+                    <div class="demo-column-tasks" style="height: 450px;">
+                        <div class="demo-task">Task 1</div>
+                        <div class="demo-task">Task 2</div>
+                        <div class="demo-task">Task 3</div>
+                        <div class="demo-task">Task 4</div>
+                        <div class="demo-task">Task 5</div>
+                        <div class="demo-task">Task 6</div>
+                        <div class="demo-task">Task 7</div>
+                    </div>
+                </div>
+                <div class="demo-column">
+                    <div class="demo-column-header">
+                        <span>Review</span>
+                        <span class="task-count">1</span>
+                    </div>
+                    <div class="demo-column-tasks" style="height: 450px; border: 2px dashed #28a745; background: rgba(40, 167, 69, 0.1);">
+                        <div class="demo-task" style="border-left-color: #28a745;">Task 8 - Successfully moved!</div>
+                        <div class="text-center text-muted mt-4">
+                            <i class="fas fa-plus fa-2x"></i>
+                            <p>Now has equal height & drop zone</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="feature-box">
+                    <h5><i class="fas fa-arrows-alt text-primary me-2"></i>Auto-Scroll Feature</h5>
+                    <p>When dragging tasks, the page automatically scrolls if you move your mouse near the top or bottom edges. Visual indicators show scroll direction.</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="feature-box">
+                    <h5><i class="fas fa-expand-arrows-alt text-primary me-2"></i>Dynamic Drop Zones</h5>
+                    <p>Short columns temporarily expand during drag operations, providing ample space to drop tasks from long columns.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="feature-box">
+                    <h5><i class="fas fa-keyboard text-primary me-2"></i>Keyboard Navigation</h5>
+                    <p>Press Tab to focus tasks, then use arrow keys to move between columns. Perfect for accessibility and power users.</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="feature-box">
+                    <h5><i class="fas fa-mobile-alt text-primary me-2"></i>Mobile Optimized</h5>
+                    <p>Enhanced touch targets and responsive design ensure smooth drag-and-drop on mobile devices.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-info mt-4">
+            <h5><i class="fas fa-lightbulb me-2"></i>Key Improvements Summary</h5>
+            <p class="mb-0">These enhancements solve your exact problem: <strong>you can now easily move tasks from the bottom of long columns to any other column</strong>, regardless of height differences. The interface provides multiple ways to accomplish this task, from improved drag-and-drop to keyboard shortcuts.</p>
+        </div>
+
+        <div class="text-center mt-4 mb-5">
+            <a href="/boards/" class="btn btn-primary btn-lg">
+                <i class="fas fa-arrow-right me-2"></i>Try the Enhanced Kanban Board
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/bootstrap.bundle.min.js"></script>
+</body>
+</html>

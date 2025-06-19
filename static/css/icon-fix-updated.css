@@ -1,0 +1,124 @@
+/* Icon visibility and alignment fixes */
+.feature-icon {
+    color: white !important; /* Ensure text is white for better contrast */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); /* Add subtle text shadow for better readability */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Enhanced shadow for better depth */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+/* Make icons consistently sized and positioned */
+.feature-icon i {
+    font-size: 1.5rem; /* Consistent icon size */
+    filter: contrast(1.1) brightness(1.2); /* Enhance contrast and brightness */
+    line-height: 1;
+}
+
+/* Specific fixes for the Lean Six Sigma section */
+.lean-six-sigma-section .d-flex .feature-icon {
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    margin-top: 0;
+}
+
+/* Align the Why TaskFlow Exists section icons to match */
+.why-taskflow-section .feature-icon {
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin-top: 0;
+}
+
+/* Make icons in both sections the exact same size */
+.lean-six-sigma-section .feature-icon i,
+.why-taskflow-section .feature-icon i {
+    font-size: 1.25rem;
+}
+
+/* Consistent vertical alignment for all feature sections */
+.lean-six-sigma-section .d-flex,
+.why-taskflow-section .d-flex {
+    align-items: center !important;
+}
+
+/* Fix vertical alignment of icon and heading content */
+.lean-six-sigma-section .d-flex > div:last-child h5,
+.why-taskflow-section .d-flex > div:last-child h5 {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+/* Ensure all icons in colored backgrounds have good contrast */
+.bg-danger .fas, 
+.bg-success .fas,
+.bg-primary .fas,
+.bg-info .fas,
+.bg-secondary .fas {
+    color: white !important;
+}
+
+/* Special case for warning background which may be bright */
+.bg-warning .fas {
+    color: #212529 !important; /* Darker color on yellow backgrounds */
+}
+
+/* Add styles for the feature icons on cards */
+.card .feature-icon {
+    margin: 0 auto 20px;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+}
+
+/* Add hover effect to feature icons */
+.feature-icon:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Vertical alignment for text content next to icons */
+.lean-six-sigma-section .d-flex > div:last-child,
+.why-taskflow-section .d-flex > div:last-child {
+    padding-top: 0;
+}
+
+/* Consistent spacing in both sections */
+.lean-six-sigma-section .d-flex {
+    margin-bottom: 20px;
+}
+
+.lean-six-sigma-section .d-flex:last-child {
+    margin-bottom: 0;
+}
+
+/* Set consistent spacing between icon and text */
+.lean-six-sigma-section .feature-icon,
+.why-taskflow-section .feature-icon {
+    margin-right: 16px !important;
+}
+
+/* Media queries for better responsiveness */
+@media (max-width: 767px) {
+    .feature-icon {
+        min-width: 38px;
+        min-height: 38px;
+    }
+    
+    .feature-icon i {
+        font-size: 1.2rem;
+    }
+    
+    .lean-six-sigma-section .d-flex,
+    .why-taskflow-section .d-flex {
+        margin-bottom: 15px;
+    }
+}

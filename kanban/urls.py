@@ -6,8 +6,9 @@ urlpatterns = [
     path('', views.welcome, name='welcome'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('boards/', views.board_list, name='board_list'),
-    path('boards/<int:board_id>/', views.board_detail, name='board_detail'),
+    path('boards/create/', views.create_board, name='create_board'),    path('boards/<int:board_id>/', views.board_detail, name='board_detail'),
     path('boards/<int:board_id>/analytics/', views.board_analytics, name='board_analytics'),
+    path('boards/<int:board_id>/edit/', views.edit_board, name='edit_board'),
     path('boards/<int:board_id>/create-task/', views.create_task, name='create_task'),
     path('boards/<int:board_id>/columns/<int:column_id>/create-task/', views.create_task, name='create_task_in_column'),
     path('boards/<int:board_id>/create-column/', views.create_column, name='create_column'),
@@ -29,11 +30,24 @@ urlpatterns = [
     path('columns/<int:column_id>/delete/', views.delete_column, name='delete_column'),    path('boards/<int:board_id>/add-lean-labels/', views.add_lean_labels, name='add_lean_labels'),
     
     # Test page for AI features
-    path('test-ai-features/', views.test_ai_features, name='test_ai_features'),
-    
-    # AI API Endpoints
+    path('test-ai-features/', views.test_ai_features, name='test_ai_features'),    # AI API Endpoints
     path('api/generate-task-description/', api_views.generate_task_description_api, name='generate_task_description_api'),
     path('api/summarize-comments/<int:task_id>/', api_views.summarize_comments_api, name='summarize_comments_api'),
-    path('api/board-analytics-insights/<int:board_id>/', api_views.board_analytics_insights_api, name='board_analytics_insights_api'),
     path('api/suggest-lss-classification/', api_views.suggest_lss_classification_api, name='suggest_lss_classification_api'),
+    path('api/summarize-board-analytics/<int:board_id>/', api_views.summarize_board_analytics_api, name='summarize_board_analytics_api'),
+      # New AI Enhancement API Endpoints
+    path('api/suggest-task-priority/', api_views.suggest_task_priority_api, name='suggest_task_priority_api'),
+    path('api/predict-deadline/', api_views.predict_deadline_api, name='predict_deadline_api'),
+    path('api/recommend-columns/', api_views.recommend_columns_api, name='recommend_columns_api'),
+    path('api/suggest-task-breakdown/', api_views.suggest_task_breakdown_api, name='suggest_task_breakdown_api'),
+    path('api/analyze-workflow-optimization/', api_views.analyze_workflow_optimization_api, name='analyze_workflow_optimization_api'),
+    path('api/create-subtasks/', api_views.create_subtasks_api, name='create_subtasks_api'),
+      # AI-Enhanced Timeline & Critical Path Analysis
+    path('api/analyze-critical-path/', api_views.analyze_critical_path_api, name='analyze_critical_path_api'),
+    path('api/predict-task-completion/', api_views.predict_task_completion_api, name='predict_task_completion_api'),
+    path('api/generate-project-timeline/', api_views.generate_project_timeline_api, name='generate_project_timeline_api'),    # Meeting Transcript Extraction
+    path('boards/<int:board_id>/meeting-transcript/', views.meeting_transcript_extraction, name='meeting_transcript_extraction'),
+    path('api/extract-tasks-from-transcript/', api_views.extract_tasks_from_transcript_api, name='extract_tasks_from_transcript_api'),
+    path('api/create-tasks-from-extraction/', api_views.create_tasks_from_extraction_api, name='create_tasks_from_extraction_api'),
+    path('api/process-transcript-file/', api_views.process_transcript_file_api, name='process_transcript_file_api'),
 ]

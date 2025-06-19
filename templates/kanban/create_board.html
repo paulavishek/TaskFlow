@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Create New Board - TaskFlow{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Create New Board</h6>
+                    <a href="{% url 'board_list' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Boards
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        
+                        <!-- AI Column Recommendations Section -->
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0">Column Structure</h6>
+                                <button type="button" id="recommend-columns-btn" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-magic me-1"></i> Get AI Recommendations
+                                </button>
+                            </div>
+                            <div id="columns-ai-spinner" class="d-none text-center mb-3">
+                                <div class="spinner-border spinner-border-sm text-info" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <span class="ms-2 text-muted small">Analyzing optimal column structure...</span>
+                            </div>
+                            <div id="column-recommendations-result" class="d-none"></div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="project_type" class="form-label">Project Type</label>
+                                    <select class="form-select" id="project_type" name="project_type">
+                                        <option value="software">Software Development</option>
+                                        <option value="marketing">Marketing Campaign</option>
+                                        <option value="design">Design Project</option>
+                                        <option value="content">Content Creation</option>
+                                        <option value="research">Research & Development</option>
+                                        <option value="general" selected>General Project</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="team_size" class="form-label">Team Size</label>
+                                    <select class="form-select" id="team_size" name="team_size">
+                                        <option value="1">Solo (1 person)</option>
+                                        <option value="2-5" selected>Small (2-5 people)</option>
+                                        <option value="6-10">Medium (6-10 people)</option>
+                                        <option value="11-20">Large (11-20 people)</option>
+                                        <option value="20+">Enterprise (20+ people)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">Create Board</button>
+                            <a href="{% url 'board_list' %}" class="btn btn-outline-secondary ms-2">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<script src="{% static 'js/ai_features.js' %}?v={{ STATIC_VERSION|default:'2' }}"></script>
+{% endblock %}

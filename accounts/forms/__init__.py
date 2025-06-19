@@ -1,12 +1,36 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, SetPasswordForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from ..models import Organization, UserProfile
 
 class LoginForm(AuthenticationForm):
     username = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Username'}))
-    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'}))
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control', 
+            'placeholder': 'Password',
+            'id': 'password-field'
+        })
+    )
+
+class CustomSetPasswordForm(SetPasswordForm):
+    new_password1 = forms.CharField(
+        label="New password",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'id': 'new-password1-field',
+            'placeholder': 'New Password'
+        })
+    )
+    new_password2 = forms.CharField(
+        label="New password confirmation",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'id': 'new-password2-field',
+            'placeholder': 'Confirm New Password'
+        })
+    )
 
 class OrganizationForm(forms.ModelForm):
     class Meta:
@@ -33,8 +57,14 @@ class RegistrationForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         self.organization = kwargs.pop('organization', None)
         super().__init__(*args, **kwargs)
-        self.fields['password1'].widget = forms.PasswordInput(attrs={'class': 'form-control'})
-        self.fields['password2'].widget = forms.PasswordInput(attrs={'class': 'form-control'})
+        self.fields['password1'].widget = forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'id': 'password1-field'
+        })
+        self.fields['password2'].widget = forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'id': 'password2-field'
+        })
     
     def clean_email(self):
         email = self.cleaned_data.get('email')

@@ -15,23 +15,24 @@ body {
     display: flex;
     overflow-x: auto;
     padding: 20px 0;
-    min-height: 600px;
+    min-height: calc(100vh - 300px); /* Responsive height */
     align-items: flex-start;
-    gap: 10px;
+    gap: 15px; /* Increased gap for better spacing */
 }
 
 .kanban-column {
-    flex: 0 0 300px;
-    margin: 0 10px;
-    background-color: #f1f1f1;
-    border-radius: 5px;
+    flex: 0 0 320px; /* Slightly wider columns */
+    margin: 0 5px; /* Reduced margin since we have gap */
+    background-color: #f8f9fa; /* Lighter background */
+    border-radius: 8px; /* More rounded corners */
     display: flex;
     flex-direction: column;
     max-height: 100%;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Enhanced shadow */
     transition: transform 0.1s ease-in-out, box-shadow 0.2s ease-in-out;
     user-select: none;
     cursor: move;
+    border: 1px solid #e9ecef; /* Subtle border */
 }
 
 .kanban-column.dragging {
@@ -119,11 +120,70 @@ body {
     padding: 10px;
     flex-grow: 1;
     overflow-y: auto;
-    min-height: 200px;
+    min-height: 400px; /* Increased minimum height */
+    /* Ensure all columns have equal height */
+    height: calc(80vh - 200px); /* Dynamic height based on viewport */
+    max-height: 600px; /* Maximum height to prevent excessive scrolling */
 }
 
 .kanban-column-tasks.drag-over {
     background-color: rgba(0, 123, 255, 0.1);
+    border: 2px dashed #007bff;
+    border-radius: 5px;
+}
+
+/* Enhanced drag and drop styling */
+.kanban-column-tasks.drag-over-extended {
+    background-color: rgba(0, 123, 255, 0.15);
+    border: 2px dashed #007bff;
+    border-radius: 5px;
+    min-height: 500px; /* Extended height during drag */
+}
+
+/* Drop zone indicator at the bottom of columns */
+.drop-zone-indicator {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(transparent, rgba(0, 123, 255, 0.1));
+    border: 2px dashed transparent;
+    border-radius: 0 0 5px 5px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #007bff;
+    font-weight: bold;
+    text-align: center;
+    z-index: 10;
+}
+
+.drop-zone-indicator.active {
+    display: flex;
+    border-color: #007bff;
+}
+
+/* Auto-scroll indicators */
+.scroll-indicator {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 123, 255, 0.9);
+    color: white;
+    padding: 5px 15px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    z-index: 1000;
+    display: none;
+}
+
+.scroll-indicator.top {
+    top: 100px;
+}
+
+.scroll-indicator.bottom {
+    bottom: 100px;
 }
 
 .kanban-task {
@@ -134,6 +194,19 @@ body {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     cursor: grab;
     position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kanban-task:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.kanban-task.dragging {
+    opacity: 0.7;
+    transform: rotate(2deg) scale(1.02);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
 }
 
 .kanban-task:active {
@@ -297,6 +370,10 @@ body {
     border-left-color: #dc3545;
 }
 
+.stats-card.info {
+    border-left-color: #17a2b8;
+}
+
 .stats-icon {
     font-size: 2rem;
     opacity: 0.8;
@@ -323,17 +400,170 @@ body {
     margin: 0 auto;
 }
 
+/* Task Form Enhancements */
+.task-form .task-planning-section {
+    background-color: #f8f9fc;
+    border: 1px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.task-form .task-planning-section h6 {
+    color: #5a5c69;
+    font-weight: 600;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.task-form .task-planning-section h6 i {
+    margin-right: 8px;
+    color: #858796;
+}
+
+/* Enhanced styling for new form fields */
+.task-form .form-label {
+    font-weight: 600;
+    color: #5a5c69;
+    margin-bottom: 5px;
+}
+
+.task-form .form-label i {
+    opacity: 0.7;
+    font-size: 0.9em;
+}
+
+/* Duration field styling */
+.task-form input[type="number"] {
+    border: 2px solid #d1d3e2;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.task-form input[type="number"]:focus {
+    border-color: #5a67d8;
+    box-shadow: 0 0 0 0.2rem rgba(90, 103, 216, 0.25);
+}
+
+/* DateTime field styling */
+.task-form input[type="datetime-local"] {
+    border: 2px solid #d1d3e2;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.task-form input[type="datetime-local"]:focus {
+    border-color: #5a67d8;
+    box-shadow: 0 0 0 0.2rem rgba(90, 103, 216, 0.25);
+}
+
+/* Milestone checkbox styling */
+.task-form .milestone-checkbox {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 10px 0;
+}
+
+.task-form .milestone-checkbox .form-check-label {
+    font-weight: 600;
+    color: #856404;
+}
+
+.task-form .milestone-checkbox .form-check-input:checked {
+    background-color: #ffc107;
+    border-color: #ffc107;
+}
+
+/* Dependencies multi-select styling */
+.task-form select[multiple] {
+    border: 2px solid #d1d3e2;
+    border-radius: 6px;
+    background-color: #fff;
+    min-height: 100px;
+}
+
+.task-form select[multiple]:focus {
+    border-color: #5a67d8;
+    box-shadow: 0 0 0 0.2rem rgba(90, 103, 216, 0.25);
+}
+
+.task-form select[multiple] option {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f1f3f6;
+}
+
+.task-form select[multiple] option:hover {
+    background-color: #e3e6f0;
+}
+
+.task-form select[multiple] option:checked {
+    background-color: #5a67d8;
+    color: white;
+}
+
+/* Help text styling */
+.task-form .form-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+/* Field icons */
+.task-form .field-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #858796;
+    pointer-events: none;
+}
+
+.task-form .form-group {
+    position: relative;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .kanban-board {
         flex-direction: column;
         align-items: center;
+        gap: 20px;
     }
     
     .kanban-column {
-        width: 90%;
+        width: 95%;
+        max-width: 400px;
         margin-bottom: 20px;
         flex: none;
+    }
+    
+    .kanban-column-tasks {
+        min-height: 300px; /* Shorter on mobile */
+        height: auto;
+        max-height: 400px;
+    }
+    
+    /* Larger touch targets on mobile */
+    .kanban-task {
+        padding: 20px;
+        margin-bottom: 15px;
+        touch-action: manipulation;
+    }
+    
+    /* Hide auto-scroll indicators on mobile */
+    .scroll-indicator {
+        display: none !important;
+    }
+
+    .task-form .row .col-md-6 {
+        margin-bottom: 15px;
+    }
+    
+    .task-form select[multiple] {
+        min-height: 80px;
     }
 }
 

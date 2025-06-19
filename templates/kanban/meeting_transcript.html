@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Extract Tasks from Meeting - {{ board.name }} - TaskFlow{% endblock %}
+
+{% block extra_css %}
+<style>
+    .task-card {
+        border: 1px solid #e3e6f0;
+        border-radius: 0.35rem;
+        transition: all 0.3s;
+        background: white;
+    }
+    
+    .task-card:hover {
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .task-card.selected {
+        border-color: #4e73df;
+        background: #f8f9fc;
+    }
+    
+    .priority-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .source-context {
+        background: #f8f9fa;
+        border-left: 4px solid #6c757d;
+        padding: 0.75rem;
+        margin: 0.5rem 0;
+        font-style: italic;
+        font-size: 0.9rem;
+    }
+    
+    .extraction-summary {
+        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .confidence-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+    }
+    
+    .confidence-high { background-color: #28a745; }
+    .confidence-medium { background-color: #ffc107; }
+    .confidence-low { background-color: #dc3545; }
+    
+    .file-upload-zone {
+        border: 2px dashed #d1d3e2;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+    
+    .file-upload-zone:hover {
+        border-color: #4e73df;
+        background-color: #f8f9fc;
+    }
+    
+    .file-upload-zone.dragover {
+        border-color: #4e73df;
+        background-color: #e3f2fd;
+    }
+    
+    .processing-animation {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-microphone-alt me-2"></i>Extract Tasks from Meeting
+        </h1>
+        <div class="d-sm-flex">
+            <a href="{% url 'board_detail' board.id %}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i>Back to Board
+            </a>
+        </div>
+    </div>
+
+    <!-- Board Info -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Board:</strong> {{ board.name }} | 
+                <strong>Members:</strong> {{ board_members|length }} | 
+                <strong>AI will extract tasks based on your board context</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-upload me-2"></i>Meeting Transcript Input
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- File Upload Zone -->
+                    <div class="mb-4">
+                        <div class="file-upload-zone" id="file-upload-zone">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                            <h5>Upload Transcript File</h5>
+                            <p class="text-muted">
+                                Drag & drop or click to upload<br>
+                                <small>Supported: .txt, .docx, .pdf (max 10MB)</small>
+                            </p>
+                            <input type="file" id="transcript-file" accept=".txt,.docx,.pdf" style="display: none;">
+                            <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('transcript-file').click()">
+                                <i class="fas fa-folder-open me-1"></i>Choose File
+                            </button>
+                        </div>
+                        <div id="file-info" class="mt-3 d-none">
+                            <div class="alert alert-success">
+                                <i class="fas fa-file-check me-2"></i>
+                                <span id="file-name"></span> (<span id="file-size"></span>)
+                                <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="clear-file">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-3">
+                        <span class="badge bg-secondary">OR</span>
+                    </div>
+
+                    <!-- Manual Input Form -->
+                    <form id="transcript-form">
+                        {% csrf_token %}
+                        <input type="hidden" id="board-id" value="{{ board.id }}">
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="meeting-type" class="form-label">Meeting Type</label>
+                                <select class="form-select" id="meeting-type">
+                                    <option value="standup">Daily Standup</option>
+                                    <option value="planning">Sprint Planning</option>
+                                    <option value="review">Review Meeting</option>
+                                    <option value="retrospective">Retrospective</option>
+                                    <option value="general" selected>General Meeting</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="meeting-date" class="form-label">Meeting Date</label>
+                                <input type="date" class="form-control" id="meeting-date" value="{{ today }}">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="meeting-title" class="form-label">Meeting Title/Topic</label>
+                            <input type="text" class="form-control" id="meeting-title" 
+                                   placeholder="e.g., Sprint Planning - Week 12">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="participants" class="form-label">Participants (comma-separated)</label>
+                            <input type="text" class="form-control" id="participants" 
+                                   placeholder="e.g., john, sarah, mike"
+                                   value="{% for member in board_members %}{{ member.username }}{% if not forloop.last %}, {% endif %}{% endfor %}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="transcript-text" class="form-label">Transcript Content</label>
+                            <textarea class="form-control" id="transcript-text" rows="15" 
+                                    placeholder="Paste your meeting transcript here...&#10;&#10;Example:&#10;John: We need to fix the login bug by Friday&#10;Sarah: I can work on that, should take about 2 days&#10;Mike: Don't forget to update the documentation after the fix"></textarea>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                AI will analyze this transcript and extract actionable tasks for your review.
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="extract-tasks-btn" class="btn btn-primary btn-lg">
+                            <i class="fas fa-robot me-2"></i>Extract Tasks with AI
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Processing -->
+    <div id="ai-processing" class="row mb-4 d-none">
+        <div class="col-12">
+            <div class="card shadow border-left-info">
+                <div class="card-body text-center processing-animation">
+                    <div class="spinner-border text-info mb-3" role="status">
+                        <span class="visually-hidden">Processing...</span>
+                    </div>
+                    <h5>AI is analyzing your meeting transcript...</h5>
+                    <p class="text-muted">This may take a few moments as we extract actionable tasks and context.</p>
+                    <div class="progress mt-3" style="height: 6px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Review Section -->
+    <div id="task-review-section" class="row d-none">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-success">
+                        <i class="fas fa-tasks me-2"></i>Extracted Tasks for Review
+                    </h6>
+                    <span id="task-count-badge" class="badge bg-success"></span>
+                </div>
+                <div class="card-body">
+                    <!-- Extraction Summary -->
+                    <div id="extraction-summary" class="extraction-summary"></div>
+                    
+                    <!-- Tasks Container -->
+                    <div id="extracted-tasks-container" class="row"></div>
+                    
+                    <!-- Follow-ups and Unresolved Items -->
+                    <div id="additional-insights" class="row mt-4"></div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="mt-4 d-flex justify-content-between align-items-center">
+                        <div>
+                            <button type="button" id="select-all-tasks" class="btn btn-outline-primary me-2">
+                                <i class="fas fa-check-square me-1"></i>Select All
+                            </button>
+                            <button type="button" id="deselect-all-tasks" class="btn btn-outline-secondary">
+                                <i class="fas fa-square me-1"></i>Deselect All
+                            </button>
+                        </div>
+                        <div>
+                            <span id="selected-count" class="me-3 text-muted">0 tasks selected</span>
+                            <button type="button" id="create-selected-tasks" class="btn btn-success" disabled>
+                                <i class="fas fa-plus me-1"></i>Add Selected Tasks to Board
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Previous Extractions -->
+    {% if previous_extractions %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-secondary">
+                        <i class="fas fa-history me-2"></i>Recent Meeting Extractions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Meeting Title</th>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Tasks Extracted</th>
+                                    <th>Tasks Created</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for extraction in previous_extractions %}
+                                <tr>
+                                    <td>{{ extraction.title }}</td>
+                                    <td>{{ extraction.meeting_date }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ extraction.get_meeting_type_display }}</span>
+                                    </td>
+                                    <td>{{ extraction.tasks_extracted_count }}</td>
+                                    <td>{{ extraction.tasks_created_count }}</td>
+                                    <td>
+                                        {% if extraction.processing_status == 'completed' %}
+                                            <span class="badge bg-success">Completed</span>
+                                        {% elif extraction.processing_status == 'failed' %}
+                                            <span class="badge bg-danger">Failed</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">{{ extraction.get_processing_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Task Creation Success Modal -->
+<div class="modal fade" id="success-modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle me-2"></i>Tasks Created Successfully!
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="success-details"></div>
+            </div>
+            <div class="modal-footer">
+                <a href="{% url 'board_detail' board.id %}" class="btn btn-primary">
+                    <i class="fas fa-eye me-1"></i>View Board
+                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/meeting_transcript_extraction.js' %}"></script>
+{% endblock %}

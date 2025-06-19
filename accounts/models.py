@@ -26,5 +26,95 @@ class UserProfile(models.Model):
     is_admin = models.BooleanField(default=False)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
     
+    # AI-Powered Smart Resource Analysis Fields
+    skills = models.JSONField(
+        default=list, 
+        blank=True,
+        help_text="List of skills with proficiency levels (e.g., [{'name': 'Python', 'level': 'Expert'}, {'name': 'React', 'level': 'Intermediate'}])"
+    )
+    weekly_capacity_hours = models.IntegerField(
+        default=40,
+        help_text="Available working hours per week"
+    )
+    current_workload_hours = models.IntegerField(
+        default=0,
+        help_text="Currently assigned hours (auto-calculated)"
+    )
+    availability_schedule = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Weekly availability schedule (e.g., {'monday': {'start': '09:00', 'end': '17:00'}})"
+    )
+    
+    # Performance Metrics (AI-calculated)
+    average_task_completion_time = models.FloatField(
+        default=0.0,
+        help_text="Average time to complete tasks (in hours)"
+    )
+    quality_score = models.IntegerField(
+        default=100,
+        help_text="Quality score based on rework rates and reviews (0-100)"
+    )
+    collaboration_score = models.IntegerField(
+        default=100,
+        help_text="Collaboration effectiveness score (0-100)"
+    )
+    productivity_trend = models.CharField(
+        max_length=20,
+        choices=[
+            ('improving', 'Improving'),
+            ('stable', 'Stable'),
+            ('declining', 'Declining'),
+        ],
+        default='stable',
+        help_text="AI-calculated productivity trend"
+    )
+    
+    # Resource Management
+    preferred_task_types = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Preferred types of tasks based on performance history"
+    )
+    peak_productivity_hours = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Hours when user is most productive (e.g., ['09:00-11:00', '14:00-16:00'])"
+    )
+    
+    # AI Analysis Metadata
+    last_resource_analysis = models.DateTimeField(
+        blank=True, 
+        null=True,
+        help_text="When AI last analyzed this user's resource profile"
+    )
+    resource_risk_factors = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="AI-identified risk factors for this resource"
+    )
+    
     def __str__(self):
         return f"{self.user.username}'s Profile"
+    
+    @property
+    def utilization_percentage(self):
+        """Calculate current utilization percentage"""
+        if self.weekly_capacity_hours == 0:
+            return 0
+        return min(100, (self.current_workload_hours / self.weekly_capacity_hours) * 100)
+    
+    @property
+    def available_hours(self):
+        """Calculate available hours this week"""
+        return max(0, self.weekly_capacity_hours - self.current_workload_hours)
+    
+    @property
+    def skill_names(self):
+        """Get list of skill names for easy searching"""
+        return [skill.get('name', '') for skill in self.skills if skill.get('name')]
+    
+    @property
+    def expert_skills(self):
+        """Get list of expert-level skills"""
+        return [skill.get('name', '') for skill in self.skills if skill.get('level') == 'Expert']

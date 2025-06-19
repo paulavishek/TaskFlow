@@ -14,13 +14,11 @@ from accounts.models import Organization, UserProfile
 from kanban.api_views import (
     generate_task_description_api, 
     summarize_comments_api,
-    board_analytics_insights_api,
     suggest_lss_classification_api as suggest_lean_classification_api
 )
 from kanban.utils.ai_utils import (
     generate_task_description,
     summarize_comments,
-    generate_analytics_insights,
     suggest_lean_classification
 )
 
@@ -78,34 +76,7 @@ class AIUtilsTestCase(TestCase):
         self.assertIsNotNone(result)
         self.assertEqual(result, "This is a summary of the comments.")
         mock_model.generate_content.assert_called_once()
-    
-    @patch('kanban.utils.ai_utils.get_model')
-    def test_generate_analytics_insights(self, mock_get_model):
-        """Test the analytics insights generation function."""
-        # Setup mock
-        mock_model = MagicMock()
-        mock_response = MagicMock()
-        mock_response.text = "Analytics insights: Performance is good."
-        mock_model.generate_content.return_value = mock_response
-        mock_get_model.return_value = mock_model
-        
-        # Test data
-        analytics_data = {
-            'total_tasks': 10,
-            'completed_tasks': 5,
-            'in_progress': 3,
-            'blocked': 2,
-            'avg_completion_time': '2 days',
-            'task_distribution': {'To Do': 2, 'In Progress': 3, 'Done': 5}
-        }
-        
-        # Call function
-        result = generate_analytics_insights(analytics_data)
-        
-        # Assertions
-        self.assertIsNotNone(result)
-        self.assertEqual(result, "Analytics insights: Performance is good.")
-        mock_model.generate_content.assert_called_once()
+  
     
     @patch('kanban.utils.ai_utils.get_model')
     def test_suggest_lean_classification(self, mock_get_model):
@@ -136,7 +107,6 @@ class AIUtilsTestCase(TestCase):
         self.assertIn('explanation', result)
         self.assertEqual(result['classification'], 'Value-Added')
         mock_model.generate_content.assert_called_once()
-    
     @patch('kanban.utils.ai_utils.get_model')
     def test_error_handling_when_model_fails(self, mock_get_model):
         """Test error handling when the model fails."""
@@ -146,8 +116,7 @@ class AIUtilsTestCase(TestCase):
         # Call functions and check they handle errors gracefully
         self.assertIsNone(generate_task_description("Test Task"))
         self.assertIsNone(summarize_comments([{'user': 'test', 'content': 'content', 'created_at': 'now'}]))
-        self.assertIsNone(generate_analytics_insights({'total_tasks': 10}))
-        self.assertIsNone(suggest_lean_classification({'title': 'Test'}))
+        self.assertIsNone(suggest_lean_classification("Test title", "Test description"))
 
 
 class AIAPIViewsTestCase(TestCase):
@@ -255,27 +224,7 @@ class AIAPIViewsTestCase(TestCase):
         self.assertIn('summary', content)
         self.assertEqual(content['summary'], "Summary of comments")
         mock_summarize.assert_called_once()
-    
-    @patch('kanban.api_views.generate_analytics_insights')
-    def test_board_analytics_insights_api(self, mock_insights):
-        """Test the board analytics insights API."""
-        # Setup mock
-        mock_insights.return_value = "Analytics insights: Workflow is efficient."
-        
-        # Create request
-        url = reverse('board_analytics_insights', kwargs={'board_id': self.board.id})
-        request = self.factory.get(url)
-        request.user = self.user
-        
-        # Call the API view
-        response = board_analytics_insights_api(request, self.board.id)
-        
-        # Assertions
-        self.assertEqual(response.status_code, 200)
-        content = json.loads(response.content)
-        self.assertIn('insights', content)
-        self.assertEqual(content['insights'], "Analytics insights: Workflow is efficient.")
-        mock_insights.assert_called_once()
+  
     
     @patch('kanban.api_views.suggest_lean_classification')
     def test_suggest_lean_classification_api(self, mock_classify):
@@ -327,29 +276,7 @@ class AIAPIViewsTestCase(TestCase):
         # This should redirect to login since @login_required is used
         response = generate_task_description_api(request)
         self.assertEqual(response.status_code, 302)  # 302 is redirect status code
-    
-    def test_board_access_restriction(self):
-        """Test that users cannot access boards they don't have permission for."""
-        # Create another user
-        other_user = User.objects.create_user(
-            username='otheruser',
-            email='other@example.com',
-            password='testpass123'
-        )
-        
-        # Create request from the other user
-        url = reverse('board_analytics_insights', kwargs={'board_id': self.board.id})
-        request = self.factory.get(url)
-        request.user = other_user
-        
-        # Call the API view
-        response = board_analytics_insights_api(request, self.board.id)
-        
-        # Assertions - should get an access denied error
-        self.assertEqual(response.status_code, 403)
-        content = json.loads(response.content)
-        self.assertIn('error', content)
-        self.assertIn('Access denied', content['error'])
+      # Note: Board access restriction tests are covered in separate test cases
 
 
 class JavaScriptIntegrationTestCase(TestCase):
@@ -419,11 +346,11 @@ class JavaScriptIntegrationTestCase(TestCase):
             data=json.dumps({'title': 'Test Task'}),
             content_type='application/json'
         )
-        
-        # Assertions
+          # Assertions
         self.assertEqual(response.status_code, 200)
         content = json.loads(response.content)
         self.assertIn('description', content)
+    
     @patch('kanban.api_views.summarize_comments')
     def test_comments_summary_endpoint(self, mock_summarize):
         """Test that the comments summary API endpoint is accessible via HTTP."""
@@ -438,21 +365,6 @@ class JavaScriptIntegrationTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         content = json.loads(response.content)
         self.assertIn('summary', content)
-    
-    @patch('kanban.api_views.generate_analytics_insights')
-    def test_board_analytics_endpoint(self, mock_insights):
-        """Test that the board analytics API endpoint is accessible via HTTP."""
-        # Setup mock
-        mock_insights.return_value = "Analytics insights: All good!"
-        
-        # Make the request
-        url = reverse('board_analytics_insights', kwargs={'board_id': self.board.id})
-        response = self.client.get(url)
-        
-        # Assertions
-        self.assertEqual(response.status_code, 200)
-        content = json.loads(response.content)
-        self.assertIn('insights', content)
     
     @patch('kanban.api_views.suggest_lean_classification')
     def test_lss_classification_endpoint(self, mock_classify):

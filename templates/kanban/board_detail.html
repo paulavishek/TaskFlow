@@ -103,8 +103,7 @@
         border-radius: 5px;
         padding: 10px;
         margin-top: 10px;
-    }
-    .filter-badge {
+    }    .filter-badge {
         display: inline-block;
         background-color: #007bff;
         color: white;
@@ -112,6 +111,27 @@
         border-radius: 15px;
         margin-right: 5px;
         margin-bottom: 5px;
+        font-size: 0.9rem;
+    }
+    
+    /* Quick Add Task Button Styling */
+    .quick-add-task-btn {
+        transition: all 0.2s ease;
+        border-radius: 20px;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+    
+    .quick-add-task-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+    }
+    
+    .quick-add-task-btn i {
         font-size: 0.9rem;
     }
 </style>
@@ -124,10 +144,15 @@
         {% if board.description %}
             <p class="text-muted">{{ board.description }}</p>
         {% endif %}
-    </div>
-    <div class="btn-group">
+    </div>    <div class="btn-group">
         <a href="{% url 'board_analytics' board.id %}" class="btn btn-outline-primary">
             <i class="fas fa-chart-pie me-1"></i> Analytics
+        </a>
+        <a href="{% url 'meeting_transcript_extraction' board.id %}" class="btn btn-outline-success">
+            <i class="fas fa-microphone-alt me-1"></i> Extract from Meeting
+        </a>
+        <a href="{% url 'meeting_transcript_extraction' board.id %}" class="btn btn-outline-success">
+            <i class="fas fa-microphone-alt me-1"></i> Meeting Tasks
         </a>
         <div class="btn-group">
             <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -140,12 +165,14 @@
         </div>
         <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
             <i class="fas fa-cog"></i>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end">
+        </button>        <ul class="dropdown-menu dropdown-menu-end">
             <li><a class="dropdown-item" href="{% url 'create_column' board.id %}">Add Column</a></li>
             <li><a class="dropdown-item" href="{% url 'create_label' board.id %}">Manage Labels</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#boardSettingsModal">Board Settings</a></li>
+            <li><a class="dropdown-item" href="{% url 'edit_board' board.id %}">Edit Board</a></li>
+            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#boardSettingsModal">Board Settings</a></li>            {% if board.created_by == request.user or request.user.profile.is_admin or request.user == board.organization.created_by %}
+            <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteBoardModal">Delete Board</a></li>
+            {% endif %}
         </ul>
     </div>
 </div>
@@ -262,22 +289,32 @@
 <div class="kanban-board" id="kanban-board">
     {% for column in columns %}
     <div class="kanban-column" id="column-{{ column.id }}" data-column-id="{{ column.id }}">
-        <div class="kanban-column-header">
-            <div class="d-flex justify-content-between align-items-center w-100">
+        <div class="kanban-column-header">            <div class="d-flex justify-content-between align-items-center w-100">
                 <div>
                     <span class="column-position-badge">{{ forloop.counter }}</span>
                     <span>{{ column.name }}</span>
-                </div>
-                <div class="column-actions">
-                    <button type="button" class="btn btn-sm btn-outline-danger delete-column-btn" 
-                            data-column-id="{{ column.id }}" data-column-name="{{ column.name }}"
-                            data-bs-toggle="modal" data-bs-target="#deleteColumnModal">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
+                </div>                <div class="column-actions">
+                    {% if column.name|lower == 'to do' or column.name|lower == 'todo' %}
+                        <!-- Quick Add Task button for To Do column -->
+                        <a href="{% url 'create_task_in_column' board.id column.id %}" 
+                           class="btn btn-sm btn-primary me-2 quick-add-task-btn" 
+                           title="Quick Add Task">
+                            <i class="fas fa-plus"></i>
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                disabled title="The 'To Do' column cannot be deleted as it's required for creating new tasks">
+                            <i class="fas fa-lock"></i>
+                        </button>
+                    {% else %}
+                        <button type="button" class="btn btn-sm btn-outline-danger delete-column-btn" 
+                                data-column-id="{{ column.id }}" data-column-name="{{ column.name }}"
+                                data-bs-toggle="modal" data-bs-target="#deleteColumnModal">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    {% endif %}
                 </div>
             </div>
-        </div>
-        <div class="kanban-column-tasks" data-column-id="{{ column.id }}">
+        </div>        <div class="kanban-column-tasks" data-column-id="{{ column.id }}">
             {% for task in tasks %}
                 {% if task.column.id == column.id %}
                 <div class="kanban-task" id="task-{{ task.id }}">
@@ -429,6 +466,29 @@
                 <form id="deleteTaskForm" method="post" action="">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger">Delete Task</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Board Modal -->
+<div class="modal fade" id="deleteBoardModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Board</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the board <strong>{{ board.name }}</strong>?</p>
+                <p class="text-danger">This action cannot be undone and all tasks associated with this board will be permanently deleted.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'delete_board' board.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete Board</button>
                 </form>
             </div>
         </div>

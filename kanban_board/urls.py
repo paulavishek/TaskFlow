@@ -23,6 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('kanban.urls')),
     path('accounts/', include('accounts.urls')),
+    path('accounts/', include('allauth.urls')),  # Add allauth URLs
 ]
 
 if settings.DEBUG:

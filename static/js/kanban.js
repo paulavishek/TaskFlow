@@ -20,6 +20,8 @@ if (typeof kanbanInitialized === 'undefined') {
                 initKanbanBoard();
                 initColumnOrdering();
                 setupTaskProgress();
+                // Add keyboard support for accessibility
+                addKeyboardSupport();
             }
             
             // Initialize charts if they exist
@@ -47,7 +49,13 @@ function initKanbanBoard() {
         column.addEventListener('dragenter', dragEnter);
         column.addEventListener('dragleave', dragLeave);
         column.addEventListener('drop', drop);
+        
+        // Add drop zone indicators
+        addDropZoneIndicator(column);
     });
+    
+    // Add scroll indicators for auto-scroll
+    addScrollIndicators();
 }
 
 // Initialize column ordering functionality
@@ -217,55 +225,247 @@ function showNotification(message, type = 'info') {
 }
 
 // Task Drag and Drop Handlers
+if (typeof draggedElement === 'undefined') {
+    var draggedElement = null;
+}
+if (typeof autoScrollInterval === 'undefined') {
+    var autoScrollInterval = null;
+}
+
 function dragStart(e) {
+    draggedElement = e.target;
     e.dataTransfer.setData('text/plain', e.target.id);
     e.dataTransfer.effectAllowed = 'move';
     
     // Add dragging class for styling
     e.target.classList.add('dragging');
     
+    // Show drop zone indicators
+    showDropZoneIndicators();
+    
+    // Start auto-scroll monitoring
+    startAutoScroll();
+    
     // Delay opacity change for better UX
     setTimeout(() => {
-        e.target.style.opacity = '0.4';
+        e.target.style.opacity = '0.7';
     }, 0);
 }
 
 function dragEnd(e) {
+    draggedElement = null;
     e.target.classList.remove('dragging');
     e.target.style.opacity = '1';
+    
+    // Hide drop zone indicators
+    hideDropZoneIndicators();
+    
+    // Stop auto-scroll
+    stopAutoScroll();
+    
+    // Clean up any drag-over states
+    document.querySelectorAll('.kanban-column-tasks').forEach(col => {
+        col.classList.remove('drag-over', 'drag-over-extended');
+    });
 }
 
 function dragOver(e) {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    
+    // Handle auto-scroll based on mouse position
+    handleAutoScrollOnDrag(e);
 }
 
 function dragEnter(e) {
     e.preventDefault();
-    e.currentTarget.classList.add('drag-over');
+    const column = e.currentTarget;
+    column.classList.add('drag-over');
+    
+    // If column is short, extend it temporarily
+    const tasks = column.querySelectorAll('.kanban-task:not(.dragging)');
+    if (tasks.length < 3) { // If column has few tasks
+        column.classList.add('drag-over-extended');
+    }
+    
+    // Show drop indicator for this column
+    const indicator = column.querySelector('.drop-zone-indicator');
+    if (indicator) {
+        indicator.classList.add('active');
+    }
 }
 
 function dragLeave(e) {
-    e.currentTarget.classList.remove('drag-over');
+    const column = e.currentTarget;
+    
+    // Only remove drag-over if we're actually leaving the column
+    // (not just moving to a child element)
+    if (!column.contains(e.relatedTarget)) {
+        column.classList.remove('drag-over', 'drag-over-extended');
+        
+        // Hide drop indicator
+        const indicator = column.querySelector('.drop-zone-indicator');
+        if (indicator) {
+            indicator.classList.remove('active');
+        }
+    }
 }
 
 function drop(e) {
     e.preventDefault();
-    e.currentTarget.classList.remove('drag-over');
+    const column = e.currentTarget;
+    column.classList.remove('drag-over', 'drag-over-extended');
     
     const taskId = e.dataTransfer.getData('text/plain').replace('task-', '');
-    const columnId = e.currentTarget.dataset.columnId;
+    const columnId = column.dataset.columnId;
     const taskElement = document.getElementById(`task-${taskId}`);
     
+    if (taskElement && taskElement !== draggedElement) {
+        return; // Prevent dropping on itself
+    }
+    
     if (taskElement) {
-        e.currentTarget.appendChild(taskElement);
+        // Smooth animation for the drop
+        taskElement.style.transform = 'scale(0.95)';
+        taskElement.style.transition = 'transform 0.2s ease';
+        
+        // Calculate drop position within the column
+        const rect = column.getBoundingClientRect();
+        const mouseY = e.clientY - rect.top;
+        const tasks = Array.from(column.querySelectorAll('.kanban-task:not(.dragging)'));
+        
+        let insertIndex = tasks.length; // Default to end
+        
+        for (let i = 0; i < tasks.length; i++) {
+            const taskRect = tasks[i].getBoundingClientRect();
+            const taskY = taskRect.top - rect.top + column.scrollTop;
+            
+            if (mouseY < taskY + taskRect.height / 2) {
+                insertIndex = i;
+                break;
+            }
+        }
+        
+        // Insert at the calculated position
+        if (insertIndex < tasks.length) {
+            column.insertBefore(taskElement, tasks[insertIndex]);
+        } else {
+            column.appendChild(taskElement);
+        }
+        
+        // Reset transform after a short delay
+        setTimeout(() => {
+            taskElement.style.transform = '';
+            taskElement.style.transition = '';
+        }, 200);
         
         // Update task position in backend
-        updateTaskPosition(taskId, columnId);
+        updateTaskPosition(taskId, columnId, insertIndex);
+    }
+    
+    // Hide drop indicator
+    const indicator = column.querySelector('.drop-zone-indicator');
+    if (indicator) {
+        indicator.classList.remove('active');
     }
 }
 
-function updateTaskPosition(taskId, columnId) {
+// Helper Functions for Enhanced Drag and Drop
+
+function addDropZoneIndicator(column) {
+    const indicator = document.createElement('div');
+    indicator.className = 'drop-zone-indicator';
+    indicator.innerHTML = '<i class="fas fa-plus"></i> Drop here';
+    column.style.position = 'relative';
+    column.appendChild(indicator);
+}
+
+function showDropZoneIndicators() {
+    document.querySelectorAll('.drop-zone-indicator').forEach(indicator => {
+        const column = indicator.parentElement;
+        const tasks = column.querySelectorAll('.kanban-task:not(.dragging)');
+        
+        // Show indicator for columns with few tasks
+        if (tasks.length < 4) {
+            indicator.style.display = 'flex';
+        }
+    });
+}
+
+function hideDropZoneIndicators() {
+    document.querySelectorAll('.drop-zone-indicator').forEach(indicator => {
+        indicator.classList.remove('active');
+        indicator.style.display = 'none';
+    });
+}
+
+function addScrollIndicators() {
+    // Add scroll indicators to the page
+    const topIndicator = document.createElement('div');
+    topIndicator.className = 'scroll-indicator top';
+    topIndicator.innerHTML = '<i class="fas fa-chevron-up"></i> Scroll up';
+    document.body.appendChild(topIndicator);
+    
+    const bottomIndicator = document.createElement('div');
+    bottomIndicator.className = 'scroll-indicator bottom';
+    bottomIndicator.innerHTML = '<i class="fas fa-chevron-down"></i> Scroll down';
+    document.body.appendChild(bottomIndicator);
+}
+
+function startAutoScroll() {
+    // Start monitoring mouse position for auto-scroll
+    document.addEventListener('dragover', handleAutoScrollOnDrag);
+}
+
+function stopAutoScroll() {
+    // Stop auto-scroll monitoring
+    document.removeEventListener('dragover', handleAutoScrollOnDrag);
+    
+    if (autoScrollInterval) {
+        clearInterval(autoScrollInterval);
+        autoScrollInterval = null;
+    }
+    
+    // Hide scroll indicators
+    document.querySelectorAll('.scroll-indicator').forEach(indicator => {
+        indicator.style.display = 'none';
+    });
+}
+
+function handleAutoScrollOnDrag(e) {
+    const scrollThreshold = 100; // pixels from edge
+    const scrollSpeed = 5;
+    const viewportHeight = window.innerHeight;
+    const mouseY = e.clientY;
+    
+    // Clear existing interval
+    if (autoScrollInterval) {
+        clearInterval(autoScrollInterval);
+        autoScrollInterval = null;
+    }
+    
+    // Check if we need to scroll up
+    if (mouseY < scrollThreshold) {
+        document.querySelector('.scroll-indicator.top').style.display = 'block';
+        autoScrollInterval = setInterval(() => {
+            window.scrollBy(0, -scrollSpeed);
+        }, 16);
+    }
+    // Check if we need to scroll down
+    else if (mouseY > viewportHeight - scrollThreshold) {
+        document.querySelector('.scroll-indicator.bottom').style.display = 'block';
+        autoScrollInterval = setInterval(() => {
+            window.scrollBy(0, scrollSpeed);
+        }, 16);
+    } else {
+        // Hide scroll indicators
+        document.querySelectorAll('.scroll-indicator').forEach(indicator => {
+            indicator.style.display = 'none';
+        });
+    }
+}
+
+function updateTaskPosition(taskId, columnId, position = 0) {
     // Send AJAX request to update task position
     fetch('/tasks/move/', {
         method: 'POST',
@@ -276,19 +476,24 @@ function updateTaskPosition(taskId, columnId) {
         },
         body: JSON.stringify({
             taskId: taskId,
-            columnId: columnId
+            columnId: columnId,
+            position: position
         })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             console.log('Task moved successfully');
+            // Show success notification
+            showNotification('Task moved successfully', 'success');
         } else {
             console.error('Error moving task:', data.error);
+            showNotification('Error moving task: ' + data.error, 'error');
         }
     })
     .catch(error => {
         console.error('Error moving task:', error);
+        showNotification('Error moving task', 'error');
     });
 }
 
@@ -312,85 +517,101 @@ function getCookie(name) {
 function initCharts() {
     // If Chart.js is loaded
     if (typeof Chart !== 'undefined') {
-        // Check for existing charts and destroy them if they exist
-        if (columnChart) {
-            columnChart.destroy();
-        }
-        if (priorityChart) {
-            priorityChart.destroy();
-        }
-        
-        // Tasks by Column Chart
-        const columnsCtx = document.getElementById('tasksColumnChart').getContext('2d');
-        const columnsData = JSON.parse(document.getElementById('columnsData').textContent);
-        
-        columnChart = new Chart(columnsCtx, {
-            type: 'bar',
-            data: {
-                labels: columnsData.map(item => item.name),
-                datasets: [{
-                    label: 'Tasks',
-                    data: columnsData.map(item => item.count),
-                    backgroundColor: [
-                        'rgba(54, 162, 235, 0.6)',
-                        'rgba(255, 206, 86, 0.6)',
-                        'rgba(75, 192, 192, 0.6)',
-                        'rgba(153, 102, 255, 0.6)',
-                        'rgba(255, 159, 64, 0.6)'
-                    ],
-                    borderColor: [
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)',
-                        'rgba(255, 159, 64, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        precision: 0
-                    }
+        try {
+            // Check for existing charts and destroy them if they exist
+            if (columnChart && typeof columnChart.destroy === 'function') {
+                columnChart.destroy();
+                columnChart = null;
+            }
+            if (priorityChart && typeof priorityChart.destroy === 'function') {
+                priorityChart.destroy();
+                priorityChart = null;
+            }
+            
+            // Tasks by Column Chart
+            const columnsCanvas = document.getElementById('tasksColumnChart');
+            if (columnsCanvas) {
+                const columnsCtx = columnsCanvas.getContext('2d');
+                const columnsDataElement = document.getElementById('columnsData');
+                
+                if (columnsDataElement && columnsDataElement.textContent) {
+                    const columnsData = JSON.parse(columnsDataElement.textContent);
+                    
+                    columnChart = new Chart(columnsCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: columnsData.map(item => item.name),
+                            datasets: [{
+                                label: 'Tasks',
+                                data: columnsData.map(item => item.count),
+                                backgroundColor: [
+                                    'rgba(54, 162, 235, 0.6)',
+                                    'rgba(255, 206, 86, 0.6)',
+                                    'rgba(75, 192, 192, 0.6)',
+                                    'rgba(153, 102, 255, 0.6)',
+                                    'rgba(255, 159, 64, 0.6)'
+                                ],
+                                borderColor: [
+                                    'rgba(54, 162, 235, 1)',
+                                    'rgba(255, 206, 86, 1)',
+                                    'rgba(75, 192, 192, 1)',
+                                    'rgba(153, 102, 255, 1)',
+                                    'rgba(255, 159, 64, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    precision: 0
+                                }
+                            }
+                        }
+                    });
                 }
             }
-        });
-        
-        // Tasks by Priority Chart
-        const priorityCtx = document.getElementById('tasksPriorityChart');
-        
-        // Check if priority chart element exists before creating the chart
-        if (priorityCtx) {
-            const priorityData = JSON.parse(document.getElementById('priorityData').textContent);
             
-            priorityChart = new Chart(priorityCtx.getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: priorityData.map(item => item.priority.charAt(0).toUpperCase() + item.priority.slice(1)),
-                    datasets: [{
-                        data: priorityData.map(item => item.count),
-                        backgroundColor: [
-                            'rgba(40, 167, 69, 0.7)',  // Low
-                            'rgba(255, 193, 7, 0.7)',  // Medium
-                            'rgba(253, 126, 20, 0.7)', // High
-                            'rgba(220, 53, 69, 0.7)'   // Urgent
-                        ],
-                        borderColor: [
-                            'rgba(40, 167, 69, 1)',
-                            'rgba(255, 193, 7, 1)',
-                            'rgba(253, 126, 20, 1)',
-                            'rgba(220, 53, 69, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true
+            // Tasks by Priority Chart
+            const priorityCanvas = document.getElementById('tasksPriorityChart');
+            
+            // Check if priority chart element exists before creating the chart
+            if (priorityCanvas) {
+                const priorityDataElement = document.getElementById('priorityData');
+                
+                if (priorityDataElement && priorityDataElement.textContent) {
+                    const priorityData = JSON.parse(priorityDataElement.textContent);
+                      priorityChart = new Chart(priorityCanvas.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: priorityData.map(item => item.priority.charAt(0).toUpperCase() + item.priority.slice(1)),
+                            datasets: [{
+                                data: priorityData.map(item => item.count),
+                                backgroundColor: [
+                                    'rgba(40, 167, 69, 0.7)',  // Low
+                                    'rgba(255, 193, 7, 0.7)',  // Medium
+                                    'rgba(253, 126, 20, 0.7)', // High
+                                    'rgba(220, 53, 69, 0.7)'   // Urgent
+                                ],
+                                borderColor: [
+                                    'rgba(40, 167, 69, 1)',
+                                    'rgba(255, 193, 7, 1)',
+                                    'rgba(253, 126, 20, 1)',
+                                    'rgba(220, 53, 69, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true
+                        }
+                    });
                 }
-            });
+            }
+        } catch (error) {
+            console.error('Error initializing charts:', error);
         }
     }
 }
@@ -453,4 +674,155 @@ function updateTaskProgress(taskId, direction) {
     .catch(error => {
         console.error('Error updating task progress:', error);
     });
+}
+
+// Keyboard Support for Accessibility
+function addKeyboardSupport() {
+    document.addEventListener('keydown', function(e) {
+        const activeElement = document.activeElement;
+        
+        // Handle task selection and movement with keyboard
+        if (activeElement && activeElement.classList.contains('kanban-task')) {
+            switch(e.key) {
+                case 'ArrowRight':
+                    e.preventDefault();
+                    moveTaskToNextColumn(activeElement);
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    moveTaskToPrevColumn(activeElement);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    focusPreviousTask(activeElement);
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    focusNextTask(activeElement);
+                    break;
+                case 'Enter':
+                case ' ':
+                    e.preventDefault();
+                    // Open task detail or trigger edit
+                    const taskId = activeElement.id.replace('task-', '');
+                    window.location.href = `/tasks/${taskId}/`;
+                    break;
+            }
+        }
+    });
+    
+    // Make tasks focusable for keyboard navigation
+    document.querySelectorAll('.kanban-task').forEach(task => {
+        task.setAttribute('tabindex', '0');
+        task.addEventListener('focus', function() {
+            this.style.outline = '2px solid #007bff';
+            this.style.outlineOffset = '2px';
+        });
+        task.addEventListener('blur', function() {
+            this.style.outline = '';
+            this.style.outlineOffset = '';
+        });
+    });
+}
+
+function moveTaskToNextColumn(taskElement) {
+    const currentColumn = taskElement.closest('.kanban-column');
+    const nextColumn = currentColumn.nextElementSibling;
+    
+    if (nextColumn && nextColumn.classList.contains('kanban-column')) {
+        const nextColumnTasks = nextColumn.querySelector('.kanban-column-tasks');
+        const taskId = taskElement.id.replace('task-', '');
+        const columnId = nextColumnTasks.dataset.columnId;
+        
+        // Move DOM element
+        nextColumnTasks.appendChild(taskElement);
+        
+        // Update backend
+        updateTaskPosition(taskId, columnId, 0);
+        
+        // Maintain focus
+        taskElement.focus();
+        
+        showNotification('Task moved to next column', 'success');
+    }
+}
+
+function moveTaskToPrevColumn(taskElement) {
+    const currentColumn = taskElement.closest('.kanban-column');
+    const prevColumn = currentColumn.previousElementSibling;
+    
+    if (prevColumn && prevColumn.classList.contains('kanban-column')) {
+        const prevColumnTasks = prevColumn.querySelector('.kanban-column-tasks');
+        const taskId = taskElement.id.replace('task-', '');
+        const columnId = prevColumnTasks.dataset.columnId;
+        
+        // Move DOM element
+        prevColumnTasks.appendChild(taskElement);
+        
+        // Update backend
+        updateTaskPosition(taskId, columnId, 0);
+        
+        // Maintain focus
+        taskElement.focus();
+        
+        showNotification('Task moved to previous column', 'success');
+    }
+}
+
+function focusPreviousTask(taskElement) {
+    const allTasks = Array.from(document.querySelectorAll('.kanban-task'));
+    const currentIndex = allTasks.indexOf(taskElement);
+    
+    if (currentIndex > 0) {
+        allTasks[currentIndex - 1].focus();
+    }
+}
+
+function focusNextTask(taskElement) {
+    const allTasks = Array.from(document.querySelectorAll('.kanban-task'));
+    const currentIndex = allTasks.indexOf(taskElement);
+    
+    if (currentIndex < allTasks.length - 1) {
+        allTasks[currentIndex + 1].focus();
+    }
+}
+
+// Enhanced Column Height Management
+function equalizeColumnHeights() {
+    const columns = document.querySelectorAll('.kanban-column-tasks');
+    if (columns.length === 0) return;
+    
+    let maxHeight = 0;
+    
+    // Find the tallest column
+    columns.forEach(column => {
+        column.style.height = 'auto'; // Reset height
+        const height = column.scrollHeight;
+        maxHeight = Math.max(maxHeight, height);
+    });
+    
+    // Set minimum height to ensure drop zones are accessible
+    const minHeight = Math.max(maxHeight, 400);
+    
+    columns.forEach(column => {
+        column.style.minHeight = minHeight + 'px';
+    });
+}
+
+// Debounced resize handler for responsive column heights
+if (typeof resizeTimeout === 'undefined') {
+    var resizeTimeout;
+}
+window.addEventListener('resize', function() {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(equalizeColumnHeights, 150);
+});
+
+// Call equalize heights on initial load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(equalizeColumnHeights, 100);
+    });
+} else {
+    setTimeout(equalizeColumnHeights, 100);
 }

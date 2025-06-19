@@ -52,10 +52,9 @@
                 </div>
             </div>
         </div>
-        {% empty %}
-        <div class="col-12">
+        {% empty %}        <div class="col-12">
             <div class="alert alert-info">
-                No boards found in your organization. <a href="{% url 'board_list' %}">Create a new board</a> to get started.
+                No boards found in your organization. <a href="{% url 'create_board' %}">Create a new board</a> to get started.
             </div>
         </div>
         {% endfor %}

@@ -1,14 +1,18 @@
+import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
 from django.contrib import messages
-from django.db.models import Count, Q, Case, When, IntegerField
+from django.db.models import Count, Q, Case, When, IntegerField, Max
 from django.utils import timezone
 from datetime import timedelta
 import json
 import csv
 from django.contrib.auth.models import User
 from django.core.management import call_command
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 from .models import Board, Column, Task, TaskLabel, Comment, TaskActivity
 from .forms import BoardForm, ColumnForm, TaskForm, TaskLabelForm, CommentForm, TaskMoveForm, TaskSearchForm
@@ -35,19 +39,135 @@ def dashboard(request):
         completion_rate = 0
         if task_count > 0:
             completion_rate = (completed_count / task_count) * 100
-        
-        # Get tasks due soon (next 3 days)
+          # Get tasks due soon (next 3 days)
         due_soon = Task.objects.filter(
             column__board__in=boards,
             due_date__range=[timezone.now(), timezone.now() + timedelta(days=3)]
         ).count()
+          # Get overdue tasks (due date in the past and not in done columns)
+        overdue_count = Task.objects.filter(
+            column__board__in=boards,
+            due_date__lt=timezone.now()
+        ).exclude(
+            column__name__icontains='done'
+        ).count()
         
+        # Get detailed task data for modals
+        all_tasks = Task.objects.filter(column__board__in=boards).select_related('column', 'assigned_to', 'column__board')
+        completed_tasks = Task.objects.filter(
+            column__board__in=boards, 
+            column__name__icontains='done'
+        ).select_related('column', 'assigned_to', 'column__board')
+        overdue_tasks = Task.objects.filter(
+            column__board__in=boards,
+            due_date__lt=timezone.now()
+        ).exclude(
+            column__name__icontains='done'
+        ).select_related('column', 'assigned_to', 'column__board')
+        due_soon_tasks = Task.objects.filter(
+            column__board__in=boards,
+            due_date__range=[timezone.now(), timezone.now() + timedelta(days=3)]
+        ).select_related('column', 'assigned_to', 'column__board')
+        
+        # Get sort preference from request (default to 'urgency')
+        sort_by = request.GET.get('sort_tasks', 'urgency')
+        
+        # Base query for My Tasks
+        my_tasks_query = Task.objects.filter(
+            column__board__in=boards,
+            assigned_to=request.user
+        ).exclude(
+            column__name__icontains='done'
+        ).select_related('column', 'column__board', 'assigned_to')
+        
+        # Apply sorting based on user preference
+        if sort_by == 'due_date':
+            # Sort by: 1) Due date (soonest first), 2) Priority, 3) Creation date
+            my_tasks = my_tasks_query.extra(
+                select={
+                    'priority_order': """
+                        CASE priority 
+                            WHEN 'urgent' THEN 1 
+                            WHEN 'high' THEN 2 
+                            WHEN 'medium' THEN 3 
+                            WHEN 'low' THEN 4 
+                            ELSE 5 
+                        END
+                    """,
+                    'due_date_order': "CASE WHEN due_date IS NULL THEN 1 ELSE 0 END"
+                }
+            ).order_by('due_date_order', 'due_date', 'priority_order', 'created_at')[:8]
+        elif sort_by == 'priority':
+            # Sort by: 1) Priority level, 2) Due date, 3) Creation date
+            my_tasks = my_tasks_query.extra(
+                select={
+                    'priority_order': """
+                        CASE priority 
+                            WHEN 'urgent' THEN 1 
+                            WHEN 'high' THEN 2 
+                            WHEN 'medium' THEN 3 
+                            WHEN 'low' THEN 4 
+                            ELSE 5 
+                        END
+                    """,
+                    'due_date_order': "CASE WHEN due_date IS NULL THEN 1 ELSE 0 END"
+                }
+            ).order_by('priority_order', 'due_date_order', 'due_date', 'created_at')[:8]
+        elif sort_by == 'recent':
+            # Sort by: 1) Most recently created/updated, 2) Priority
+            my_tasks = my_tasks_query.extra(
+                select={
+                    'priority_order': """
+                        CASE priority 
+                            WHEN 'urgent' THEN 1 
+                            WHEN 'high' THEN 2 
+                            WHEN 'medium' THEN 3 
+                            WHEN 'low' THEN 4 
+                            ELSE 5 
+                        END
+                    """
+                }
+            ).order_by('-updated_at', '-created_at', 'priority_order')[:8]
+        else:  # Default: 'urgency'
+            # Sort by: 1) Overdue tasks first, 2) Priority level, 3) Due date, 4) Creation date
+            my_tasks = my_tasks_query.extra(
+                select={
+                    'is_overdue': "CASE WHEN due_date < datetime('now') THEN 1 ELSE 0 END",
+                    'priority_order': """
+                        CASE priority 
+                            WHEN 'urgent' THEN 1 
+                            WHEN 'high' THEN 2 
+                            WHEN 'medium' THEN 3 
+                            WHEN 'low' THEN 4 
+                            ELSE 5 
+                        END
+                    """
+                }
+            ).order_by('-is_overdue', 'priority_order', 'due_date', 'created_at')[:8]
+        
+        # Count of my tasks (for stats)
+        my_tasks_count = Task.objects.filter(
+            column__board__in=boards,
+            assigned_to=request.user
+        ).exclude(
+            column__name__icontains='done'
+        ).count()        
         return render(request, 'kanban/dashboard.html', {
             'boards': boards,
             'task_count': task_count,
             'completed_count': completed_count,
             'completion_rate': round(completion_rate, 1),
             'due_soon': due_soon,
+            'overdue_count': overdue_count,
+            'all_tasks': all_tasks,
+            'completed_tasks': completed_tasks,
+            'overdue_tasks': overdue_tasks,
+            'due_soon_tasks': due_soon_tasks,
+            'remaining_tasks': task_count - completed_count,
+            'my_tasks': my_tasks,
+            'my_tasks_count': my_tasks_count,
+            'my_tasks_sort_by': sort_by,  # Current sort preference
+            'now': timezone.now(),  # For comparing dates in the template
         })
     except UserProfile.DoesNotExist:
         return redirect('create_organization')
@@ -62,6 +182,22 @@ def board_list(request):
             (Q(created_by=request.user) | Q(members=request.user))
         ).distinct()
         
+        # For board_list, we only display boards, creation is handled by create_board view
+        form = BoardForm()
+        
+        return render(request, 'kanban/board_list.html', {
+            'boards': boards,
+            'form': form
+        })
+    except UserProfile.DoesNotExist:
+        return redirect('create_organization')
+
+@login_required
+def create_board(request):
+    try:
+        profile = request.user.profile
+        organization = profile.organization
+        
         if request.method == 'POST':
             form = BoardForm(request.POST)
             if form.is_valid():
@@ -70,13 +206,39 @@ def board_list(request):
                 board.created_by = request.user
                 board.save()
                 board.members.add(request.user)
-                messages.success(request, f'Board "{board.name}" created successfully!')
+                  # Check if there are recommended columns to create
+                recommended_columns_json = request.POST.get('recommended_columns')
+                if recommended_columns_json:
+                    try:
+                        recommended_columns = json.loads(recommended_columns_json)
+                        
+                        # Create the recommended columns
+                        for i, column_data in enumerate(recommended_columns):
+                            Column.objects.create(
+                                name=column_data['name'],
+                                board=board,
+                                position=i
+                            )
+                        
+                        messages.success(request, f'Board "{board.name}" created successfully with {len(recommended_columns)} AI-recommended columns!')
+                    except (json.JSONDecodeError, KeyError) as e:
+                        # Fallback to default columns if there's an error with recommended columns
+                        default_columns = ['To Do', 'In Progress', 'Done']
+                        for i, name in enumerate(default_columns):
+                            Column.objects.create(name=name, board=board, position=i)
+                        messages.success(request, f'Board "{board.name}" created successfully with default columns!')
+                else:
+                    # No recommended columns, create default ones
+                    default_columns = ['To Do', 'In Progress', 'Done']
+                    for i, name in enumerate(default_columns):
+                        Column.objects.create(name=name, board=board, position=i)
+                    messages.success(request, f'Board "{board.name}" created successfully!')
+                
                 return redirect('board_detail', board_id=board.id)
         else:
             form = BoardForm()
         
-        return render(request, 'kanban/board_list.html', {
-            'boards': boards,
+        return render(request, 'kanban/create_board.html', {
             'form': form
         })
     except UserProfile.DoesNotExist:
@@ -89,15 +251,29 @@ def board_detail(request, board_id):
     # Check if user has access to this board
     if not (board.created_by == request.user or request.user in board.members.all()):
         return HttpResponseForbidden("You don't have access to this board.")
-    
     columns = Column.objects.filter(board=board)
     
-    # Create default columns if none exist
+    # Create default columns if none exist (only for boards created without AI recommendations)
     if not columns.exists():
         default_columns = ['To Do', 'In Progress', 'Done']
         for i, name in enumerate(default_columns):
             Column.objects.create(name=name, board=board, position=i)
         columns = Column.objects.filter(board=board)
+    else:
+        # Ensure "To Do" column exists - recreate if missing (for compatibility)
+        has_todo = columns.filter(name__iregex=r'^(to do|todo)$').exists()
+        if not has_todo:
+            # Get the highest position and add "To Do" at the beginning
+            max_position = columns.aggregate(max_pos=Max('position'))['max_pos'] or -1
+            
+            # Shift all existing columns one position to the right
+            for column in columns.order_by('-position'):
+                column.position += 1
+                column.save()
+                
+            # Create "To Do" column at position 0
+            Column.objects.create(name='To Do', board=board, position=0)
+            columns = Column.objects.filter(board=board)  # Refresh queryset
     
     # Initialize the search form
     search_form = TaskSearchForm(request.GET or None, board=board)
@@ -241,12 +417,23 @@ def create_task(request, board_id, column_id=None):
     # Check if user has access to this board
     if not (board.created_by == request.user or request.user in board.members.all()):
         return HttpResponseForbidden("You don't have access to this board.")
-    
     if column_id:
         column = get_object_or_404(Column, id=column_id, board=board)
     else:
-        # Get the first column (To Do)
-        column = Column.objects.filter(board=board).order_by('position').first()
+        # Try to get "To Do" column first, otherwise get the first available column
+        column = Column.objects.filter(
+            board=board, 
+            name__iregex=r'^(to do|todo)$'
+        ).first()
+        
+        if not column:
+            # If no "To Do" column exists, get the first column
+            column = Column.objects.filter(board=board).order_by('position').first()
+        
+        # If still no column exists, this is an error state
+        if not column:
+            messages.error(request, 'No columns exist on this board. Please create a column first.')
+            return redirect('board_detail', board_id=board.id)
     
     if request.method == 'POST':
         form = TaskForm(request.POST, board=board)
@@ -341,11 +528,12 @@ def create_label(request, board_id):
             messages.success(request, 'Label created successfully!')
             return redirect('board_detail', board_id=board.id)
     else:
-        form = TaskLabelForm()
-    
-    return render(request, 'kanban/create_label.html', {
+        form = TaskLabelForm()    
+        return render(request, 'kanban/create_label.html', {
         'form': form,
-        'board': board
+        'board': board,
+        'has_lean_labels': board.labels.filter(category='lean').exists(),
+        'has_regular_labels': board.labels.filter(category='regular').exists()
     })
 
 @login_required
@@ -460,28 +648,39 @@ def board_analytics(request, board_id):
     
     # Set tasks in Done column to 100% progress for calculation
     total_progress_percentage = 0
-    
     for task in all_tasks:
         # If task is in Done column, count as 100%
         if task.column.name.lower().find('done') >= 0:
             progress = 100
         else:
-            progress = task.progress
+            # Handle None progress values by defaulting to 0
+            progress = task.progress if task.progress is not None else 0
         
         total_progress_percentage += progress
     
     # Calculate overall productivity based on progress of all tasks
     productivity = 0
     if total_tasks > 0:
-        productivity = (total_progress_percentage / (total_tasks * 100)) * 100
-    
-    # Get tasks due soon (next 7 days)
+        productivity = (total_progress_percentage / (total_tasks * 100)) * 100      # Get tasks due soon (next 7 days)
     today = timezone.now().date()
     upcoming_tasks = Task.objects.filter(
         column__board=board,
+        due_date__isnull=False,
         due_date__date__gte=today,
         due_date__date__lte=today + timedelta(days=7)
     ).order_by('due_date')
+    
+    # Get overdue tasks (due date in the past and not in done columns)
+    overdue_tasks = Task.objects.filter(
+        column__board=board,
+        due_date__isnull=False,
+        due_date__date__lt=today
+    ).exclude(
+        column__name__icontains='done'
+    ).order_by('due_date')
+    
+    # Get count of overdue tasks
+    overdue_count = overdue_tasks.count()
     
     # Lean Six Sigma Metrics
     # Get tasks by value added category
@@ -508,29 +707,29 @@ def board_analytics(request, board_id):
     value_added_percentage = 0
     if total_categorized > 0:
         value_added_percentage = (value_added_count / total_categorized) * 100
-    
-    # Tasks by Lean Six Sigma category
+      # Tasks by Lean Six Sigma category
     tasks_by_lean_category = [
         {'name': 'Value-Added', 'count': value_added_count, 'color': '#28a745'},
         {'name': 'Necessary NVA', 'count': necessary_nva_count, 'color': '#ffc107'},
         {'name': 'Waste/Eliminate', 'count': waste_count, 'color': '#dc3545'}
     ]
-    
     return render(request, 'kanban/board_analytics.html', {
         'board': board,
         'columns': columns,
         'tasks': all_tasks,  # Add all tasks to the template context
-        'tasks_by_column': tasks_by_column,  # Already a list of dicts
-        'tasks_by_priority': tasks_by_priority,  # Converted to list of dicts
-        'tasks_by_user': tasks_by_user,  # Converted to list of dicts
-        'completed_tasks': completed_tasks,  # Converted to list of dicts
+        'tasks_by_column': tasks_by_column,  # Raw data for JSON encoding in template
+        'tasks_by_priority': tasks_by_priority,  # Raw data for JSON encoding in template
+        'tasks_by_user': tasks_by_user,  # Raw data for JSON encoding in template
+        'completed_tasks': completed_tasks,  # Raw data for JSON encoding in template
+        'tasks_by_lean_category': tasks_by_lean_category, # Raw data for JSON encoding in template
         'productivity': round(productivity, 1),
         'upcoming_tasks': upcoming_tasks,
+        'overdue_tasks': overdue_tasks,  # Add overdue tasks
+        'overdue_count': overdue_count,  # Add overdue count
         'total_tasks': total_tasks,
         'completed_count': completed_count,
         'now': timezone.now(),  # For comparing dates in the template
         # Lean Six Sigma metrics
-        'tasks_by_lean_category': tasks_by_lean_category,
         'value_added_percentage': round(value_added_percentage, 1),
         'total_categorized': total_categorized,
     })
@@ -595,9 +794,11 @@ def move_task(request):
 def add_board_member(request, board_id):
     board = get_object_or_404(Board, id=board_id)
     
-    # Check if user is the board creator or has admin rights
-    if not board.created_by == request.user:
-        return HttpResponseForbidden("Only the board creator can add members.")
+    # Check if user is the board creator, superuser, or has access to the board
+    if not (board.created_by == request.user or 
+            request.user.is_superuser or 
+            request.user in board.members.all()):
+        return HttpResponseForbidden("You don't have permission to add members to this board.")
     
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
@@ -627,8 +828,20 @@ def add_board_member(request, board_id):
 def delete_board(request, board_id):
     board = get_object_or_404(Board, id=board_id)
     
-    # Check if user is the board creator
-    if board.created_by != request.user:
+    # Check if user has permission to delete this board
+    # Allow deletion if user is:
+    # 1. Board creator
+    # 2. Organization admin (if they have access to the board)
+    # 3. Organization creator
+    user_profile = getattr(request.user, 'profile', None)
+    has_permission = (
+        board.created_by == request.user or  # Board creator
+        (user_profile and user_profile.is_admin and 
+         (request.user in board.members.all() or board.created_by == request.user)) or  # Organization admin with board access
+        (user_profile and request.user == board.organization.created_by)  # Organization creator
+    )
+    
+    if not has_permission:
         return HttpResponseForbidden("You don't have permission to delete this board.")
     
     # Delete the board
@@ -832,6 +1045,11 @@ def delete_column(request, column_id):
     # Check if user has access to this board
     if not (board.created_by == request.user or request.user in board.members.all()):
         return HttpResponseForbidden("You don't have access to this board.")
+    
+    # Prevent deletion of "To Do" column as it's required for task creation
+    if column.name.lower() in ['to do', 'todo']:
+        messages.error(request, 'Cannot delete the "To Do" column as it is required for creating new tasks.')
+        return redirect('board_detail', board_id=board.id)
     
     if request.method == 'POST':
         # Store column name for success message
@@ -1143,3 +1361,58 @@ def welcome(request):
 def test_ai_features(request):
     """Test page for AI features debugging"""
     return render(request, 'kanban/test_ai_features.html')
+
+@login_required
+def edit_board(request, board_id):
+    board = get_object_or_404(Board, id=board_id)
+    
+    # Check if user is the board creator or a member
+    if not (board.created_by == request.user or request.user in board.members.all()):
+        return HttpResponseForbidden("You don't have permission to edit this board.")
+    
+    if request.method == 'POST':
+        form = BoardForm(request.POST, instance=board)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Board "{board.name}" updated successfully!')
+            return redirect('board_detail', board_id=board.id)
+    else:
+        form = BoardForm(instance=board)
+    
+    return render(request, 'kanban/edit_board.html', {
+        'form': form,
+        'board': board
+    })
+
+@login_required
+@login_required
+def meeting_transcript_extraction(request, board_id):
+    """
+    View for extracting tasks from meeting transcripts using AI
+    """
+    try:
+        # Verify board access
+        board = get_object_or_404(Board, id=board_id)
+        if not (board.created_by == request.user or request.user in board.members.all()):
+            return HttpResponseForbidden("You don't have access to this board.")
+        
+        # Get previous meeting transcripts for this board
+        from kanban.models import MeetingTranscript
+        previous_extractions = MeetingTranscript.objects.filter(
+            board=board,
+            created_by=request.user
+        ).order_by('-created_at')[:10]
+        
+        context = {
+            'board': board,
+            'today': timezone.now().date(),
+            'previous_extractions': previous_extractions,
+            'board_members': board.members.all(),
+        }
+        
+        return render(request, 'kanban/meeting_transcript.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in meeting transcript extraction view: {str(e)}")
+        messages.error(request, 'Error loading meeting transcript page. Please try again.')
+        return redirect('board_detail', board_id=board_id)

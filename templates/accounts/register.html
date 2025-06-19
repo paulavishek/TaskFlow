@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
+{% load socialaccount %}
 
 {% block title %}Register - Digital Kanban Board{% endblock %}
 
@@ -24,9 +25,126 @@
                 </div>
                 {% endif %}
                 
+                <!-- Google OAuth Signup -->
+                {% if not organization %}
+                <div class="d-grid gap-2 mb-4">
+                    {% get_providers as socialaccount_providers %}
+                    {% if socialaccount_providers %}
+                        {% for provider in socialaccount_providers %}
+                            {% if provider.id == "google" %}
+                                <a href="{% provider_login_url provider.id %}" class="btn btn-danger btn-lg">
+                                    <i class="fab fa-google me-2"></i>
+                                    Sign up with Google
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="row">
+                    <div class="col">
+                        <hr>
+                    </div>
+                    <div class="col-auto">
+                        <span class="text-muted">or</span>
+                    </div>
+                    <div class="col">
+                        <hr>
+                    </div>
+                </div>
+                {% endif %}
+                  <!-- Traditional Registration Form -->
+                
                 <form method="post">
                     {% csrf_token %}
-                    {{ form|crispy }}
+                    
+                    <!-- Username Field -->
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">Username</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <div class="text-danger">
+                                {% for error in form.username.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Email Field -->
+                    <div class="mb-3">
+                        <label for="id_email" class="form-label">Email</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="text-danger">
+                                {% for error in form.email.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Password1 Field with Toggle -->
+                    <div class="mb-3">
+                        <label for="password1-field" class="form-label">Password</label>
+                        <div class="input-group">
+                            <input type="password" 
+                                   class="form-control" 
+                                   name="password1" 
+                                   id="password1-field" 
+                                   placeholder="Password" 
+                                   required>
+                            <button class="btn btn-outline-secondary" 
+                                    type="button" 
+                                    id="toggle-password1"
+                                    title="Show/Hide Password">
+                                <i class="fas fa-eye" id="password1-toggle-icon"></i>
+                            </button>
+                        </div>
+                        {% if form.password1.errors %}
+                            <div class="text-danger">
+                                {% for error in form.password1.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Password2 Field with Toggle -->
+                    <div class="mb-3">
+                        <label for="password2-field" class="form-label">Password Confirmation</label>
+                        <div class="input-group">
+                            <input type="password" 
+                                   class="form-control" 
+                                   name="password2" 
+                                   id="password2-field" 
+                                   placeholder="Confirm Password" 
+                                   required>
+                            <button class="btn btn-outline-secondary" 
+                                    type="button" 
+                                    id="toggle-password2"
+                                    title="Show/Hide Password">
+                                <i class="fas fa-eye" id="password2-toggle-icon"></i>
+                            </button>
+                        </div>
+                        {% if form.password2.errors %}
+                            <div class="text-danger">
+                                {% for error in form.password2.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Non-field errors -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
                     <div class="d-grid gap-2 mt-4">
                         <button type="submit" class="btn btn-primary">Register</button>
                     </div>
@@ -37,9 +155,45 @@
                     {% if not organization %}
                     <p>Want to create an organization? <a href="{% url 'create_organization' %}">Create Organization</a></p>
                     {% endif %}
-                </div>
-            </div>
+                </div>            </div>
         </div>
     </div>
 </div>
+
+<!-- Password Toggle JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to set up password toggle for a field
+    function setupPasswordToggle(toggleId, fieldId, iconId) {
+        const toggleButton = document.getElementById(toggleId);
+        const passwordField = document.getElementById(fieldId);
+        const toggleIcon = document.getElementById(iconId);
+        
+        if (toggleButton && passwordField && toggleIcon) {
+            toggleButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Toggle password visibility
+                const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordField.setAttribute('type', type);
+                
+                // Toggle icon
+                if (type === 'text') {
+                    toggleIcon.classList.remove('fa-eye');
+                    toggleIcon.classList.add('fa-eye-slash');
+                    toggleButton.setAttribute('title', 'Hide Password');
+                } else {
+                    toggleIcon.classList.remove('fa-eye-slash');
+                    toggleIcon.classList.add('fa-eye');
+                    toggleButton.setAttribute('title', 'Show Password');
+                }
+            });
+        }
+    }
+    
+    // Set up toggles for both password fields
+    setupPasswordToggle('toggle-password1', 'password1-field', 'password1-toggle-icon');
+    setupPasswordToggle('toggle-password2', 'password2-field', 'password2-toggle-icon');
+});
+</script>
 {% endblock %}

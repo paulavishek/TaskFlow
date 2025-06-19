@@ -21,10 +21,30 @@ class TaskLabelAdmin(admin.ModelAdmin):
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ('title', 'column', 'priority', 'due_date', 'assigned_to', 'created_by')
-    list_filter = ('column', 'priority', 'due_date', 'created_at')
+    list_display = ('title', 'column', 'priority', 'due_date', 'assigned_to', 'is_milestone', 'is_critical_path', 'created_by')
+    list_filter = ('column', 'priority', 'due_date', 'is_milestone', 'is_critical_path', 'created_at')
     search_fields = ('title', 'description')
-    filter_horizontal = ('labels',)
+    filter_horizontal = ('labels', 'predecessors')
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'description', 'column', 'assigned_to', 'priority', 'progress', 'labels')
+        }),
+        ('Timeline & Dependencies', {
+            'fields': ('due_date', 'estimated_start_date', 'estimated_duration_hours', 
+                      'actual_start_date', 'actual_duration_hours', 'is_milestone', 'predecessors'),
+            'classes': ('collapse',)
+        }),
+        ('AI Analysis Results', {
+            'fields': ('earliest_start', 'earliest_finish', 'latest_start', 'latest_finish', 
+                      'slack_time_hours', 'is_critical_path', 'ai_risk_score', 'ai_recommendations', 'last_ai_analysis'),
+            'classes': ('collapse',),
+            'description': 'These fields are automatically calculated by AI analysis'
+        }),
+    )
+    
+    readonly_fields = ('earliest_start', 'earliest_finish', 'latest_start', 'latest_finish', 
+                      'slack_time_hours', 'is_critical_path', 'last_ai_analysis')
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):

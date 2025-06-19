@@ -289,3 +289,21 @@ def delete_organization(request):
         return redirect('organization_settings')
     except UserProfile.DoesNotExist:
         return redirect('create_organization')
+
+
+@login_required
+def social_signup_complete(request):
+    """
+    Handle post-social signup flow when user needs to be assigned to an organization
+    """
+    try:
+        # Check if user already has a profile
+        profile = request.user.profile
+        return redirect('dashboard')  # User already has organization
+    except UserProfile.DoesNotExist:
+        # User signed up with Google but doesn't have an organization
+        # Redirect them to organization choice page
+        messages.info(request, 
+                     'Welcome! Since this is your first time signing in with Google, '
+                     'please choose or create an organization.')
+        return redirect('organization_choice')

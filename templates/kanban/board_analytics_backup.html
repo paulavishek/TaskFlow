@@ -1,0 +1,1607 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load kanban_filters %}
+
+{% block title %}{{ board.name }} - Analytics{% endblock %}
+
+{% block extra_css %}
+<!-- Chart.js CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+<!-- Analytics CSS -->
+<link rel="stylesheet" href="{% static 'css/analytics.css' %}">
+
+<!-- CSRF Token for AJAX requests -->
+<meta name="csrf-token" content="{{ csrf_token }}">
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0 text-gray-800">{{ board.name }} - Analytics</h1>
+        <p class="text-muted">Track task progress and productivity metrics</p>
+    </div>
+    <div>
+        <a href="{% url 'board_detail' board.id %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Board
+        </a>
+    </div>
+</div>
+
+<!-- AI Analytics Summary Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow border-left-info">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-robot me-2"></i>AI Analytics Summary
+                </h6>
+                <button id="generate-ai-summary" class="btn btn-sm btn-info" data-board-id="{{ board.id }}">
+                    <span id="ai-summary-spinner" class="spinner-border spinner-border-sm d-none me-1" role="status"></span>
+                    <i class="fas fa-brain me-1"></i> Generate AI Summary
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="ai-summary-container" class="d-none">
+                    <div class="ai-summary-content">
+                        <div id="ai-summary-text"></div>
+                    </div>
+                </div>                <div id="ai-summary-placeholder" class="text-center py-4">
+                    <i class="fas fa-robot fa-3x text-muted mb-3"></i>
+                    <p class="text-muted mb-0">Click "Generate AI Summary" to get intelligent insights about your board analytics</p>
+                    <small class="text-muted">AI will analyze task distribution, productivity trends, and provide actionable recommendations</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Workflow Optimization Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow border-left-warning">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-warning">
+                    <i class="fas fa-cogs me-2"></i>Workflow Optimization
+                </h6>
+                <button id="analyze-workflow-btn" class="btn btn-sm btn-warning" data-board-id="{{ board.id }}">
+                    <span id="workflow-ai-spinner" class="spinner-border spinner-border-sm d-none me-1" role="status"></span>
+                    <i class="fas fa-chart-line me-1"></i> Analyze Workflow
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="workflow-optimization-container" class="d-none">
+                    <div id="workflow-optimization-content"></div>
+                </div>
+                <div id="workflow-optimization-placeholder" class="text-center py-4">
+                    <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
+                    <p class="text-muted mb-0">Click "Analyze Workflow" to get AI-powered optimization recommendations</p>
+                    <small class="text-muted">AI will identify bottlenecks, workload imbalances, and suggest process improvements</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI-Enhanced Timeline & Critical Path Analysis Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow border-left-success">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="fas fa-chart-gantt me-2"></i>AI-Powered Timeline Analysis
+                </h6>
+                <div class="btn-group" role="group">
+                    <button id="analyze-critical-path-btn" class="btn btn-sm btn-success" data-board-id="{{ board.id }}">
+                        <span id="critical-path-spinner" class="spinner-border spinner-border-sm d-none me-1" role="status"></span>
+                        <i class="fas fa-route me-1"></i> Critical Path
+                    </button>
+                    <button id="generate-timeline-btn" class="btn btn-sm btn-outline-success" data-board-id="{{ board.id }}">
+                        <span id="timeline-spinner" class="spinner-border spinner-border-sm d-none me-1" role="status"></span>
+                        <i class="fas fa-clock me-1"></i> Timeline View
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Critical Path Analysis Results -->
+                <div id="critical-path-container" class="d-none mb-4">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6 class="text-success mb-3"><i class="fas fa-route me-2"></i>Critical Path Analysis</h6>
+                            <div id="critical-path-content"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-info mb-3"><i class="fas fa-clock me-2"></i>Project Timeline</h6>
+                            <div id="project-insights-content"></div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-warning mb-3"><i class="fas fa-exclamation-triangle me-2"></i>Schedule Recommendations</h6>
+                            <div id="schedule-recommendations-content"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Timeline View Results -->
+                <div id="timeline-container" class="d-none mb-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3"><i class="fas fa-tasks me-2"></i>Project Phases</h6>
+                            <div id="timeline-phases-content"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-secondary mb-3"><i class="fas fa-users me-2"></i>Resource Timeline</h6>
+                            <div id="resource-timeline-content"></div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-info mb-3"><i class="fas fa-flag me-2"></i>Critical Milestones</h6>
+                            <div id="milestones-content"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Placeholder when no analysis is done -->
+                <div id="timeline-analysis-placeholder" class="text-center py-5">
+                    <i class="fas fa-chart-gantt fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted mb-3">AI-Enhanced Timeline Analysis</h5>
+                    <p class="text-muted mb-2">Transform your Kanban board into intelligent Gantt-like insights</p>
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <div class="row text-start">
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled small text-muted">
+                                        <li><i class="fas fa-check text-success me-2"></i>Critical Path Identification</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Slack Time Calculation</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Schedule Risk Assessment</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled small text-muted">
+                                        <li><i class="fas fa-check text-success me-2"></i>Resource Bottleneck Detection</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Milestone Tracking</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Timeline Optimization</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analytics Overview Cards -->
+<div class="row mb-4">
+    <!-- Total Tasks Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card primary shadow h-100 py-2 metrics-card" data-bs-toggle="modal" data-bs-target="#totalTasksModal">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Tasks</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_tasks }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clipboard-list stats-icon text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Tasks Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card success shadow h-100 py-2 metrics-card" data-bs-toggle="modal" data-bs-target="#completedTasksModal">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Completed Tasks</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ completed_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle stats-icon text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Productivity Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card warning shadow h-100 py-2 metrics-card" data-bs-toggle="modal" data-bs-target="#productivityModal">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Overall Productivity</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ productivity }}%</div>
+                        <small class="text-muted">Based on task progress</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-line stats-icon text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overdue Tasks Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card danger shadow h-100 py-2 metrics-card" data-bs-toggle="modal" data-bs-target="#overdueModal">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Overdue Tasks</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ overdue_tasks|length }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle stats-icon text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Second Row of Metric Cards -->
+<div class="row mb-4">
+    <!-- Coming Due Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card info shadow h-100 py-2 metrics-card" data-bs-toggle="modal" data-bs-target="#comingDueModal">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Coming Due</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ upcoming_tasks|length }}</div>
+                        <small class="text-muted">Next 7 days</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-alt stats-icon text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overall Progress Card -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Overall Board Progress</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="progress-indicator">
+                            <div class="progress-bar-circular" style="--progress-value: {{ productivity }}"></div>
+                            <div class="progress-circle"></div>
+                            <div class="progress-text">{{ productivity }}%</div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <h5>Work In Progress</h5>
+                        <div class="progress mb-3" style="height: 25px;">
+                            <div id="overall-progress-bar" class="progress-bar bg-success" 
+                                role="progressbar" 
+                                data-progress="{{ productivity }}" 
+                                aria-valuenow="{{ productivity }}"
+                                aria-valuemin="0" aria-valuemax="100">
+                                {{ productivity }}%
+                            </div>
+                        </div>
+                        <div class="productivity-explainer">
+                            <p class="mb-1"><i class="fas fa-info-circle me-1"></i> <strong>How is productivity calculated?</strong></p>
+                            <p class="mb-0">
+                                Productivity is based on the progress of all tasks. Tasks in "Done" columns are counted 
+                                as 100% complete, while tasks in other columns use their individual progress percentages.
+                                This gives a more accurate picture of work completed, even for tasks that are still in progress.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>        </div>    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row">
+    <!-- Tasks by Column Chart -->
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Tasks by Column</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="tasksColumnChart"></canvas>
+                </div>
+                {{ tasks_by_column|json_script:"columnsData" }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Tasks by Priority Chart -->
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Tasks by Priority</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="tasksPriorityChart"></canvas>
+                </div>
+                {{ tasks_by_priority|json_script:"priorityData" }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lean Six Sigma Metrics Row -->
+<div class="row">
+    <!-- Value-Added Analysis Card -->
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-line me-1"></i> Lean Six Sigma Value Analysis
+                    <button type="button" class="btn btn-sm text-primary border-0 p-0 ms-1" data-bs-toggle="modal" data-bs-target="#leanSixSigmaInfoModal">
+                        <i class="fas fa-info-circle" title="Learn more about Lean Six Sigma categories"></i>
+                    </button>
+                </h6>                {% if not total_categorized %}
+                <a href="{% url 'create_label' board.id %}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-plus me-1"></i> Add Lean Labels
+                </a>
+                {% endif %}
+            </div>            <div class="card-body">                {% if total_categorized %}
+                    <!-- Process Flow Analysis - Optimized 4-Column Layout -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="mb-4"><i class="fas fa-chart-bar me-2"></i>Process Flow Analysis</h6>
+                            
+                            <!-- Process Flow Items in 4-column layout for better space usage -->
+                            <div class="row g-3 mb-4">
+                                <!-- Value-Added -->
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="flow-item-compact">
+                                        <div class="flow-badge-compact flow-badge-success">VA</div>
+                                        <div class="flow-content-compact">
+                                            <h6 class="flow-title-compact">Value-Added</h6>
+                                            <p class="flow-subtitle-compact">Essential activities</p>
+                                            <div class="flow-stats-compact">
+                                                <span class="flow-count-compact">{{ tasks_by_lean_category.0.count }}</span>
+                                                <span class="flow-percentage-compact">({{ tasks_by_lean_category.0.count|percentage:total_categorized }}%)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Necessary NVA -->
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="flow-item-compact">
+                                        <div class="flow-badge-compact flow-badge-warning">NNVA</div>
+                                        <div class="flow-content-compact">
+                                            <h6 class="flow-title-compact">Necessary NVA</h6>
+                                            <p class="flow-subtitle-compact">Required support activities</p>
+                                            <div class="flow-stats-compact">
+                                                <span class="flow-count-compact">{{ tasks_by_lean_category.1.count }}</span>
+                                                <span class="flow-percentage-compact">({{ tasks_by_lean_category.1.count|percentage:total_categorized }}%)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Waste -->
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="flow-item-compact">
+                                        <div class="flow-badge-compact flow-badge-danger">Waste</div>
+                                        <div class="flow-content-compact">
+                                            <h6 class="flow-title-compact">Waste Activities</h6>
+                                            <p class="flow-subtitle-compact">Activities to eliminate</p>
+                                            <div class="flow-stats-compact">
+                                                <span class="flow-count-compact">{{ tasks_by_lean_category.2.count }}</span>
+                                                <span class="flow-percentage-compact">({{ tasks_by_lean_category.2.count|percentage:total_categorized }}%)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Process Efficiency in the 4th column -->
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="efficiency-compact">
+                                        <div class="efficiency-header-compact">
+                                            <h6 class="efficiency-title-compact">Process Efficiency</h6>
+                                            {% with efficiency_score=value_added_percentage|floatformat:0|add:0 %}
+                                                <div class="efficiency-score-compact
+                                                    {% if efficiency_score >= 70 %} text-success
+                                                    {% elif efficiency_score >= 50 %} text-warning
+                                                    {% else %} text-danger{% endif %}">
+                                                    {{ efficiency_score }}/100
+                                                </div>
+                                                <div class="efficiency-status-compact">
+                                                    {% if efficiency_score >= 70 %}
+                                                        <span class="badge bg-success badge-compact"><i class="fas fa-trophy me-1"></i>Excellent</span>
+                                                    {% elif efficiency_score >= 50 %}
+                                                        <span class="badge bg-warning badge-compact"><i class="fas fa-thumbs-up me-1"></i>Good</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger badge-compact"><i class="fas fa-exclamation-triangle me-1"></i>Needs Improvement</span>
+                                                    {% endif %}
+                                                </div>
+                                            {% endwith %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Progress Bar Summary - Full Width -->
+                            <div class="flow-summary-wide">
+                                <div class="progress-stacked-wide mb-3">
+                                    <div class="progress-segment progress-segment-success" 
+                                         style="width: {{ tasks_by_lean_category.0.count|percentage:total_categorized }}%"></div>
+                                    <div class="progress-segment progress-segment-warning" 
+                                         style="width: {{ tasks_by_lean_category.1.count|percentage:total_categorized }}%"></div>
+                                    <div class="progress-segment progress-segment-danger" 
+                                         style="width: {{ tasks_by_lean_category.2.count|percentage:total_categorized }}%"></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <small class="text-muted">Total Categorized: {{ total_categorized }} of {{ total_tasks }} tasks</small>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        {% if total_categorized < total_tasks %}
+                                        <small>
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            <a href="{% url 'create_label' board.id %}" class="text-decoration-none">Add more labels</a> to increase coverage
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Chart Section - Full Width Below -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="chart-container-wide">
+                                <canvas id="leanSixSigmaChart"></canvas>                                <div class="chart-center-overlay">
+                                    <div class="chart-center-value" style="font-size: 48px !important; font-weight: 900 !important; color: #28a745 !important; text-shadow: 0 4px 8px rgba(40, 167, 69, 0.5) !important; background: linear-gradient(135deg, #28a745, #20c997) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; background-clip: text !important; animation: pulseValueInline 2s ease-in-out infinite !important; transform: scale(1.1) !important; text-align: center !important; display: block !important; margin: 0 auto !important; line-height: 1 !important;">{{ value_added_percentage|floatformat:1 }}%</div>
+                                    <div class="chart-center-label" style="font-size: 18px !important; color: #28a745 !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: 2px !important; text-shadow: 0 2px 4px rgba(40, 167, 69, 0.4) !important; margin-top: 10px !important; text-align: center !important; display: block !important;">Value-Added</div>
+                                </div>
+                            </div>
+                            {{ tasks_by_lean_category|json_script:"leanCategoryData" }}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                        <p class="mb-0">No tasks have been categorized with Lean Six Sigma labels yet.</p>
+                        <p class="text-muted">Add Lean Six Sigma labels to your tasks to see value stream analysis here.</p>
+                        <a href="{% url 'create_label' board.id %}" class="btn btn-primary mt-2">
+                            <i class="fas fa-plus me-1"></i> Add Lean Six Sigma Labels
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Process Efficiency Card -->
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-pie me-1"></i> Process Efficiency
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if total_categorized %}
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="process-efficiency-tips card bg-light mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Lean Six Sigma Insights</h5>
+                                    {% if value_added_percentage < 30 %}
+                                        <div class="alert alert-danger">
+                                            <i class="fas fa-exclamation-triangle me-1"></i> Low Value-Added percentage ({{ value_added_percentage }}%)
+                                            <p class="small mb-0">Consider reducing waste activities and focusing on value-adding tasks.</p>
+                                        </div>
+                                    {% elif value_added_percentage < 70 %}
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-info-circle me-1"></i> Moderate Value-Added percentage ({{ value_added_percentage }}%)
+                                            <p class="small mb-0">Look for opportunities to convert necessary NVA tasks to value-added.</p>
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-success">
+                                            <i class="fas fa-check-circle me-1"></i> High Value-Added percentage ({{ value_added_percentage }}%)
+                                            <p class="small mb-0">Great job! Your process is focused on value-adding activities.</p>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <h6 class="mt-3">Recommendations:</h6>
+                                    <ul class="mb-0">
+                                        {% if tasks_by_lean_category.2.count > 0 %}
+                                            <li>Focus on eliminating {{ tasks_by_lean_category.2.count }} waste tasks to improve efficiency.</li>
+                                        {% endif %}
+                                        {% if tasks_by_lean_category.1.count > tasks_by_lean_category.0.count %}
+                                            <li>Review necessary NVA tasks to see if any can be streamlined or eliminated.</li>
+                                        {% endif %}
+                                        <li>Use the Lean Six Sigma filter to focus on high-value tasks first.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                        <p class="mb-0">Process efficiency metrics will appear here once tasks are categorized.</p>
+                        <p class="text-muted">Start by adding Lean Six Sigma labels to your tasks.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tasks by Assignee Row -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Tasks by Assignee</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Total Tasks</th>
+                                <th>Progress</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task_user in tasks_by_user %}
+                            <tr>
+                                <td>
+                                    {% if task_user.username %}
+                                    {{ task_user.username }}
+                                    {% else %}
+                                    <em>Unassigned</em>
+                                    {% endif %}
+                                </td>
+                                <td>{{ task_user.count }}</td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-info progress-dynamic" 
+                                            data-width="{{ task_user.completion_rate }}"
+                                            role="progressbar" 
+                                            aria-valuenow="{{ task_user.completion_rate }}"
+                                            aria-valuemin="0" aria-valuemax="100">
+                                            {{ task_user.completion_rate }}%
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">{{ task_user.completed }} of {{ task_user.count }} tasks completed</small>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">No tasks assigned yet</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Upcoming Deadlines</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for task in upcoming_tasks %}
+                    <a href="{% url 'task_detail' task.id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ task.title }}</h6>
+                            <small class="{% if task.due_date < now %}text-danger{% endif %}">
+                                {{ task.due_date|date:"M d, Y" }}
+                                {% if task.due_date < now %}<span class="badge bg-danger ms-1">Overdue</span>{% endif %}
+                            </small>
+                        </div>
+                        <p class="mb-1">{{ task.column.name }}</p>
+                        <small>
+                            {% if task.assigned_to %}
+                            Assigned to: {{ task.assigned_to.username }}
+                            {% else %}
+                            Unassigned
+                            {% endif %}
+                        </small>
+                    </a>
+                    {% empty %}
+                    <div class="text-center py-3">
+                        <p class="text-muted mb-0">No upcoming deadlines</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Metric Detail Modals -->
+<!-- Total Tasks Modal -->
+<div class="modal fade" id="totalTasksModal" tabindex="-1" aria-labelledby="totalTasksModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="totalTasksModalLabel">All Tasks</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Column</th>
+                            <th>Priority</th>
+                            <th>Progress</th>
+                            <th>Assigned To</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for column in columns %}
+                            {% for task in tasks %}
+                                {% if task.column.id == column.id %}
+                                <tr>
+                                    <td>{{ task.title }}</td>
+                                    <td>{{ task.column.name }}</td>
+                                    <td><span class="badge priority-{{ task.priority }}">{{ task.priority|title }}</span></td>
+                                    <td>
+                                        <div class="progress" style="height: 10px;">
+                                            <div class="progress-bar task-progress-bar {% if task.column.name|lower == 'done' %}bg-success{% elif task.progress < 30 %}bg-danger{% elif task.progress < 70 %}bg-warning{% else %}bg-success{% endif %}"
+                                                 role="progressbar"
+                                                 data-progress="{% if task.column.name|lower == 'done' %}100{% else %}{{ task.progress }}{% endif %}"
+                                                 aria-valuenow="{% if task.column.name|lower == 'done' %}100{% else %}{{ task.progress }}{% endif %}"
+                                                 aria-valuemin="0"
+                                                 aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                        <small>{% if task.column.name|lower == 'done' %}100{% else %}{{ task.progress }}{% endif %}%</small>
+                                    </td>
+                                    <td>{{ task.assigned_to.username|default:"Unassigned" }}</td>
+                                    <td>
+                                        <a href="{% url 'task_detail' task.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Completed Tasks Modal -->
+<div class="modal fade" id="completedTasksModal" tabindex="-1" aria-labelledby="completedTasksModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="completedTasksModalLabel">Completed Tasks</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Priority</th>
+                            <th>Completed On</th>
+                            <th>Assigned To</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                            {% if task.column.name|lower == 'done' or task.progress == 100 %}
+                            <tr>
+                                <td>{{ task.title }}</td>
+                                <td><span class="badge priority-{{ task.priority }}">{{ task.priority|title }}</span></td>
+                                <td>{{ task.updated_at|date:"M d, Y" }}</td>
+                                <td>{{ task.assigned_to.username|default:"Unassigned" }}</td>
+                                <td>
+                                    <a href="{% url 'task_detail' task.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Productivity Modal -->
+<div class="modal fade" id="productivityModal" tabindex="-1" aria-labelledby="productivityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="productivityModalLabel">Productivity Breakdown</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-6 offset-md-3">
+                        <div class="progress-indicator">
+                            <div class="progress-bar-circular" style="--progress-value: {{ productivity }}"></div>
+                            <div class="progress-circle"></div>
+                            <div class="progress-text">{{ productivity }}%</div>
+                        </div>
+                        <h5 class="text-center">Overall Productivity</h5>
+                    </div>
+                </div>
+                
+                <div class="productivity-explainer mb-4">
+                    <p class="mb-1"><i class="fas fa-info-circle me-1"></i> <strong>How is productivity calculated?</strong></p>
+                    <p class="mb-0">
+                        Productivity is based on the progress of all tasks. Tasks in "Done" columns are counted 
+                        as 100% complete, while tasks in other columns use their individual progress percentages.
+                        This gives a more accurate picture of work completed, even for tasks that are still in progress.
+                    </p>
+                </div>
+                
+                <h5>Progress by Column</h5>
+                <div class="row">
+                    {% for column in columns %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <strong>{{ column.name }}</strong> 
+                                <span class="badge bg-secondary float-end">{{ column.tasks.count }} tasks</span>
+                            </div>
+                            <div class="card-body p-0">
+                                <ul class="list-group list-group-flush">
+                                    {% for task in tasks %}
+                                        {% if task.column.id == column.id %}
+                                        <li class="list-group-item">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="text-truncate" style="max-width: 180px;" title="{{ task.title }}">{{ task.title }}</span>
+                                                <small>
+                                                    <span class="badge priority-{{ task.priority }}">{{ task.priority|title }}</span>
+                                                </small>
+                                            </div>
+                                            <div class="progress mt-1">
+                                                <div class="progress-bar task-progress-bar {% if task.column.name|lower == 'done' %}bg-success{% elif task.progress < 30 %}bg-danger{% elif task.progress < 70 %}bg-warning{% else %}bg-success{% endif %}"
+                                                    role="progressbar"
+                                                    data-progress="{% if task.column.name|lower == 'done' %}100{% else %}{{ task.progress }}{% endif %}"
+                                                    aria-valuenow="{% if task.column.name|lower == 'done' %}100{% else %}{{ task.progress }}{% endif %}"
+                                                    aria-valuemin="0"
+                                                    aria-valuemax="100">
+                                                </div>
+                                            </div>
+                                            <div class="d-flex justify-content-between mt-1">
+                                                <small>{% if task.column.name|lower == 'done' %}100{% else %}{{ task.progress }}{% endif %}%</small>
+                                                <small class="text-muted">
+                                                    {% if task.assigned_to %}
+                                                    {{ task.assigned_to.username }}
+                                                    {% else %}
+                                                    Unassigned
+                                                    {% endif %}
+                                                </small>
+                                            </div>
+                                        </li>
+                                        {% endif %}
+                                    {% empty %}
+                                        <li class="list-group-item text-center text-muted">No tasks in this column</li>
+                                    {% endfor %}
+                                    
+                                    {% if column.tasks.count == 0 %}
+                                        <li class="list-group-item text-center text-muted">No tasks in this column</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>        </div>
+    </div>
+</div>
+
+<!-- Overdue Tasks Modal -->
+<div class="modal fade" id="overdueModal" tabindex="-1" aria-labelledby="overdueModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="overdueModalLabel">Overdue Tasks</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if overdue_tasks %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Attention Required:</strong> These tasks are past their due dates and need immediate attention.
+                </div>
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Due Date</th>
+                            <th>Days Overdue</th>
+                            <th>Priority</th>
+                            <th>Progress</th>
+                            <th>Assigned To</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in overdue_tasks %}
+                        <tr class="table-danger">
+                            <td>{{ task.title }}</td>
+                            <td>
+                                {{ task.due_date|date:"M d, Y" }}
+                                <span class="badge bg-danger ms-1">Overdue</span>
+                            </td>
+                            <td>
+                                {% with days_overdue=task.due_date|timesince_days %}
+                                    <span class="text-danger fw-bold">{{ days_overdue }} day{{ days_overdue|pluralize }}</span>
+                                {% endwith %}
+                            </td>
+                            <td><span class="badge priority-{{ task.priority }}">{{ task.priority|title }}</span></td>
+                            <td>
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar task-progress-bar {% if task.progress < 30 %}bg-danger{% elif task.progress < 70 %}bg-warning{% else %}bg-success{% endif %}"
+                                        role="progressbar"
+                                        data-progress="{{ task.progress }}"
+                                        aria-valuenow="{{ task.progress }}"
+                                        aria-valuemin="0"
+                                        aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <small>{{ task.progress }}%</small>
+                            </td>
+                            <td>{{ task.assigned_to.username|default:"Unassigned" }}</td>
+                            <td>
+                                <a href="{% url 'task_detail' task.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <p class="lead">No overdue tasks!</p>
+                    <p class="text-muted">Great job staying on top of your deadlines.</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Coming Due Modal -->
+<div class="modal fade" id="comingDueModal" tabindex="-1" aria-labelledby="comingDueModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="comingDueModalLabel">Tasks Coming Due Soon</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if upcoming_tasks %}
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Due Date</th>
+                            <th>Priority</th>
+                            <th>Progress</th>
+                            <th>Assigned To</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in upcoming_tasks %}
+                        <tr>
+                            <td>{{ task.title }}</td>
+                            <td class="{% if task.due_date < now %}text-danger{% endif %}">
+                                {{ task.due_date|date:"M d, Y" }}
+                                {% if task.due_date < now %}<span class="badge bg-danger ms-1">Overdue</span>{% endif %}
+                            </td>
+                            <td><span class="badge priority-{{ task.priority }}">{{ task.priority|title }}</span></td>
+                            <td>
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar task-progress-bar {% if task.column.name|lower == 'done' %}bg-success{% elif task.progress < 30 %}bg-danger{% elif task.progress < 70 %}bg-warning{% else %}bg-success{% endif %}"
+                                        role="progressbar"
+                                        data-progress="{% if task.column.name|lower == 'done' %}100{% else %}{{ task.progress }}{% endif %}"
+                                        aria-valuenow="{% if task.column.name|lower == 'done' %}100{% else %}{{ task.progress }}{% endif %}"
+                                        aria-valuemin="0"
+                                        aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <small>{% if task.column.name|lower == 'done' %}100{% else %}{{ task.progress }}{% endif %}%</small>
+                            </td>
+                            <td>{{ task.assigned_to.username|default:"Unassigned" }}</td>
+                            <td>
+                                <a href="{% url 'task_detail' task.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-calendar-check fa-3x text-muted mb-3"></i>
+                    <p class="lead">No tasks coming due soon!</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lean Six Sigma Info Modal -->
+<div class="modal fade" id="leanSixSigmaInfoModal" tabindex="-1" aria-labelledby="leanSixSigmaInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="leanSixSigmaInfoModalLabel">Understanding Lean Six Sigma Categories</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card bg-success bg-opacity-10 h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <span class="badge bg-success">&nbsp;</span> Value-Added (VA)
+                                </h5>
+                                <p class="card-text">Activities that directly contribute to meeting customer requirements and that the customer is willing to pay for.</p>
+                                <h6>Examples:</h6>
+                                <ul>
+                                    <li>Performing actual work/service</li>
+                                    <li>Transforming a product</li>
+                                    <li>Creating features customers request</li>
+                                </ul>
+                                <p class="small text-muted">These tasks should be optimized and prioritized.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-warning bg-opacity-10 h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <span class="badge bg-warning">&nbsp;</span> Necessary Non-Value-Added (NNVA)
+                                </h5>
+                                <p class="card-text">Activities that don't add value from the customer's perspective but are required due to current constraints.</p>
+                                <h6>Examples:</h6>
+                                <ul>
+                                    <li>Regulatory compliance</li>
+                                    <li>Documentation for legal reasons</li>
+                                    <li>Quality inspections</li>
+                                </ul>
+                                <p class="small text-muted">These tasks should be minimized but cannot be eliminated entirely.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-danger bg-opacity-10 h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <span class="badge bg-danger">&nbsp;</span> Waste/Eliminate (NVA)
+                                </h5>
+                                <p class="card-text">Activities that consume resources but add no value from the customer's perspective.</p>
+                                <h6>Examples:</h6>
+                                <ul>
+                                    <li>Waiting time</li>
+                                    <li>Rework and defects</li>
+                                    <li>Unnecessary meetings or documentation</li>
+                                </ul>
+                                <p class="small text-muted">These tasks should be eliminated whenever possible.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h5>Why This Matters:</h5>
+                        <p>Categorizing tasks this way helps teams identify and eliminate waste, streamline necessary processes, and focus resources on what truly adds value. Aim for a high percentage of Value-Added tasks to improve overall efficiency.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script src="{% static 'js/kanban.js' %}"></script>
+
+<!-- Charts and Progress -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize all charts
+        initializeCharts();
+        
+        // Initialize Lean Six Sigma chart if data exists
+        const leanDataElement = document.getElementById('leanCategoryData');
+        if (leanDataElement) {
+            initializeLeanSixSigmaChart();
+        }
+        
+        // Function to initialize all standard charts
+        function initializeCharts() {
+            // Tasks by column chart
+            const columnsDataElement = document.getElementById('columnsData');
+            if (columnsDataElement) {
+                const columnsData = JSON.parse(columnsDataElement.textContent);
+                const columnCtx = document.getElementById('tasksColumnChart');
+                if (columnCtx) {
+                    new Chart(columnCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: columnsData.map(item => item.name),
+                            datasets: [{
+                                label: 'Number of Tasks',
+                                data: columnsData.map(item => item.count),
+                                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // Tasks by priority chart
+            const priorityDataElement = document.getElementById('priorityData');
+            if (priorityDataElement) {
+                const priorityData = JSON.parse(priorityDataElement.textContent);
+                const priorityCtx = document.getElementById('tasksPriorityChart');
+                if (priorityCtx) {
+                    const priorityColors = {
+                        'Low': 'rgba(40, 167, 69, 0.8)',
+                        'Medium': 'rgba(255, 193, 7, 0.8)',
+                        'High': 'rgba(255, 87, 51, 0.8)',
+                        'Urgent': 'rgba(220, 53, 69, 0.8)',
+                    };
+                    
+                    new Chart(priorityCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: priorityData.map(item => item.priority),
+                            datasets: [{
+                                data: priorityData.map(item => item.count),
+                                backgroundColor: priorityData.map(item => priorityColors[item.priority] || 'rgba(108, 117, 125, 0.8)'),
+                                borderColor: '#ffffff',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }
+          // Function to initialize Lean Six Sigma chart
+        function initializeLeanSixSigmaChart() {
+            const leanDataElement = document.getElementById('leanCategoryData');
+            if (leanDataElement) {
+                const leanData = JSON.parse(leanDataElement.textContent);
+                const leanCtx = document.getElementById('leanSixSigmaChart');
+                if (leanCtx && leanData.length > 0) {
+                    new Chart(leanCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: leanData.map(item => item.name),
+                            datasets: [{
+                                data: leanData.map(item => item.count),
+                                backgroundColor: leanData.map(item => item.color),
+                                borderColor: '#ffffff',
+                                borderWidth: 3,
+                                hoverBorderWidth: 5,
+                                cutout: '65%'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        padding: 20,
+                                        usePointStyle: true,
+                                        pointStyle: 'circle',
+                                        font: {
+                                            size: 12,
+                                            weight: '500'
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    titleColor: '#ffffff',
+                                    bodyColor: '#ffffff',
+                                    borderColor: '#ffffff',
+                                    borderWidth: 1,
+                                    cornerRadius: 8,
+                                    padding: 12,
+                                    callbacks: {
+                                        label: function(context) {
+                                            const value = context.raw;
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = Math.round((value / total) * 100);
+                                            return `${context.label}: ${value} tasks (${percentage}%)`;
+                                        }
+                                    }
+                                }
+                            },
+                            elements: {
+                                arc: {
+                                    borderRadius: 8
+                                }
+                            },
+                            interaction: {
+                                intersect: false,
+                                mode: 'index'
+                            },
+                            animation: {
+                                animateRotate: true,
+                                animateScale: true,
+                                duration: 1000,
+                                easing: 'easeOutCubic'
+                            }
+                        }
+                    });
+                }
+            }
+        }
+        // Set width for the overall progress bar
+        const overallProgressBar = document.getElementById('overall-progress-bar');
+        if (overallProgressBar) {
+            const progress = overallProgressBar.getAttribute('data-progress');
+            if (progress) {
+                overallProgressBar.style.width = progress + '%';
+            }
+        }
+
+        // Find all progress bars with the progress-dynamic class
+        const progressBars = document.querySelectorAll('.progress-dynamic');
+        
+        // Set the width for each progress bar
+        progressBars.forEach(bar => {
+            const width = bar.getAttribute('data-width');
+            if (width) {
+                bar.style.width = width + '%';
+            }
+        });
+
+        // Apply task progress widths for modal bars using data-progress
+        document.querySelectorAll('.task-progress-bar[data-progress]').forEach(bar => {
+            const progressValue = bar.getAttribute('data-progress');
+            if (progressValue) {
+                bar.style.width = progressValue + '%';
+            }
+        });
+
+        // Fix for modals not closing properly
+        document.querySelectorAll('.modal button[data-bs-dismiss="modal"]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Get the modal ID from the button's parent modal
+                const modal = this.closest('.modal');
+                // Use Bootstrap's modal API to hide it properly
+                bootstrap.Modal.getInstance(modal).hide();
+                
+                // Also remove any orphaned backdrops
+                document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                    backdrop.remove();
+                });
+                
+                // Remove modal-open class from body if no modals are open
+                if (!document.querySelector('.modal.show')) {
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+                }
+            });
+        });
+        
+        // Initialize metric cards to open modals when clicked
+        const metricCards = document.querySelectorAll('.metrics-card');
+        metricCards.forEach(card => {
+            card.addEventListener('click', function() {
+                const targetModal = this.getAttribute('data-bs-target');
+                const modalElement = document.querySelector(targetModal);
+                  if (modalElement) {
+                    const modalInstance = new bootstrap.Modal(modalElement);
+                    modalInstance.show();
+                }
+            });        });
+    });
+</script>
+
+{% load static %}
+<script src="{% static 'js/ai_features.js' %}?v={{ STATIC_VERSION|default:'2' }}"></script>
+
+<!-- Add CSRF token for AJAX requests -->
+<script>
+    // Make CSRF token available globally for AJAX requests
+    window.CSRF_TOKEN = '{{ csrf_token }}';
+    
+    // Also add it as a meta tag for the ai_features.js to find
+    if (!document.querySelector('meta[name="csrf-token"]')) {
+        const meta = document.createElement('meta');
+        meta.name = 'csrf-token';
+        meta.content = '{{ csrf_token }}';
+        document.head.appendChild(meta);
+    }
+    
+    // AI-Enhanced Timeline Analysis Functions
+    document.addEventListener('DOMContentLoaded', function() {
+        // Critical Path Analysis
+        const analyzeCriticalPathBtn = document.getElementById('analyze-critical-path-btn');
+        if (analyzeCriticalPathBtn) {
+            analyzeCriticalPathBtn.addEventListener('click', function() {
+                const boardId = this.getAttribute('data-board-id');
+                const spinner = document.getElementById('critical-path-spinner');
+                const placeholder = document.getElementById('timeline-analysis-placeholder');
+                const container = document.getElementById('critical-path-container');
+                
+                // Show spinner
+                spinner.classList.remove('d-none');
+                this.disabled = true;
+                
+                // Make API call
+                fetch('/api/analyze-critical-path/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': window.CSRF_TOKEN
+                    },
+                    body: JSON.stringify({
+                        board_id: boardId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    // Hide placeholder and show results
+                    placeholder.classList.add('d-none');
+                    container.classList.remove('d-none');
+                    
+                    // Populate critical path content
+                    const criticalPathContent = document.getElementById('critical-path-content');
+                    if (data.critical_path && data.critical_path.length > 0) {
+                        criticalPathContent.innerHTML = `
+                            <div class="alert alert-success">
+                                <h6><i class="fas fa-route me-2"></i>Critical Path Identified</h6>
+                                <div class="critical-path-tasks">
+                                    ${data.critical_path.map((task, index) => `
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="badge bg-primary me-2">${index + 1}</span>
+                                            <strong>${task.task_title}</strong>
+                                            <span class="text-muted ms-2">(${task.duration_hours}h)</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        criticalPathContent.innerHTML = `
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>No clear critical path identified. Consider adding task dependencies and estimated durations.
+                            </div>
+                        `;
+                    }
+                    
+                    // Populate project insights
+                    const projectInsights = document.getElementById('project-insights-content');
+                    if (data.project_insights) {
+                        const insights = data.project_insights;
+                        projectInsights.innerHTML = `
+                            <div class="card border-info">
+                                <div class="card-body p-3">
+                                    <div class="row text-center">
+                                        <div class="col-6 border-end">
+                                            <div class="h6 mb-0 text-info">${insights.total_duration_hours || 0}h</div>
+                                            <small class="text-muted">Total Duration</small>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="h6 mb-0 text-success">${insights.critical_path_duration || 0}h</div>
+                                            <small class="text-muted">Critical Path</small>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="row text-center">
+                                        <div class="col-6 border-end">
+                                            <div class="h6 mb-0 text-warning">${insights.high_risk_tasks || 0}</div>
+                                            <small class="text-muted">High Risk Tasks</small>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="h6 mb-0 text-primary">${insights.schedule_buffer_hours || 0}h</div>
+                                            <small class="text-muted">Schedule Buffer</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    // Populate recommendations
+                    const recommendationsContent = document.getElementById('schedule-recommendations-content');
+                    if (data.recommendations && data.recommendations.length > 0) {
+                        recommendationsContent.innerHTML = data.recommendations.map(rec => `
+                            <div class="alert alert-${rec.impact === 'high' ? 'warning' : 'info'} mb-2">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">${rec.title}</h6>
+                                        <p class="mb-1 small">${rec.description}</p>
+                                        <small class="text-muted">
+                                            Impact: <span class="badge bg-${rec.impact === 'high' ? 'danger' : rec.impact === 'medium' ? 'warning' : 'info'}">${rec.impact}</span>
+                                            Effort: <span class="badge bg-secondary">${rec.effort}</span>
+                                        </small>
+                                    </div>
+                                    <span class="badge bg-primary">${rec.priority}</span>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        recommendationsContent.innerHTML = `
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>No specific recommendations at this time. Your project timeline looks good!
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error analyzing critical path:', error);
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'alert alert-danger';
+                    errorDiv.innerHTML = `
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Failed to analyze critical path: ${error.message}
+                    `;
+                    placeholder.appendChild(errorDiv);
+                })
+                .finally(() => {
+                    // Hide spinner
+                    spinner.classList.add('d-none');
+                    this.disabled = false;
+                });
+            });
+        }
+        
+        // Generate Timeline
+        const generateTimelineBtn = document.getElementById('generate-timeline-btn');
+        if (generateTimelineBtn) {
+            generateTimelineBtn.addEventListener('click', function() {
+                const boardId = this.getAttribute('data-board-id');
+                const spinner = document.getElementById('timeline-spinner');
+                const placeholder = document.getElementById('timeline-analysis-placeholder');
+                const container = document.getElementById('timeline-container');
+                
+                // Show spinner
+                spinner.classList.remove('d-none');
+                this.disabled = true;
+                
+                // Make API call
+                fetch('/api/generate-project-timeline/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': window.CSRF_TOKEN
+                    },
+                    body: JSON.stringify({
+                        board_id: boardId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    // Hide placeholder and show results
+                    placeholder.classList.add('d-none');
+                    container.classList.remove('d-none');
+                    
+                    // Populate timeline phases
+                    const phasesContent = document.getElementById('timeline-phases-content');
+                    if (data.timeline_phases && data.timeline_phases.length > 0) {
+                        phasesContent.innerHTML = data.timeline_phases.map(phase => `
+                            <div class="card mb-3">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title text-primary">${phase.phase_name}</h6>
+                                    <p class="card-text small text-muted mb-2">
+                                        ${phase.start_date} to ${phase.end_date}
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-${phase.phase_status === 'completed' ? 'success' : phase.phase_status === 'in_progress' ? 'warning' : 'secondary'}">
+                                            ${phase.phase_status.replace('_', ' ').toUpperCase()}
+                                        </span>
+                                        <small class="text-muted">
+                                            Confidence: <span class="badge bg-${phase.completion_confidence === 'high' ? 'success' : phase.completion_confidence === 'medium' ? 'warning' : 'danger'}">${phase.completion_confidence}</span>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        phasesContent.innerHTML = `
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>No timeline phases identified. Consider organizing tasks into logical phases.
+                            </div>
+                        `;
+                    }
+                    
+                    // Populate resource timeline
+                    const resourceContent = document.getElementById('resource-timeline-content');
+                    if (data.resource_timeline && data.resource_timeline.length > 0) {
+                        resourceContent.innerHTML = data.resource_timeline.map(resource => `
+                            <div class="card mb-3">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title">${resource.team_member}</h6>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="small text-muted">Utilization</span>
+                                        <span class="badge bg-${resource.utilization_percentage > 90 ? 'danger' : resource.utilization_percentage > 70 ? 'warning' : 'success'}">
+                                            ${resource.utilization_percentage}%
+                                        </span>
+                                    </div>
+                                    ${resource.recommendations && resource.recommendations.length > 0 ? `
+                                        <div class="small text-muted">
+                                            <strong>Recommendations:</strong>
+                                            <ul class="mb-0 ps-3">
+                                                ${resource.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                                            </ul>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        resourceContent.innerHTML = `
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>No resource timeline data available.
+                            </div>
+                        `;
+                    }
+                    
+                    // Populate milestones
+                    const milestonesContent = document.getElementById('milestones-content');
+                    if (data.critical_milestones && data.critical_milestones.length > 0) {
+                        milestonesContent.innerHTML = data.critical_milestones.map(milestone => `
+                            <div class="alert alert-${milestone.confidence === 'high' ? 'success' : milestone.confidence === 'medium' ? 'warning' : 'danger'} mb-2">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">${milestone.milestone}</h6>
+                                        <p class="mb-1 small">Target: ${milestone.target_date} | Forecast: ${milestone.forecasted_date}</p>
+                                        <small class="text-muted">${milestone.impact_if_delayed}</small>
+                                    </div>
+                                    <span class="badge bg-${milestone.confidence === 'high' ? 'success' : milestone.confidence === 'medium' ? 'warning' : 'danger'}">
+                                        ${milestone.confidence.toUpperCase()}
+                                    </span>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        milestonesContent.innerHTML = `
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>No critical milestones identified. Consider marking important tasks as milestones.
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error generating timeline:', error);
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'alert alert-danger';
+                    errorDiv.innerHTML = `
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Failed to generate timeline: ${error.message}
+                    `;
+                    placeholder.appendChild(errorDiv);
+                })
+                .finally(() => {
+                    // Hide spinner
+                    spinner.classList.add('d-none');
+                    this.disabled = false;
+                });
+            });
+        }
+    });
+</script>
+
+{% load static %}
+<script src="{% static 'js/ai_features.js' %}?v={{ STATIC_VERSION|default:'2' }}"></script>
+
+<!-- Add CSRF token for AJAX requests -->
+<script>
+    // Make CSRF token available globally for AJAX requests
+    window.CSRF_TOKEN = '{{ csrf_token }}';
+    
+    // Also add it as a meta tag for the ai_features.js to find
+    if (!document.querySelector('meta[name="csrf-token"]')) {
+        const meta = document.createElement('meta');
+        meta.name = 'csrf-token';
+        meta.content = '{{ csrf_token }}';
+        document.head.appendChild(meta);
+    }
+    
+    // AI-Enhanced Timeline Analysis Functions
+    document.addEventListener('DOMContentLoaded', function() {
+        // Critical Path Analysis
+        const analyzeCriticalPathBtn = document.getElementById('analyze-critical-path-btn');
+        if (analyzeCriticalPathBtn) {
+            analyzeCriticalPathBtn.addEventListener('click', function() {
+                const boardId = this.getAttribute('data-board-id');
+                const spinner = document.getElementById('critical-path-spinner');
+                const placeholder = document.getElementById('timeline-analysis-placeholder');
+                const container = document.getElementById('critical-path-container');
+                
+                // Show spinner
+                spinner.classList.remove('d-none');
+                this.disabled = true;
+                
+                // Make API call
+                fetch('/api/analyze-critical-path/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': window.CSRF_TOKEN
+                    },
+                    body: JSON.stringify({
+                        board_id: boardId

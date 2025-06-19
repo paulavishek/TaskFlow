@@ -7,17 +7,16 @@
 <div class="row mb-4">
     <div class="col-md-12">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Your Boards</h1>
-            <div>
+            <h1 class="h3 mb-0 text-gray-800">Your Boards</h1>            <div>
                 <a href="{% url 'organization_boards' %}" class="d-none d-sm-inline-block btn btn-outline-primary shadow-sm me-2">
                     <i class="fas fa-building fa-sm me-1"></i> Organization Boards
                 </a>
                 <button class="btn btn-outline-success shadow-sm me-2" data-bs-toggle="modal" data-bs-target="#importBoardModal">
                     <i class="fas fa-file-import fa-sm me-1"></i> Import Board
                 </button>
-                <button class="d-none d-sm-inline-block btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#createBoardModal">
+                <a href="{% url 'create_board' %}" class="d-none d-sm-inline-block btn btn-primary shadow-sm">
                     <i class="fas fa-plus fa-sm text-white-50 me-2"></i> New Board
-                </button>
+                </a>
             </div>
         </div>
     </div>
@@ -49,12 +48,11 @@
                     <div class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
+                        </button>                        <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="{% url 'board_detail' board.id %}">Open Board</a></li>
-                            <li><a class="dropdown-item" href="{% url 'board_analytics' board.id %}">View Analytics</a></li>
-                            {% if board.created_by == user %}
+                            <li><a class="dropdown-item" href="{% url 'board_analytics' board.id %}">View Analytics</a></li>                            {% if board.created_by == user or user.profile.is_admin or user == board.organization.created_by %}
                             <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'edit_board' board.id %}">Edit Board</a></li>
                             <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteBoardModal{{ board.id }}">Delete Board</a></li>
                             {% endif %}
                         </ul>
@@ -87,14 +85,13 @@
         </div>
         {% endfor %}
     {% else %}
-    <div class="col-12">
-        <div class="card shadow">
+    <div class="col-12">        <div class="card shadow">
             <div class="card-body text-center py-5">
                 <i class="fas fa-clipboard-list fa-4x text-gray-300 mb-3"></i>
                 <p class="mb-4">You don't have any boards yet.</p>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createBoardModal">
+                <a href="{% url 'create_board' %}" class="btn btn-primary">
                     <i class="fas fa-plus fa-sm"></i> Create Your First Board
-                </button>
+                </a>
             </div>
         </div>
     </div>
@@ -103,7 +100,7 @@
 
 <!-- Create Board Modal -->
 <div class="modal fade" id="createBoardModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Create New Board</h5>
@@ -113,6 +110,49 @@
                 <div class="modal-body">
                     {% csrf_token %}
                     {{ form|crispy }}
+                    
+                    <!-- AI Column Recommendations Section -->
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Column Structure</h6>
+                            <button type="button" id="recommend-columns-btn" class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-magic me-1"></i> Get AI Recommendations
+                            </button>
+                        </div>
+                        <div id="columns-ai-spinner" class="d-none text-center mb-3">
+                            <div class="spinner-border spinner-border-sm text-info" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <span class="ms-2 text-muted small">Analyzing optimal column structure...</span>
+                        </div>
+                        <div id="column-recommendations-result" class="d-none"></div>
+                        
+                        <!-- Additional project context for better recommendations -->
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label for="project_type" class="form-label">Project Type</label>
+                                <select class="form-select" id="project_type" name="project_type">
+                                    <option value="general">General</option>
+                                    <option value="software_development">Software Development</option>
+                                    <option value="marketing">Marketing</option>
+                                    <option value="product_design">Product Design</option>
+                                    <option value="research">Research</option>
+                                    <option value="manufacturing">Manufacturing</option>
+                                    <option value="content_creation">Content Creation</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="team_size" class="form-label">Team Size</label>
+                                <select class="form-select" id="team_size" name="team_size">
+                                    <option value="1">Solo (1 person)</option>
+                                    <option value="2-5" selected>Small (2-5 people)</option>
+                                    <option value="6-10">Medium (6-10 people)</option>
+                                    <option value="11-20">Large (11-20 people)</option>
+                                    <option value="20+">Enterprise (20+ people)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -152,4 +192,9 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<script src="{% static 'js/ai_features.js' %}?v={{ STATIC_VERSION|default:'2' }}"></script>
 {% endblock %}

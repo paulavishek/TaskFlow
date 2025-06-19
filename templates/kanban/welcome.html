@@ -6,7 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/lean-six-sigma.css' %}">
 <link rel="stylesheet" href="{% static 'css/lean-six-sigma-animations.css' %}">
-<link rel="stylesheet" href="{% static 'css/icon-fix.css' %}">
+<link rel="stylesheet" href="{% static 'css/welcome-alignment-fix.css' %}">
 <style>
     /* Welcome page specific styling */
     body {
@@ -282,9 +282,8 @@
         <div class="row align-items-center">
             <div class="col-md-6">
                 <h2 class="fw-bold mb-4">Enhanced with Lean Six Sigma</h2>
-                <p class="lead">Identify and eliminate waste in your processes with integrated Lean Six Sigma features.</p>
-                  <div class="d-flex align-items-start mt-4">
-                    <div class="bg-success rounded p-2 me-3 text-white feature-icon">
+                <p class="lead">Identify and eliminate waste in your processes with integrated Lean Six Sigma features.</p>                  <div class="d-flex mt-4">
+                    <div class="bg-success rounded text-white feature-icon">
                         <i class="fas fa-check"></i>
                     </div>
                     <div>
@@ -293,17 +292,16 @@
                     </div>
                 </div>
                 
-                <div class="d-flex align-items-start mt-3">
-                    <div class="bg-warning rounded p-2 me-3 text-dark feature-icon">
+                <div class="d-flex mt-4">
+                    <div class="bg-warning rounded text-dark feature-icon">
                         <i class="fas fa-exclamation"></i>
                     </div>
                     <div>
-                        <h5>Necessary Non-Value-Added (NNVA)</h5>
-                        <p class="text-muted">Track necessary activities that don't directly add customer value.</p>
+                        <h5>Necessary Non-Value-Added (NNVA)</h5>                        <p class="text-muted">Track necessary activities that don't directly add customer value.</p>
                     </div>
                 </div>
-                  <div class="d-flex align-items-start mt-3">
-                    <div class="bg-danger rounded p-2 me-3 text-white feature-icon">
+                  <div class="d-flex mt-4">
+                    <div class="bg-danger rounded text-white feature-icon">
                         <i class="fas fa-times"></i>
                     </div>
                     <div>
@@ -312,8 +310,8 @@
                     </div>
                 </div>
                 
-                <div class="d-flex align-items-start mt-3">
-                    <div class="bg-info rounded p-2 me-3 text-white feature-icon">
+                <div class="d-flex mt-4">
+                    <div class="bg-info rounded text-white feature-icon">
                         <i class="fas fa-chart-pie"></i>
                     </div>
                     <div>
@@ -338,45 +336,31 @@
             <h2 class="fw-bold">Why TaskFlow Exists</h2>
             <p class="text-muted">Bridging the gap between task management and process improvement</p>
         </div>
-        
-        <div class="row g-4">            <div class="col-md-4">
-                <div class="card feature-card p-4 h-100">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="feature-icon bg-danger rounded-circle p-2 me-3 text-white">
+          <div class="row g-4">            <div class="col-md-4">                <div class="card feature-card p-4 h-100">
+                    <div class="d-flex">
+                        <div class="feature-icon bg-danger text-white">
                             <i class="fas fa-exclamation-triangle"></i>
                         </div>
-                        <div>
-                            <h5 class="mb-0">The Problem</h5>
-                        </div>
                     </div>
+                    <h5 class="mt-3 mb-3">The Problem</h5>
                     <p class="mb-0">Standard task managers often lack integrated, data-driven tools for process improvement. Teams need better visibility into not just what they are doing, but how effectively they are doing it.</p>
                 </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="card feature-card p-4 h-100">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="feature-icon bg-primary rounded-circle p-2 me-3 text-white">
+            </div>              <div class="col-md-4">                <div class="card feature-card p-4 h-100">
+                    <div class="d-flex">
+                        <div class="feature-icon bg-primary text-white">
                             <i class="fas fa-lightbulb"></i>
                         </div>
-                        <div>
-                            <h5 class="mb-0">The Solution</h5>
-                        </div>
                     </div>
+                    <h5 class="mt-3 mb-3">The Solution</h5>
                     <p class="mb-0">TaskFlow is a digital Kanban board designed to bridge this gap. It combines intuitive project management with a powerful analytics layer based on Lean Six Sigma principles, helping teams to organize tasks, collaborate effectively, and continuously improve their workflows.</p>
                 </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="card feature-card p-4 h-100">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="feature-icon bg-success rounded-circle p-2 me-3 text-white">
+            </div>              <div class="col-md-4">                <div class="card feature-card p-4 h-100">
+                    <div class="d-flex">
+                        <div class="feature-icon bg-success text-white">
                             <i class="fas fa-chart-line"></i>
                         </div>
-                        <div>
-                            <h5 class="mb-0">The Impact</h5>
-                        </div>
                     </div>
+                    <h5 class="mt-3 mb-3">The Impact</h5>
                     <p class="mb-0">With TaskFlow, teams gain deeper insights into their processes, enabling data-driven decisions that reduce waste and increase value-adding activities. The result is improved efficiency, better resource utilization, and higher quality deliverables that truly matter to stakeholders.</p>
                 </div>
             </div>

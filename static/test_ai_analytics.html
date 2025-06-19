@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Analytics Test</title>
+    <script>
+        // Test AI Summary endpoint
+        async function testAISummary() {
+            try {
+                const response = await fetch('/api/summarize-board-analytics/1/', {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                const data = await response.json();
+                document.getElementById('ai-summary-result').innerHTML = 
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                document.getElementById('ai-summary-result').innerHTML = 
+                    '<div style="color: red;">Error: ' + error + '</div>';
+            }
+        }
+
+        // Test Workflow Optimization endpoint
+        async function testWorkflowOptimization() {
+            try {
+                const response = await fetch('/api/analyze-workflow-optimization/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        board_id: 1
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('workflow-result').innerHTML = 
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                document.getElementById('workflow-result').innerHTML = 
+                    '<div style="color: red;">Error: ' + error + '</div>';
+            }
+        }
+
+        // Test Critical Path endpoint
+        async function testCriticalPath() {
+            try {
+                const response = await fetch('/api/analyze-critical-path/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        board_id: 1
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('critical-path-result').innerHTML = 
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                document.getElementById('critical-path-result').innerHTML = 
+                    '<div style="color: red;">Error: ' + error + '</div>';
+            }
+        }
+
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        button { padding: 10px 20px; margin: 10px; }
+        .result { border: 1px solid #ccc; padding: 10px; margin: 10px 0; min-height: 100px; }
+        pre { white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>AI Analytics Test Page</h1>
+    
+    <div>
+        <h2>AI Summary</h2>
+        <button onclick="testAISummary()">Test AI Summary</button>
+        <div id="ai-summary-result" class="result">Click button to test...</div>
+    </div>
+    
+    <div>
+        <h2>Workflow Optimization</h2>
+        <button onclick="testWorkflowOptimization()">Test Workflow Optimization</button>
+        <div id="workflow-result" class="result">Click button to test...</div>
+    </div>
+    
+    <div>
+        <h2>Critical Path Analysis</h2>
+        <button onclick="testCriticalPath()">Test Critical Path</button>
+        <div id="critical-path-result" class="result">Click button to test...</div>
+    </div>
+</body>
+</html>
