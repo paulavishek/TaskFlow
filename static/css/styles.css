@@ -11,13 +11,21 @@ body {
 }
 
 /* Kanban Board Styles */
+:root {
+    --column-scroll-max-height: 400px;
+    --column-scroll-min-height: 200px;
+}
+
 .kanban-board {
     display: flex;
     overflow-x: auto;
+    overflow-y: visible;
     padding: 20px 0;
     min-height: calc(100vh - 300px); /* Responsive height */
     align-items: flex-start;
     gap: 15px; /* Increased gap for better spacing */
+    /* Ensure columns are properly contained */
+    position: relative;
 }
 
 .kanban-column {
@@ -27,12 +35,14 @@ body {
     border-radius: 8px; /* More rounded corners */
     display: flex;
     flex-direction: column;
-    max-height: 100%;
+    height: fit-content; /* Allow column to size based on content */
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Enhanced shadow */
     transition: transform 0.1s ease-in-out, box-shadow 0.2s ease-in-out;
     user-select: none;
     cursor: move;
     border: 1px solid #e9ecef; /* Subtle border */
+    position: relative; /* Ensure proper containment */
+    overflow: visible; /* Allow content to be visible but contain scroll elements */
 }
 
 .kanban-column.dragging {
@@ -118,12 +128,119 @@ body {
 
 .kanban-column-tasks {
     padding: 10px;
-    flex-grow: 1;
-    overflow-y: auto;
-    min-height: 400px; /* Increased minimum height */
-    /* Ensure all columns have equal height */
-    height: calc(80vh - 200px); /* Dynamic height based on viewport */
-    max-height: 600px; /* Maximum height to prevent excessive scrolling */
+    flex-grow: 0; /* Don't grow to fill remaining space */
+    overflow-y: visible; /* Default to visible */
+    min-height: var(--column-scroll-min-height); /* Minimum height for empty columns */
+    /* Smooth transition for height changes */
+    transition: height 0.3s ease, border 0.3s ease;
+    border-radius: 4px;
+    position: relative; /* Ensure proper positioning context */
+    width: 100%; /* Full width of parent column */
+    box-sizing: border-box; /* Include padding in width calculation */
+}
+
+/* Force reset all column scrolling styles */
+.kanban-column-tasks.force-reset {
+    height: auto !important;
+    max-height: none !important;
+    min-height: var(--column-scroll-min-height) !important;
+    overflow-y: visible !important;
+    overflow-x: visible !important;
+    border: none !important;
+    border-radius: 4px !important;
+    background-color: transparent !important;
+    padding: 10px !important;
+    position: static !important;
+    width: auto !important;
+    box-sizing: content-box !important;
+    contain: none !important;
+    transform: none !important;
+}
+
+/* Override any webkit scrollbar styles for reset columns */
+.kanban-column-tasks.force-reset::-webkit-scrollbar {
+    width: auto;
+    height: auto;
+    background: transparent;
+}
+
+/* Ensure parent columns don't interfere when reset */
+.kanban-column.force-reset {
+    position: static !important;
+    overflow: visible !important;
+    isolation: auto !important;
+}
+
+/* Scrollable columns when tasks exceed threshold */
+.kanban-column-tasks.scrollable {
+    /* Core scrolling properties */
+    height: var(--column-scroll-max-height) !important;
+    max-height: var(--column-scroll-max-height) !important;
+    min-height: auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    
+    /* Ensure proper containment within parent column */
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    
+    /* Visual styling */
+    border: 1px solid rgba(0, 123, 255, 0.3) !important;
+    border-radius: 4px !important;
+    background-color: #ffffff;
+    padding: 8px !important;
+    
+    /* Custom scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: #6c757d #f1f1f1;
+    
+    /* Prevent layout shifts */
+    contain: layout;
+}
+
+/* Ensure scrollable columns are properly isolated */
+.kanban-column.has-scroll {
+    position: relative;
+    overflow: visible;
+    isolation: isolate;
+}
+
+/* Prevent scrollable columns from affecting sibling elements */
+.kanban-column.has-scroll .kanban-column-tasks.scrollable {
+    transform: translateZ(0); /* Create new stacking context */
+}
+
+/* Custom scrollbar styling for webkit browsers */
+.kanban-column-tasks.scrollable::-webkit-scrollbar {
+    width: 8px;
+}
+
+.kanban-column-tasks.scrollable::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.kanban-column-tasks.scrollable::-webkit-scrollbar-thumb {
+    background: #6c757d;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.kanban-column-tasks.scrollable::-webkit-scrollbar-thumb:hover {
+    background: #adb5bd;
+}
+
+/* Visual indicator for scrollable columns */
+.kanban-column.has-scroll .kanban-column-header::after {
+    content: '↕';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: rgba(0, 123, 255, 0.8);
+    font-weight: bold;
 }
 
 .kanban-column-tasks.drag-over {
@@ -164,26 +281,36 @@ body {
     border-color: #007bff;
 }
 
-/* Auto-scroll indicators */
-.scroll-indicator {
-    position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(0, 123, 255, 0.9);
+/* Scroll indicators for columns */
+.scroll-indicator-top, .scroll-indicator-bottom {
+    position: absolute;
+    right: 5px;
+    background: rgba(0, 123, 255, 0.9);
     color: white;
-    padding: 5px 15px;
-    border-radius: 15px;
-    font-size: 0.8rem;
-    z-index: 1000;
-    display: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 20;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.scroll-indicator.top {
-    top: 100px;
+.scroll-indicator-top {
+    top: 5px;
+    border-radius: 0 0 4px 4px;
 }
 
-.scroll-indicator.bottom {
-    bottom: 100px;
+.scroll-indicator-bottom {
+    bottom: 5px;
+    border-radius: 4px 4px 0 0;
+}
+
+/* Show scroll indicators when column is scrollable and has content to scroll */
+.kanban-column.has-scroll:hover .scroll-indicator-top,
+.kanban-column.has-scroll:hover .scroll-indicator-bottom {
+    opacity: 0.8;
 }
 
 .kanban-task {

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Column Scroll Test</title>
+    <style>
+        :root {
+            --column-scroll-max-height: 400px;
+            --column-scroll-min-height: 200px;
+        }
+        
+        .test-container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        .kanban-column {
+            background: #f8f9fa;
+            border-radius: 8px;
+            width: 300px;
+            border: 1px solid #ddd;
+            position: relative;
+        }
+        
+        .kanban-column-header {
+            padding: 12px;
+            background: #e9ecef;
+            border-radius: 8px 8px 0 0;
+            font-weight: bold;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .kanban-column-tasks {
+            padding: 10px;
+            min-height: var(--column-scroll-min-height);
+            max-height: 500px;
+            transition: max-height 0.3s ease;
+        }
+        
+        .kanban-column-tasks.scrollable {
+            max-height: var(--column-scroll-max-height);
+            overflow-y: scroll;
+            scrollbar-width: thin;
+            scrollbar-color: #6c757d transparent;
+            border: 2px solid rgba(0, 123, 255, 0.2);
+            border-radius: 4px;
+            background-color: #f8f9fa;
+        }
+        
+        .kanban-column-tasks.scrollable::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .kanban-column-tasks.scrollable::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .kanban-column-tasks.scrollable::-webkit-scrollbar-thumb {
+            background: #6c757d;
+            border-radius: 4px;
+        }
+        
+        .kanban-column.has-scroll .kanban-column-header::after {
+            content: '↕';
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: rgba(0, 123, 255, 0.8);
+            font-weight: bold;
+        }
+        
+        .kanban-task {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Column Scroll Feature Test</h1>
+    
+    <div class="test-container">
+        <!-- Normal column (3 tasks) -->
+        <div class="kanban-column">
+            <div class="kanban-column-header">Normal Column (3 tasks)</div>
+            <div class="kanban-column-tasks">
+                <div class="kanban-task">Task 1</div>
+                <div class="kanban-task">Task 2</div>
+                <div class="kanban-task">Task 3</div>
+            </div>
+        </div>
+        
+        <!-- Scrollable column (8 tasks) -->
+        <div class="kanban-column has-scroll">
+            <div class="kanban-column-header">Scrollable Column (8 tasks)</div>
+            <div class="kanban-column-tasks scrollable">
+                <div class="kanban-task">Task 1</div>
+                <div class="kanban-task">Task 2</div>
+                <div class="kanban-task">Task 3</div>
+                <div class="kanban-task">Task 4</div>
+                <div class="kanban-task">Task 5</div>
+                <div class="kanban-task">Task 6</div>
+                <div class="kanban-task">Task 7</div>
+                <div class="kanban-task">Task 8</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        console.log('Test page loaded');
+        
+        // Test dynamic addition
+        setTimeout(() => {
+            const normalColumn = document.querySelector('.kanban-column:first-child');
+            const tasksContainer = normalColumn.querySelector('.kanban-column-tasks');
+            
+            // Add more tasks
+            for (let i = 4; i <= 7; i++) {
+                const task = document.createElement('div');
+                task.className = 'kanban-task';
+                task.textContent = `Task ${i}`;
+                tasksContainer.appendChild(task);
+            }
+            
+            // Make it scrollable
+            normalColumn.classList.add('has-scroll');
+            tasksContainer.classList.add('scrollable');
+            normalColumn.querySelector('.kanban-column-header').textContent = 'Dynamic Column (7 tasks)';
+            
+            console.log('Added dynamic tasks and scroll');
+        }, 2000);
+    </script>
+</body>
+</html>

@@ -6,22 +6,42 @@ if (typeof priorityChart === 'undefined') {
     var priorityChart = null;
 }
 
+// Configuration for column scrolling
+if (typeof COLUMN_SCROLL_CONFIG === 'undefined') {
+    var COLUMN_SCROLL_CONFIG = {
+        TASK_THRESHOLD: 5,        // Number of tasks before scroll appears (changed from 4 to 5)
+        MAX_HEIGHT: 400,          // Maximum height in pixels when scrollable
+        MIN_HEIGHT: 200,          // Minimum height in pixels for empty columns
+        ENABLE_INDICATORS: true   // Show scroll indicators
+    };
+}
+
 // Check if event listeners are already attached
 if (typeof kanbanInitialized === 'undefined') {
     var kanbanInitialized = false;
-    
-    document.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener('DOMContentLoaded', function() {
         // Only initialize if not already done
         if (!kanbanInitialized) {
             kanbanInitialized = true;
-            
-            // Initialize Kanban Board functionality if board exists
+              // Initialize Kanban Board functionality if board exists
             if (document.querySelector('.kanban-board')) {
+                // Force cleanup any existing scroll states first
+                setTimeout(() => {
+                    if (typeof forceCleanupAllColumns === 'function') {
+                        forceCleanupAllColumns();
+                    }
+                }, 100);
+                
                 initKanbanBoard();
                 initColumnOrdering();
                 setupTaskProgress();
                 // Add keyboard support for accessibility
                 addKeyboardSupport();
+                
+                // Initialize column scrolling after other components and cleanup
+                setTimeout(() => {
+                    initColumnScrolling();
+                }, 800);
             }
             
             // Initialize charts if they exist
@@ -35,6 +55,9 @@ if (typeof kanbanInitialized === 'undefined') {
 function initKanbanBoard() {
     const tasks = document.querySelectorAll('.kanban-task');
     const columns = document.querySelectorAll('.kanban-column-tasks');
+    
+    // Initialize column scrolling based on task count
+    initColumnScrolling();
     
     // Initialize drag for all tasks
     tasks.forEach(task => {
@@ -358,15 +381,206 @@ function drop(e) {
             taskElement.style.transform = '';
             taskElement.style.transition = '';
         }, 200);
-        
-        // Update task position in backend
+          // Update task position in backend
         updateTaskPosition(taskId, columnId, insertIndex);
+        
+        // Update column scrolling immediately for visual feedback
+        setTimeout(() => {
+            updateColumnScrolling();
+        }, 100);
     }
     
     // Hide drop indicator
     const indicator = column.querySelector('.drop-zone-indicator');
     if (indicator) {
         indicator.classList.remove('active');
+    }
+}
+
+// Column Scrolling Management
+function initColumnScrolling() {
+    try {
+        console.log('Initializing column scrolling...');
+        
+        // Set CSS custom properties based on configuration
+        document.documentElement.style.setProperty('--column-scroll-max-height', COLUMN_SCROLL_CONFIG.MAX_HEIGHT + 'px');
+        document.documentElement.style.setProperty('--column-scroll-min-height', COLUMN_SCROLL_CONFIG.MIN_HEIGHT + 'px');
+        
+        console.log('CSS properties set:', {
+            maxHeight: COLUMN_SCROLL_CONFIG.MAX_HEIGHT + 'px',
+            minHeight: COLUMN_SCROLL_CONFIG.MIN_HEIGHT + 'px'
+        });
+        
+        // Initial update
+        updateColumnScrolling();
+        
+        // Listen for task operations (avoid recursion)
+        document.addEventListener('taskMoved', function() {
+            setTimeout(updateColumnScrolling, 100);
+        });
+        
+        console.log('Column scrolling initialized successfully');
+        
+    } catch (error) {
+        console.error('Error in initColumnScrolling:', error);
+    }
+}
+
+function updateColumnScrolling() {
+    try {
+        console.log('Updating column scrolling...');
+        
+        const columns = document.querySelectorAll('.kanban-column-tasks');
+        console.log(`Found ${columns.length} columns`);
+        
+        columns.forEach((column, index) => {
+            const tasks = column.querySelectorAll('.kanban-task');
+            const taskCount = tasks.length;
+            const columnWrapper = column.closest('.kanban-column');
+            
+            console.log(`Column ${index + 1}: ${taskCount} tasks`);
+              // Add or remove scrollable class based on task count
+            if (taskCount > COLUMN_SCROLL_CONFIG.TASK_THRESHOLD) {
+                console.log(`  → Making column ${index + 1} scrollable`);
+                column.classList.add('scrollable');
+                
+                // Clear any conflicting styles first
+                column.style.minHeight = '';
+                column.style.flexGrow = '';
+                column.style.maxHeight = '';
+                
+                // Apply only essential scrolling styles
+                column.style.height = COLUMN_SCROLL_CONFIG.MAX_HEIGHT + 'px';
+                column.style.overflowY = 'auto';
+                column.style.overflowX = 'hidden';
+                
+                // Ensure the column wrapper doesn't interfere
+                if (columnWrapper) {
+                    columnWrapper.classList.add('has-scroll');
+                    columnWrapper.style.position = 'relative';
+                    columnWrapper.style.overflow = 'visible';
+                }
+                  } else {
+                console.log(`  → Removing scroll from column ${index + 1}`);
+                column.classList.remove('scrollable');
+                
+                // Thorough cleanup of all scroll-related styles
+                column.style.height = '';
+                column.style.maxHeight = '';
+                column.style.minHeight = '';
+                column.style.overflowY = '';
+                column.style.overflowX = '';
+                column.style.border = '';
+                column.style.borderRadius = '';
+                column.style.padding = '';
+                column.style.backgroundColor = '';
+                column.style.contain = '';
+                column.style.position = '';
+                column.style.width = '';
+                column.style.boxSizing = '';
+                
+                // Reset to default natural sizing
+                column.style.minHeight = COLUMN_SCROLL_CONFIG.MIN_HEIGHT + 'px';
+                
+                if (columnWrapper) {
+                    columnWrapper.classList.remove('has-scroll');
+                    // Also cleanup wrapper styles that might interfere
+                    columnWrapper.style.position = '';
+                    columnWrapper.style.overflow = '';
+                }
+            }
+        });
+        
+        console.log('Column scrolling update completed');
+        
+    } catch (error) {
+        console.error('Error in updateColumnScrolling:', error);
+    }
+}
+
+// Make function globally accessible
+window.kanbanUpdateColumnScrolling = updateColumnScrolling;
+
+// Force cleanup function to reset all column styles
+function forceCleanupAllColumns() {
+    console.log('Force cleaning up all column styles...');
+    
+    const columns = document.querySelectorAll('.kanban-column-tasks');
+    columns.forEach((column, index) => {
+        console.log(`  → Force cleaning column ${index + 1}`);
+        
+        // Remove all scroll-related classes
+        column.classList.remove('scrollable');
+        // Add force reset class temporarily
+        column.classList.add('force-reset');
+        
+        // Clear all inline styles
+        column.removeAttribute('style');
+        
+        // Get wrapper and clean it too
+        const columnWrapper = column.closest('.kanban-column');
+        if (columnWrapper) {
+            columnWrapper.classList.remove('has-scroll');
+            columnWrapper.classList.add('force-reset');
+            // Don't remove all styles from wrapper, just overflow-related ones
+            columnWrapper.style.position = '';
+            columnWrapper.style.overflow = '';
+        }
+    });
+    
+    // After a short delay, remove reset classes and reapply proper scrolling
+    setTimeout(() => {
+        columns.forEach(column => {
+            column.classList.remove('force-reset');
+            const columnWrapper = column.closest('.kanban-column');
+            if (columnWrapper) {
+                columnWrapper.classList.remove('force-reset');
+            }
+        });
+        
+        // Reapply proper scrolling
+        updateColumnScrolling();
+    }, 200);
+}
+
+// Make cleanup function globally accessible
+window.kanbanForceCleanup = forceCleanupAllColumns;
+
+function addScrollIndicators(column) {
+    // Temporarily disabled to debug scroll bar positioning issues
+    // This function will be re-enabled once the core scrolling is working properly
+    return;
+}
+
+function removeScrollIndicators(column) {
+    const columnWrapper = column.closest('.kanban-column');
+    if (columnWrapper) {
+        const topIndicator = columnWrapper.querySelector('.scroll-indicator-top');
+        const bottomIndicator = columnWrapper.querySelector('.scroll-indicator-bottom');
+        
+        if (topIndicator) topIndicator.remove();
+        if (bottomIndicator) bottomIndicator.remove();
+    }
+}
+
+function updateScrollIndicators(column, topIndicator, bottomIndicator) {
+    const scrollTop = column.scrollTop;
+    const scrollHeight = column.scrollHeight;
+    const clientHeight = column.clientHeight;
+    const scrollBottom = scrollHeight - scrollTop - clientHeight;
+    
+    // Show top indicator if not at top
+    if (scrollTop > 10) {
+        topIndicator.style.opacity = '1';
+    } else {
+        topIndicator.style.opacity = '0';
+    }
+    
+    // Show bottom indicator if not at bottom
+    if (scrollBottom > 10) {
+        bottomIndicator.style.opacity = '1';
+    } else {
+        bottomIndicator.style.opacity = '0';
     }
 }
 
@@ -486,6 +700,14 @@ function updateTaskPosition(taskId, columnId, position = 0) {
             console.log('Task moved successfully');
             // Show success notification
             showNotification('Task moved successfully', 'success');
+            
+            // Update column scrolling after task move
+            updateColumnScrolling();
+            
+            // Dispatch custom event for task moved
+            document.dispatchEvent(new CustomEvent('taskMoved', {
+                detail: { taskId, columnId, position }
+            }));
         } else {
             console.error('Error moving task:', data.error);
             showNotification('Error moving task: ' + data.error, 'error');
@@ -792,20 +1014,16 @@ function equalizeColumnHeights() {
     const columns = document.querySelectorAll('.kanban-column-tasks');
     if (columns.length === 0) return;
     
-    let maxHeight = 0;
-    
-    // Find the tallest column
+    // Don't equalize heights for scrollable columns
     columns.forEach(column => {
-        column.style.height = 'auto'; // Reset height
-        const height = column.scrollHeight;
-        maxHeight = Math.max(maxHeight, height);
-    });
-    
-    // Set minimum height to ensure drop zones are accessible
-    const minHeight = Math.max(maxHeight, 400);
-    
-    columns.forEach(column => {
-        column.style.minHeight = minHeight + 'px';
+        if (!column.classList.contains('scrollable')) {
+            column.style.height = 'auto'; // Reset height for non-scrollable columns
+            
+            // Set minimum height to ensure drop zones are accessible
+            const minHeight = Math.max(COLUMN_SCROLL_CONFIG.MIN_HEIGHT, 200);
+            column.style.minHeight = minHeight + 'px';
+        }
+        // Leave scrollable columns unchanged - they manage their own height
     });
 }
 

@@ -1,0 +1,33 @@
+/* Temporary CSS fix for column scroll positioning issues */
+.kanban-column {
+    /* Ensure proper containment for scroll bars */
+    contain: layout style;
+    position: relative !important;
+    overflow: visible !important;
+}
+
+/* Reset any conflicting styles on scrollable columns */
+.kanban-column-tasks.scrollable {
+    /* Force scroll bar to stay within column bounds */
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    
+    /* Clear any transforms that might cause positioning issues */
+    transform: none !important;
+    
+    /* Ensure scroll area is properly contained */
+    contain: strict !important;
+}
+
+/* Debug styles to visualize column boundaries */
+.kanban-column.has-scroll {
+    outline: 2px dashed red !important;
+    outline-offset: -2px !important;
+}
+
+.kanban-column-tasks.scrollable {
+    outline: 2px solid blue !important;
+    outline-offset: -2px !important;
+}
