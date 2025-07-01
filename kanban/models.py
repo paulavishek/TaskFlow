@@ -60,25 +60,6 @@ class Task(models.Model):
     labels = models.ManyToManyField(TaskLabel, related_name='tasks', blank=True)
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     progress = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
-    
-    # AI-Enhanced Timeline & Dependencies Fields
-    estimated_start_date = models.DateTimeField(blank=True, null=True, help_text="AI-suggested or manually set start date")
-    estimated_duration_hours = models.IntegerField(default=8, validators=[MinValueValidator(1)], help_text="Estimated time to complete in hours")
-    actual_start_date = models.DateTimeField(blank=True, null=True, help_text="When work actually started")
-    actual_duration_hours = models.IntegerField(blank=True, null=True, validators=[MinValueValidator(0)], help_text="Actual time spent in hours")
-    
-    # Critical Path Analysis Fields (AI-calculated)
-    earliest_start = models.DateTimeField(blank=True, null=True, help_text="AI-calculated earliest start time")
-    earliest_finish = models.DateTimeField(blank=True, null=True, help_text="AI-calculated earliest finish time")
-    latest_start = models.DateTimeField(blank=True, null=True, help_text="AI-calculated latest start time")
-    latest_finish = models.DateTimeField(blank=True, null=True, help_text="AI-calculated latest finish time")
-    slack_time_hours = models.IntegerField(blank=True, null=True, help_text="AI-calculated slack/float time in hours")
-    is_critical_path = models.BooleanField(default=False, help_text="AI-determined: is this task on the critical path?")
-    
-    # Milestone and Dependencies
-    is_milestone = models.BooleanField(default=False, help_text="Is this task a project milestone?")
-    predecessors = models.ManyToManyField('self', blank=True, symmetrical=False, related_name='successors', 
-                                        help_text="Tasks that must be completed before this task can start")
       # AI Analysis Results
     ai_risk_score = models.IntegerField(blank=True, null=True, validators=[MinValueValidator(0), MaxValueValidator(100)],
                                       help_text="AI-calculated risk score (0-100)")
@@ -119,7 +100,7 @@ class Task(models.Model):
         help_text="Identified resource conflicts and scheduling issues"
     )
     
-    # Enhanced Resource Tracking  
+    # Enhanced Resource Tracking    
     complexity_score = models.IntegerField(
         default=5,
         validators=[MinValueValidator(1), MaxValueValidator(10)],
@@ -140,28 +121,6 @@ class Task(models.Model):
     
     def __str__(self):
         return self.title
-    
-    @property
-    def has_dependencies(self):
-        """Check if this task has any predecessor dependencies"""
-        return self.predecessors.exists()
-    
-    @property
-    def is_blocking_others(self):
-        """Check if this task is blocking other tasks"""
-        return self.successors.exists()
-    
-    @property
-    def dependency_chain_length(self):
-        """Calculate the length of the dependency chain for this task"""
-        if not self.has_dependencies:
-            return 0
-        
-        max_depth = 0
-        for predecessor in self.predecessors.all():
-            depth = 1 + predecessor.dependency_chain_length
-            max_depth = max(max_depth, depth)
-        return max_depth
 
 class Comment(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='comments')

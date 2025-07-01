@@ -136,15 +136,83 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col-auto me-3">
                         <i class="fas fa-magic fa-2x text-primary"></i>
-                    </div>
-                    <div class="col">
-                        <div class="font-weight-bold text-primary mb-1">Enhanced: Advanced AI Features</div>
-                        <p class="mb-0">Access powerful AI-driven tools for resource analysis, timeline management, meeting insights, and Lean Six Sigma optimization through your board settings.</p>
-                    </div>
-                    <div class="col-auto">
-                        <a href="{% url 'board_list' %}" class="btn btn-sm btn-primary">
-                            Explore Features
-                        </a>
+                    </div>                    <div class="col">
+                        <div class="font-weight-bold text-primary mb-1">Enhanced: <strong class="text-primary">Advanced AI Features</strong></div>
+                        <p class="mb-0">Access our advanced AI-powered <strong class="text-info">Meeting Transcript Analysis</strong> and <strong class="text-warning">Lean Six Sigma optimization </strong> tools through your <strong class="text-primary"><i class="fas fa-cog me-1"></i>board settings</strong>.</p>
+                    </div>                    <div class="col-auto">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-primary dropdown-toggle" type="button" id="exploreFeaturesDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                Explore Features
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="exploreFeaturesDropdown">
+                                <li>
+                                    <h6 class="dropdown-header">
+                                        <i class="fas fa-microphone-alt text-info me-2"></i>
+                                        <strong class="text-info">Meeting Transcript Analysis</strong>
+                                    </h6>
+                                </li>
+                                <li>
+                                    <span class="dropdown-item-text">
+                                        <small class="text-muted">Choose a board to analyze meeting transcripts:</small>
+                                    </span>
+                                </li>
+                                {% if boards %}
+                                    {% for board in boards|slice:":3" %}
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'meeting_transcript_extraction' board.id %}">
+                                            <i class="fas fa-project-diagram me-2"></i>{{ board.name|truncatechars:25 }}
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                    {% if boards|length > 3 %}
+                                    <li>
+                                        <a class="dropdown-item text-muted" href="{% url 'board_list' %}">
+                                            <i class="fas fa-ellipsis-h me-2"></i>View all boards...
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                {% else %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'create_board' %}">
+                                        <i class="fas fa-plus me-2"></i>Create your first board
+                                    </a>
+                                </li>
+                                {% endif %}                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <h6 class="dropdown-header">
+                                        <i class="fas fa-industry text-warning me-2"></i>
+                                        <strong class="text-warning">Lean Six Sigma Tools</strong>
+                                    </h6>
+                                </li>
+                                <li>
+                                    <span class="dropdown-item-text">
+                                        <small class="text-muted">Access through board settings or analytics:</small>
+                                    </span>
+                                </li>
+                                {% if boards %}
+                                    {% for board in boards|slice:":3" %}
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'board_analytics' board.id %}">
+                                            <i class="fas fa-chart-pie me-2"></i>{{ board.name|truncatechars:25 }} - Analytics
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                    {% if boards|length > 3 %}
+                                    <li>
+                                        <a class="dropdown-item text-muted" href="{% url 'board_list' %}">
+                                            <i class="fas fa-ellipsis-h me-2"></i>View all boards...
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                {% else %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'create_board' %}">
+                                        <i class="fas fa-plus me-2"></i>Create your first board
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>

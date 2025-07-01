@@ -16,8 +16,6 @@ TaskFlow isn't just another project management tool - it's your **Gemini-powered
 - AI Analytics Summarization powered by advanced language understanding
 - Smart Comment Summarization through natural language processing
 - Lean Six Sigma Classification with intelligent process analysis
-- AI Resource Analysis for optimal team allocation and capacity planning
-- AI Timeline Management with critical path analysis and milestone planning
 - Meeting Transcript Analysis for automatic task extraction from documents
 
 🎯 **Core Productivity Features**
@@ -171,32 +169,6 @@ Gemini Output: Detailed description with checklist including:
 1. When creating/editing tasks, click "Suggest LSS Classification"
 2. Gemini recommends: Value-Added, Necessary Non-Value-Added, or Waste
 3. Use these AI-powered insights to optimize your workflow
-
-### 📊 **AI Resource Analysis** *(Powered by Gemini)*
-
-**What it does:** Advanced AI-powered analysis of team resources, workload distribution, and capacity planning to optimize project allocation.
-
-**How to use it:**
-1. Navigate to the Resource Analysis section in your dashboard
-2. Click "Generate Resource Analysis"
-3. Get comprehensive insights about:
-   - Team member workload and availability
-   - Skill-based task allocation recommendations
-   - Capacity planning and bottleneck identification
-   - Optimal resource distribution strategies
-
-### ⏱️ **AI Timeline Management** *(Powered by Gemini)*
-
-**What it does:** Intelligent project timeline generation and critical path analysis using AI to predict project completion and identify dependencies.
-
-**How to use it:**
-1. Access the Timeline feature from your board
-2. Let AI analyze task dependencies and complexity
-3. Get automated timeline suggestions with:
-   - Critical path identification
-   - Milestone recommendations
-   - Risk assessment and mitigation strategies
-   - Resource scheduling optimization
 
 ### 🎙️ **Meeting Transcript Analysis** *(Powered by Gemini)*
 

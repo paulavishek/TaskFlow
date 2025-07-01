@@ -26,18 +26,15 @@ def test_ai_improvements():
         # Get tasks data
         tasks = Task.objects.filter(column__board=software_board)
         print(f"📋 Found {tasks.count()} tasks")
-        
-        # Build board data for AI analysis
+          # Build board data for AI analysis
         tasks_data = []
         for task in tasks[:10]:  # Test with first 10 tasks
             task_info = {
                 'id': task.id,
                 'title': task.title,
-                'estimated_duration_hours': task.estimated_duration_hours,
                 'priority': task.priority,
                 'assigned_to': task.assigned_to.username if task.assigned_to else None,
-                'progress': task.progress,
-                'predecessors': [p.id for p in task.predecessors.all()]
+                'progress': task.progress
             }
             tasks_data.append(task_info)
         

@@ -202,24 +202,13 @@
             <div class="card-body">
                 <p class="text-muted mb-3">
                     Access our powerful AI-driven features for advanced project management and optimization.
-                </p>
-                <div class="row">
-                    <div class="col-md-3 mb-2">
-                        <a href="{% url 'ai_resource_analysis' board.id %}" class="btn btn-outline-info btn-block">
-                            <i class="fas fa-users-cog me-2"></i>Resource Analysis
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <a href="{% url 'ai_timeline_management' board.id %}" class="btn btn-outline-success btn-block">
-                            <i class="fas fa-chart-gantt me-2"></i>Timeline Management
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-2">
+                </p>                <div class="row">
+                    <div class="col-md-4 mb-2">
                         <a href="{% url 'meeting_transcript_extraction' board.id %}" class="btn btn-outline-warning btn-block">
                             <i class="fas fa-microphone-alt me-2"></i>Meeting Analysis
                         </a>
                     </div>
-                    <div class="col-md-3 mb-2">
+                    <div class="col-md-4 mb-2">
                         <button class="btn btn-outline-secondary btn-block" onclick="toggleLeanSixSigmaFeatures()">
                             <i class="fas fa-industry me-2"></i>Lean Six Sigma
                         </button>

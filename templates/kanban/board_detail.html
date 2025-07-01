@@ -173,11 +173,7 @@
             <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" href="{% url 'export_board' board.id %}?format=json">Export as JSON</a></li>
                 <li><a class="dropdown-item" href="{% url 'export_board' board.id %}?format=csv">Export as CSV</a></li>
-            </ul>
-        </div>
-        <button type="button" class="btn btn-outline-info" onclick="testScrollFeature()" title="Test Column Scroll Feature">
-            <i class="fas fa-scroll me-1"></i> Test Scroll
-        </button>
+            </ul>        </div>
         <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
             <i class="fas fa-cog"></i>
         </button><ul class="dropdown-menu dropdown-menu-end">
@@ -186,21 +182,14 @@
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="{% url 'edit_board' board.id %}">Edit Board</a></li>
             <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#boardSettingsModal">Board Settings</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li class="dropdown-item-text">
+            <li><hr class="dropdown-divider"></li>            <li class="dropdown-item-text">
                 <small class="text-muted"><i class="fas fa-magic me-1"></i><strong>Advanced Features</strong></small>
             </li>
-            <li><a class="dropdown-item" href="{% url 'ai_resource_analysis' board.id %}">
-                <i class="fas fa-users-cog me-2 text-info"></i>AI Resource Analysis
-            </a></li>
-            <li><a class="dropdown-item" href="{% url 'ai_timeline_management' board.id %}">
-                <i class="fas fa-chart-gantt me-2 text-success"></i>AI Timeline Management
-            </a></li>
             <li><a class="dropdown-item" href="{% url 'meeting_transcript_extraction' board.id %}">
                 <i class="fas fa-microphone-alt me-2 text-warning"></i>Meeting Transcript Analysis
             </a></li>
-            <li><a class="dropdown-item" href="#" onclick="toggleLeanSixSigmaFeatures()">
-                <i class="fas fa-industry me-2 text-secondary"></i>Lean Six Sigma Tools
+            <li><a class="dropdown-item" href="#" onclick="toggleLeanSixSigmaFeatures()" id="lss-toggle-menu-item">
+                <i class="fas fa-industry me-2 text-secondary"></i><span id="lss-toggle-text">Hide Lean Six Sigma Tools</span>
             </a></li>
             <li><hr class="dropdown-divider"></li>
             {% if board.created_by == request.user or request.user.profile.is_admin or request.user == board.organization.created_by %}
@@ -222,17 +211,11 @@
                 We've reorganized our AI-powered features into an <strong>Advanced Features</strong> section. 
                 Access them through the settings dropdown (<i class="fas fa-cog"></i>) to keep your main interface clean and focused.
             </p>
-            <div class="d-flex flex-wrap gap-2">
-                <a href="{% url 'ai_resource_analysis' board.id %}" class="btn btn-sm btn-outline-info">
-                    <i class="fas fa-users-cog me-1"></i>Resource Analysis
-                </a>
-                <a href="{% url 'ai_timeline_management' board.id %}" class="btn btn-sm btn-outline-success">
-                    <i class="fas fa-chart-gantt me-1"></i>Timeline Management
-                </a>
-                <a href="{% url 'meeting_transcript_extraction' board.id %}" class="btn btn-sm btn-outline-warning">
-                    <i class="fas fa-microphone-alt me-1"></i>Meeting Analysis
-                </a>
-            </div>
+            <p class="mb-0">
+                <i class="fas fa-industry me-1 text-secondary"></i>
+                <strong>Lean Six Sigma Tools:</strong> We also include process improvement tools based on Lean Six Sigma methodology. 
+                These help identify waste, streamline workflows, and improve efficiency. You can toggle these features on/off in the settings menu if you prefer a simpler interface.
+            </p>
         </div>
     </div>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -733,108 +716,7 @@
             window.kanbanUpdateColumnScrolling();
         }
     };
-    
-    // Lean Six Sigma Tools Toggle Function
-    function toggleLeanSixSigmaFeatures() {
-        // Show/hide Lean Six Sigma related elements
-        const leanElements = document.querySelectorAll('.lean-sigma-element, .task-label[data-category="lean"]');
-        const isHidden = document.body.classList.contains('hide-lean-features');
-        
-        if (isHidden) {
-            document.body.classList.remove('hide-lean-features');
-            leanElements.forEach(el => el.style.display = '');
-            localStorage.setItem('leanSigmaVisible', 'true');
-        } else {
-            document.body.classList.add('hide-lean-features');
-            leanElements.forEach(el => el.style.display = 'none');
-            localStorage.setItem('leanSigmaVisible', 'false');
-        }
-        
-        // Update button text or icon if needed
-        const toggleBtn = document.querySelector('[onclick="toggleLeanSixSigmaFeatures()"]');
-        if (toggleBtn) {
-            const icon = toggleBtn.querySelector('i');
-            if (isHidden) {
-                icon.className = 'fas fa-industry me-2 text-secondary';
-                toggleBtn.innerHTML = '<i class="fas fa-industry me-2 text-secondary"></i>Hide Lean Six Sigma Tools';
-            } else {
-                icon.className = 'fas fa-eye-slash me-2 text-secondary';
-                toggleBtn.innerHTML = '<i class="fas fa-eye-slash me-2 text-secondary"></i>Show Lean Six Sigma Tools';
-            }
-        }
-    }
-    
-    // Initialize Lean Six Sigma visibility on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        const leanSigmaVisible = localStorage.getItem('leanSigmaVisible');        if (leanSigmaVisible === 'false') {
-            toggleLeanSixSigmaFeatures();
-        }
-    });
-      // Test function for column scroll feature
-    function testScrollFeature() {
-        console.log('=== Column Scroll Feature Debug ===');
-        
-        // Check if configuration exists
-        if (typeof COLUMN_SCROLL_CONFIG !== 'undefined') {
-            console.log('✅ COLUMN_SCROLL_CONFIG found:', COLUMN_SCROLL_CONFIG);
-        } else {
-            console.log('❌ COLUMN_SCROLL_CONFIG not found');
-        }
-        
-        // Check CSS custom properties
-        const rootStyles = getComputedStyle(document.documentElement);
-        const maxHeight = rootStyles.getPropertyValue('--column-scroll-max-height');
-        const minHeight = rootStyles.getPropertyValue('--column-scroll-min-height');
-        console.log('CSS Custom Properties:', { maxHeight, minHeight });
-        
-        // Check columns
-        const columns = document.querySelectorAll('.kanban-column-tasks');
-        console.log(`Found ${columns.length} columns`);
-        
-        columns.forEach((column, index) => {
-            const tasks = column.querySelectorAll('.kanban-task');
-            const taskCount = tasks.length;
-            const isScrollable = column.classList.contains('scrollable');
-            const computedStyles = getComputedStyle(column);
-            
-            console.log(`Column ${index + 1}:`, {
-                taskCount,
-                isScrollable,
-                hasScrollableClass: column.classList.contains('scrollable'),
-                classList: Array.from(column.classList),
-                maxHeight: computedStyles.maxHeight,
-                overflowY: computedStyles.overflowY,
-                scrollHeight: column.scrollHeight,
-                clientHeight: column.clientHeight
-            });
-            
-            if (taskCount > 4) {
-                console.log(`  → Should be scrollable (${taskCount} > 4)`);
-                if (!isScrollable) {
-                    console.log('  ⚠️ Missing scrollable class');
-                    // Manually add the class for testing
-                    column.classList.add('scrollable');
-                    console.log('  ✅ Added scrollable class manually');
-                }
-            } else {
-                console.log(`  → Should NOT be scrollable (${taskCount} <= 4)`);
-                if (isScrollable) {
-                    console.log('  ⚠️ Unnecessary scrollable class');
-                }
-            }
-        });
-        
-        // Test manual trigger
-        if (typeof window.kanbanUpdateColumnScrolling === 'function') {
-            console.log('✅ Global function available');
-            console.log('Triggering manual update...');
-            window.kanbanUpdateColumnScrolling();
-        } else {
-            console.log('❌ Global function not available');
-        }
-        
-        alert('Column scroll test completed! Check browser console for details.');
-    }
+      
 </script>
 {% endblock %}
 

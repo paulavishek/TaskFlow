@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LSS Toggle Debug</title>
+    <script>
+        function debugLeanLabels() {
+            console.log('=== DEBUGGING LEAN LABELS ===');
+            
+            // Check for label selects
+            const labelSelects = document.querySelectorAll('select[name="labels"], #id_labels');
+            console.log('Found label selects:', labelSelects.length);
+            
+            labelSelects.forEach((select, i) => {
+                console.log(`Select ${i}:`, select);
+                const options = select.querySelectorAll('option');
+                console.log(`  Options count: ${options.length}`);
+                
+                options.forEach((option, j) => {
+                    console.log(`  Option ${j}:`, {
+                        text: option.textContent,
+                        value: option.value,
+                        'data-category': option.dataset.category,
+                        'data-category-attr': option.getAttribute('data-category')
+                    });
+                });
+            });
+            
+            // Check localStorage
+            console.log('localStorage leanSigmaVisible:', localStorage.getItem('leanSigmaVisible'));
+            
+            // Check body class
+            console.log('Body has hide-lean-features class:', document.body.classList.contains('hide-lean-features'));
+            
+            // Check lean elements
+            const leanElements = document.querySelectorAll('.lean-sigma-element');
+            console.log('Found lean-sigma-element elements:', leanElements.length);
+        }
+        
+        function testToggle() {
+            console.log('=== TESTING TOGGLE ===');
+            if (typeof toggleLeanSixSigmaFeatures === 'function') {
+                toggleLeanSixSigmaFeatures();
+                console.log('Toggle function called');
+            } else {
+                console.log('Toggle function not found!');
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Debug LSS Toggle</h1>
+    <button onclick="debugLeanLabels()">Debug Lean Labels</button>
+    <button onclick="testToggle()">Test Toggle</button>
+    
+    <br><br>
+    
+    <select name="labels" id="id_labels" multiple>
+        <option value="1" data-category="lean">Value-Added</option>
+        <option value="2" data-category="lean">Necessary NVA</option>
+        <option value="3" data-category="lean">Waste/Eliminate</option>
+        <option value="4" data-category="regular">Front-end</option>
+        <option value="5" data-category="regular">Back-end</option>
+    </select>
+    
+    <div class="lean-sigma-element">
+        <button>Suggest LSS Classification</button>
+    </div>
+    
+    <script src="/static/js/lean-six-sigma-toggle.js"></script>
+</body>
+</html>

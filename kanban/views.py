@@ -1383,8 +1383,7 @@ def test_ai_features(request):
 @login_required
 def edit_board(request, board_id):
     board = get_object_or_404(Board, id=board_id)
-    
-    # Check if user is the board creator or a member
+      # Check if user is the board creator or a member
     if not (board.created_by == request.user or request.user in board.members.all()):
         return HttpResponseForbidden("You don't have permission to edit this board.")
     
@@ -1401,118 +1400,6 @@ def edit_board(request, board_id):
         'form': form,
         'board': board
     })
-
-@login_required  
-def ai_resource_analysis(request, board_id):
-    """
-    Advanced AI Resource Analysis page
-    """
-    try:
-        board = get_object_or_404(Board, id=board_id)
-        
-        # Check if user has access to the board
-        if not (request.user in board.members.all() or 
-                board.created_by == request.user or 
-                request.user.profile.is_admin or 
-                request.user == board.organization.created_by):
-            return HttpResponseForbidden("You don't have access to this board.")
-        
-        # Get team members and their profiles
-        team_members = board.members.all()
-        
-        # Get tasks for analysis
-        tasks = Task.objects.filter(column__board=board).select_related(
-            'assigned_to', 'assigned_to__profile', 'column'
-        ).prefetch_related('labels')
-        
-        # Calculate basic metrics
-        total_tasks = tasks.count()
-        assigned_tasks = tasks.filter(assigned_to__isnull=False).count()
-        unassigned_tasks = total_tasks - assigned_tasks
-        
-        # Get workload distribution
-        workload_data = []
-        for member in team_members:
-            member_tasks = tasks.filter(assigned_to=member)
-            in_progress = member_tasks.filter(column__name__icontains='progress').count()
-            completed = member_tasks.filter(column__name__icontains='done').count()
-            
-            workload_data.append({
-                'user': member,
-                'profile': getattr(member, 'profile', None),
-                'total_tasks': member_tasks.count(),
-                'in_progress': in_progress,
-                'completed': completed,
-                'utilization': min(100, (member_tasks.count() / max(1, total_tasks)) * 100)
-            })
-        
-        context = {
-            'board': board,
-            'team_members': team_members,
-            'workload_data': workload_data,
-            'total_tasks': total_tasks,
-            'assigned_tasks': assigned_tasks,
-            'unassigned_tasks': unassigned_tasks,
-            'tasks': tasks,
-        }
-        
-        return render(request, 'kanban/ai_resource_analysis.html', context)
-        
-    except Exception as e:
-        logger.error(f"Error in AI resource analysis view: {str(e)}")
-        messages.error(request, 'Error loading AI resource analysis. Please try again.')
-        return redirect('board_detail', board_id=board_id)
-
-@login_required  
-def ai_timeline_management(request, board_id):
-    """
-    Advanced AI Timeline Management page
-    """
-    try:
-        board = get_object_or_404(Board, id=board_id)
-        
-        # Check if user has access to the board
-        if not (request.user in board.members.all() or 
-                board.created_by == request.user or 
-                request.user.profile.is_admin or 
-                request.user == board.organization.created_by):
-            return HttpResponseForbidden("You don't have access to this board.")
-        
-        # Get tasks with relationships for timeline analysis
-        tasks = Task.objects.filter(column__board=board).select_related(
-            'assigned_to', 'column'
-        ).prefetch_related('labels')
-        
-        # Get project statistics
-        total_tasks = tasks.count()
-        completed_tasks = tasks.filter(column__name__icontains='done').count()
-        in_progress_tasks = tasks.filter(column__name__icontains='progress').count()
-        overdue_tasks = tasks.filter(
-            due_date__lt=timezone.now().date()
-        ).exclude(column__name__icontains='done').count()
-        
-        # Calculate project completion percentage
-        completion_percentage = 0
-        if total_tasks > 0:
-            completion_percentage = (completed_tasks / total_tasks) * 100
-        
-        context = {
-            'board': board,
-            'tasks': tasks,
-            'total_tasks': total_tasks,
-            'completed_tasks': completed_tasks,
-            'in_progress_tasks': in_progress_tasks,
-            'overdue_tasks': overdue_tasks,
-            'completion_percentage': round(completion_percentage, 1),
-            'today': timezone.now().date(),
-        }
-        
-        return render(request, 'kanban/ai_timeline_management.html', context)
-        
-    except Exception as e:
-        logger.error(f"Error in AI timeline management view: {str(e)}")
-        messages.error(request, 'Error loading AI timeline management. Please try again.')
-        return redirect('board_detail', board_id=board_id)
 
 @login_required
 def meeting_transcript_extraction(request, board_id):

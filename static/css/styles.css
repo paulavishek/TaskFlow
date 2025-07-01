@@ -827,3 +827,46 @@ body {
 }
 
 /* End feature card styles */
+
+/* Lean Six Sigma Toggle Styles */
+.hide-lean-features .lean-sigma-element {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* Specific targeting for LSS elements by ID */
+.hide-lean-features #suggest-lss-classification,
+.hide-lean-features #classify-spinner,
+.hide-lean-features #lss-suggestion-container {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* More aggressive hiding for buttons and UI elements */
+.hide-lean-features .btn:has(.fa-robot),
+.hide-lean-features button[id*="suggest-lss"],
+.hide-lean-features button[id*="classify"] {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+.hide-lean-features .task-label[data-category="lean"] {
+    display: none !important;
+}
+
+.hide-lean-features select[name="labels"] option[data-category="lean"],
+.hide-lean-features #id_labels option[data-category="lean"] {
+    display: none !important;
+}
+
+/* Hide entire Labels field when LSS tools are hidden and no regular labels exist */
+.hide-lean-features #labels-field-container.labels-only-lean,
+.hide-lean-features [data-field-name="labels"].labels-only-lean,
+.hide-lean-features #div_id_labels.labels-only-lean,
+.hide-lean-features .form-group.labels-only-lean,
+.hide-lean-features .mb-3.labels-only-lean,
+.hide-lean-features .field-wrapper.labels-only-lean {
+    display: none !important;
+}
