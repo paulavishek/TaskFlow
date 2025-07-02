@@ -50,6 +50,37 @@
     </div>
 </div>
 
+<!-- Demo Mode Banner for Recruiters -->
+{% if task_count == 0 or not user_boards %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="alert alert-info alert-dismissible fade show" role="alert" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white;">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5 class="alert-heading mb-2">
+                        <i class="fas fa-rocket me-2"></i>
+                        Welcome to TaskFlow's AI-Powered Demo!
+                    </h5>
+                    <p class="mb-2">
+                        Experience our Gemini-powered features with realistic project scenarios designed for recruiters and evaluators.
+                        Load demo data to instantly see AI task generation, smart analytics, and workflow optimization in action.
+                    </p>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{% url 'demo_mode' %}" class="btn btn-light btn-sm">
+                            <i class="fas fa-play me-1"></i> Start Demo Experience
+                        </a>
+                        <a href="{% url 'getting_started_wizard' %}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-magic me-1"></i> Getting Started Wizard
+                        </a>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Analytics Cards -->
 <div class="row mb-4">
     <div class="col-xl-3 col-md-6 mb-4">

@@ -76,6 +76,29 @@ TaskFlow is an open-source project inspired by the powerful Kanban functionaliti
 - [🤝 Contributing](#-contributing)
 - [📄 License](#-license)
 
+## 🎯 Quick Demo for Recruiters
+
+**Experience TaskFlow's AI capabilities instantly!** Our demo system is specifically designed for recruiters and evaluators to showcase the full power of Gemini integration without manual setup.
+
+### 🚀 [**Live Demo Mode**](/demo/)
+
+**Perfect for job interviews and skill demonstrations:**
+
+- **One-Click Setup**: Load realistic project scenarios instantly
+- **Three Industry Scenarios**: Tech startup, marketing agency, enterprise IT
+- **AI Feature Showcase**: Live demonstration of all Gemini-powered capabilities
+- **Guided Tour**: Interactive exploration of key features
+- **Professional Presentation**: Polished interface designed for evaluation
+
+**Demo Scenarios Available:**
+- 📱 **Tech Startup**: Mobile app development (45+ tasks, 3 boards, 8 team members)
+- 📢 **Marketing Agency**: Multi-client campaigns (60+ tasks, 4 boards, 12 team members)  
+- 🏢 **Enterprise IT**: System migration project (35+ tasks, 2 boards, 15 team members)
+
+**Access:** Visit `/demo/` after login or click "Demo Mode" in navigation
+
+---
+
 ## 🤖 AI-Powered Features
 
 TaskFlow leverages advanced AI to make project management smarter, faster, and more efficient:

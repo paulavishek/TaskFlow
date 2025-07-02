@@ -54,4 +54,10 @@ urlpatterns = [
     path('api/extract-tasks-from-transcript/', api_views.extract_tasks_from_transcript_api, name='extract_tasks_from_transcript_api'),
     path('api/create-tasks-from-extraction/', api_views.create_tasks_from_extraction_api, name='create_tasks_from_extraction_api'),
     path('api/process-transcript-file/', api_views.process_transcript_file_api, name='process_transcript_file_api'),
+    
+    # Demo Mode for Recruiters
+    path('demo/', views.demo_mode, name='demo_mode'),
+    path('demo/tour/', views.demo_tour_guide, name='demo_tour_guide'),
+    path('api/load-demo-data/', views.load_demo_data_api, name='load_demo_data_api'),
+    path('api/clear-demo-data/', views.clear_demo_data_api, name='clear_demo_data_api'),
 ]

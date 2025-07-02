@@ -10,6 +10,8 @@ import json
 import csv
 from django.contrib.auth.models import User
 from django.core.management import call_command
+from io import StringIO
+import sys
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -1642,3 +1644,202 @@ def reset_wizard(request):
             return redirect('organization_choice')
     
     return redirect('dashboard')
+
+@login_required
+def demo_mode(request):
+    """
+    Demo mode interface for recruiters and evaluators
+    """
+    try:
+        profile = request.user.profile
+        organization = profile.organization
+        
+        # Check if user already has demo data
+        user_boards = Board.objects.filter(created_by=request.user, organization=organization)
+        has_demo_data = user_boards.exists()
+        
+        # Get demo scenarios info
+        demo_scenarios = {
+            "tech_startup": {
+                "name": "Tech Startup - Mobile App Development",
+                "description": "Mobile app development with sprint planning, feature development, and bug tracking workflows.",
+                "boards": 3,
+                "tasks": 45,
+                "team_members": 8,
+                "features_showcased": ["AI Column Recommendations", "Sprint Planning", "Bug Tracking"],
+                "icon": "fas fa-mobile-alt",
+                "color": "tech-startup"
+            },
+            "marketing_agency": {
+                "name": "Marketing Agency - Multi-Client Campaigns", 
+                "description": "Multi-client campaign management with content creation, approval workflows, and performance tracking.",
+                "boards": 4,
+                "tasks": 60,
+                "team_members": 12,
+                "features_showcased": ["Campaign Workflows", "Client Management", "Content Planning"],
+                "icon": "fas fa-bullhorn",
+                "color": "marketing-agency"
+            },
+            "enterprise_it": {
+                "name": "Enterprise IT - System Migration Project",
+                "description": "Large-scale system migration with risk management, resource allocation, and stakeholder coordination.",
+                "boards": 2,
+                "tasks": 35,
+                "team_members": 15,
+                "features_showcased": ["Complex Workflows", "Risk Management", "Resource Planning"],
+                "icon": "fas fa-server",
+                "color": "enterprise-it"
+            }
+        }
+        
+        context = {
+            'demo_scenarios': demo_scenarios,
+            'has_demo_data': has_demo_data,
+            'user': request.user,
+            'organization': organization,
+        }
+        
+        return render(request, 'kanban/demo_mode.html', context)
+        
+    except UserProfile.DoesNotExist:
+        return redirect('organization_choice')
+
+@login_required
+def load_demo_data_api(request):
+    """
+    API endpoint to load demo data for a specific scenario
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST method required'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        scenario = data.get('scenario')
+        
+        if scenario not in ['tech_startup', 'marketing_agency', 'enterprise_it']:
+            return JsonResponse({'error': 'Invalid scenario'}, status=400)
+        
+        # Import the management command
+        from kanban.management.commands.load_demo_data import Command
+        
+        # Create a command instance and run it
+        command = Command()
+        
+        # Capture output
+        old_stdout = sys.stdout
+        sys.stdout = captured_output = StringIO()
+        
+        try:
+            # Execute the command with the user's ID
+            if scenario == 'tech_startup':
+                command.create_tech_startup_scenario(request.user)
+            elif scenario == 'marketing_agency':
+                command.create_marketing_agency_scenario(request.user)
+            elif scenario == 'enterprise_it':
+                command.create_enterprise_it_scenario(request.user)
+            
+            # Get the captured output
+            output = captured_output.getvalue()
+            
+        finally:
+            # Restore stdout
+            sys.stdout = old_stdout
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Demo data loaded successfully for {scenario}',
+            'scenario': scenario,
+            'output': output
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        logger.error(f"Error loading demo data: {str(e)}")
+        return JsonResponse({'error': f'Failed to load demo data: {str(e)}'}, status=500)
+
+@login_required
+def clear_demo_data_api(request):
+    """
+    API endpoint to clear all demo data
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST method required'}, status=405)
+    
+    try:
+        # Import the management command
+        from kanban.management.commands.load_demo_data import Command
+        
+        # Create a command instance
+        command = Command()
+        
+        # Capture output
+        old_stdout = sys.stdout
+        sys.stdout = captured_output = StringIO()
+        
+        try:
+            # Clear demo data
+            command.clear_demo_data(request.user)
+            output = captured_output.getvalue()
+            
+        finally:
+            # Restore stdout
+            sys.stdout = old_stdout
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'All demo data cleared successfully',
+            'output': output
+        })
+        
+    except Exception as e:
+        logger.error(f"Error clearing demo data: {str(e)}")
+        return JsonResponse({'error': f'Failed to clear demo data: {str(e)}'}, status=500)
+
+@login_required
+def demo_tour_guide(request):
+    """
+    Guided tour interface that shows AI features in action
+    """
+    try:
+        profile = request.user.profile
+        organization = profile.organization
+        
+        # Get user's boards for tour
+        user_boards = Board.objects.filter(
+            Q(organization=organization) &
+            (Q(created_by=request.user) | Q(members=request.user))
+        ).distinct()
+        
+        # Check if user has demo data
+        has_demo_data = user_boards.exists()
+        
+        if not has_demo_data:
+            messages.warning(request, 'Please load demo data first to experience the guided tour.')
+            return redirect('demo_mode')
+        
+        # Get the first board with the most tasks for the tour
+        featured_board = user_boards.annotate(
+            task_count=Count('columns__tasks')
+        ).order_by('-task_count').first()
+        
+        if not featured_board:
+            messages.warning(request, 'No suitable board found for the tour.')
+            return redirect('demo_mode')
+        
+        # Get sample tasks for AI feature demonstration
+        sample_tasks = Task.objects.filter(
+            column__board=featured_board
+        ).select_related('column', 'assigned_to').prefetch_related('labels', 'comments')[:5]
+        
+        context = {
+            'featured_board': featured_board,
+            'sample_tasks': sample_tasks,
+            'user_boards': user_boards,
+            'organization': organization,
+        }
+        
+        return render(request, 'kanban/demo_tour_guide.html', context)
+        
+    except UserProfile.DoesNotExist:
+        return redirect('organization_choice')

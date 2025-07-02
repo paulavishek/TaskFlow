@@ -1,0 +1,642 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}TaskFlow AI Features - Guided Demo Tour{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tour-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .tour-header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 16px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .tour-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 10px;
+    }
+
+    .tour-subtitle {
+        color: #64748b;
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+    }
+
+    .tour-progress {
+        background: #e2e8f0;
+        border-radius: 10px;
+        height: 8px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    .tour-progress-bar {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        height: 100%;
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+
+    .feature-showcase {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .feature-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .feature-card:hover {
+        border-color: #667eea;
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+    }
+
+    .feature-card.active {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+    }
+
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        margin-bottom: 20px;
+        color: white;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .feature-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 10px;
+    }
+
+    .feature-description {
+        color: #64748b;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+
+    .feature-demo-btn {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .feature-demo-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .board-preview {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 16px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .board-preview-title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .sample-tasks {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .sample-task {
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s ease;
+    }
+
+    .sample-task:hover {
+        border-color: #667eea;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+    }
+
+    .task-title {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 8px;
+        font-size: 1.1rem;
+    }
+
+    .task-meta {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+    }
+
+    .task-priority {
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .priority-urgent { background: #fee2e2; color: #dc2626; }
+    .priority-high { background: #fed7aa; color: #ea580c; }
+    .priority-medium { background: #fef3c7; color: #d97706; }
+    .priority-low { background: #dcfce7; color: #16a34a; }
+
+    .task-progress {
+        background: #e2e8f0;
+        border-radius: 6px;
+        height: 8px;
+        overflow: hidden;
+        margin-top: 10px;
+    }
+
+    .task-progress-bar {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        height: 100%;
+        transition: width 0.3s ease;
+    }
+
+    .ai-showcase {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 16px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border: 2px solid rgba(102, 126, 234, 0.2);
+    }
+
+    .ai-showcase-title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .ai-feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .ai-feature {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .ai-feature:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+    }
+
+    .ai-feature-icon {
+        font-size: 2rem;
+        color: #667eea;
+        margin-bottom: 15px;
+    }
+
+    .ai-feature-name {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 8px;
+    }
+
+    .ai-feature-desc {
+        color: #64748b;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
+    .navigation-controls {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 30px;
+    }
+
+    .nav-btn {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+    }
+
+    .nav-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .nav-btn.secondary {
+        background: #f1f5f9;
+        color: #64748b;
+        border: 2px solid #e2e8f0;
+    }
+
+    .nav-btn.secondary:hover {
+        background: #e2e8f0;
+        color: #64748b;
+    }
+
+    @media (max-width: 768px) {
+        .tour-container {
+            padding: 10px;
+        }
+        
+        .feature-showcase {
+            grid-template-columns: 1fr;
+        }
+        
+        .sample-tasks {
+            grid-template-columns: 1fr;
+        }
+        
+        .navigation-controls {
+            flex-direction: column;
+            align-items: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tour-container">
+    <div class="tour-header">
+        <div class="tour-title">🤖 AI-Powered Features Tour</div>
+        <div class="tour-subtitle">Experience TaskFlow's Gemini Integration in Action</div>
+        <div class="tour-progress">
+            <div class="tour-progress-bar" id="tourProgress"></div>
+        </div>
+        <p class="text-muted">Explore real AI capabilities with your loaded demo data</p>
+    </div>
+
+    <!-- AI Features Showcase -->
+    <div class="ai-showcase">
+        <div class="ai-showcase-title">
+            <i class="fas fa-brain"></i>
+            AI Features Ready to Demo
+        </div>
+        <p class="text-muted mb-4">Click on any feature below to see it in action with your demo data</p>
+        
+        <div class="ai-feature-grid">
+            <div class="ai-feature" onclick="demoFeature('task-generation')">
+                <div class="ai-feature-icon">
+                    <i class="fas fa-magic"></i>
+                </div>
+                <div class="ai-feature-name">AI Task Generation</div>
+                <div class="ai-feature-desc">Generate detailed task descriptions with AI assistance</div>
+            </div>
+            
+            <div class="ai-feature" onclick="demoFeature('comment-summary')">
+                <div class="ai-feature-icon">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <div class="ai-feature-name">Comment Summarization</div>
+                <div class="ai-feature-desc">Instantly summarize long discussion threads</div>
+            </div>
+            
+            <div class="ai-feature" onclick="demoFeature('board-analytics')">
+                <div class="ai-feature-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="ai-feature-name">Smart Analytics</div>
+                <div class="ai-feature-desc">AI-powered insights and performance analysis</div>
+            </div>
+            
+            <div class="ai-feature" onclick="demoFeature('column-optimization')">
+                <div class="ai-feature-icon">
+                    <i class="fas fa-columns"></i>
+                </div>
+                <div class="ai-feature-name">Column Recommendations</div>
+                <div class="ai-feature-desc">Optimize workflow with AI-suggested columns</div>
+            </div>
+            
+            <div class="ai-feature" onclick="demoFeature('priority-suggestion')">
+                <div class="ai-feature-icon">
+                    <i class="fas fa-sort-amount-down"></i>
+                </div>
+                <div class="ai-feature-name">Priority Optimization</div>
+                <div class="ai-feature-desc">Smart priority suggestions based on context</div>
+            </div>
+            
+            <div class="ai-feature" onclick="demoFeature('deadline-prediction')">
+                <div class="ai-feature-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="ai-feature-name">Deadline Prediction</div>
+                <div class="ai-feature-desc">Realistic deadline estimates using AI</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Board Preview -->
+    <div class="board-preview">
+        <div class="board-preview-title">
+            <i class="fas fa-project-diagram"></i>
+            Your Demo Board: {{ featured_board.name }}
+        </div>
+        <p class="text-muted mb-3">{{ featured_board.description }}</p>
+        
+        <div class="sample-tasks">
+            {% for task in sample_tasks %}
+            <div class="sample-task" onclick="openTask({{ task.id }})">
+                <div class="task-title">{{ task.title|truncatechars:60 }}</div>
+                <div class="task-meta">
+                    <span class="task-priority priority-{{ task.priority }}">{{ task.get_priority_display }}</span>
+                    <span class="text-muted">{{ task.column.name }}</span>
+                </div>
+                <div class="task-progress">
+                    <div class="task-progress-bar" style="width: {{ task.progress }}%"></div>
+                </div>
+                <small class="text-muted">{{ task.progress }}% Complete</small>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Feature Showcase Cards -->
+    <div class="feature-showcase">
+        <div class="feature-card" data-feature="analytics">
+            <div class="feature-icon">
+                <i class="fas fa-chart-bar"></i>
+            </div>
+            <div class="feature-title">AI Analytics Dashboard</div>
+            <div class="feature-description">
+                See AI-powered insights about project progress, team performance, and bottleneck identification. 
+                Our Gemini integration provides intelligent analysis of your project data.
+            </div>
+            <button class="feature-demo-btn" onclick="goToAnalytics()">
+                <i class="fas fa-external-link-alt"></i> View Analytics Dashboard
+            </button>
+        </div>
+
+        <div class="feature-card" data-feature="board-management">
+            <div class="feature-icon">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <div class="feature-title">Smart Board Management</div>
+            <div class="feature-description">
+                Experience AI-powered task creation, column optimization, and workflow recommendations. 
+                See how Gemini enhances project organization and team collaboration.
+            </div>
+            <button class="feature-demo-btn" onclick="goToBoard()">
+                <i class="fas fa-external-link-alt"></i> Explore Board Features
+            </button>
+        </div>
+
+        <div class="feature-card" data-feature="collaboration">
+            <div class="feature-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="feature-title">Team Collaboration Tools</div>
+            <div class="feature-description">
+                Discover AI-enhanced comment summarization, task assignment suggestions, and intelligent 
+                team communication features that improve productivity.
+            </div>
+            <button class="feature-demo-btn" onclick="showCollaboration()">
+                <i class="fas fa-external-link-alt"></i> See Collaboration Tools
+            </button>
+        </div>
+    </div>
+
+    <!-- Navigation Controls -->
+    <div class="navigation-controls">
+        <a href="{% url 'dashboard' %}" class="nav-btn">
+            <i class="fas fa-tachometer-alt"></i>
+            Go to Dashboard
+        </a>
+        
+        <a href="{% url 'board_detail' featured_board.id %}" class="nav-btn">
+            <i class="fas fa-arrow-right"></i>
+            Start Using the Board
+        </a>
+        
+        <a href="{% url 'demo_mode' %}" class="nav-btn secondary">
+            <i class="fas fa-arrow-left"></i>
+            Back to Demo Mode
+        </a>
+    </div>
+</div>
+
+<!-- Demo Modal -->
+<div class="modal fade" id="demoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="demoModalTitle">AI Feature Demo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="demoModalBody">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Progress bar animation
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            document.getElementById('tourProgress').style.width = '100%';
+        }, 500);
+    });
+
+    // Demo feature functions
+    function demoFeature(featureType) {
+        const modal = new bootstrap.Modal(document.getElementById('demoModal'));
+        const title = document.getElementById('demoModalTitle');
+        const body = document.getElementById('demoModalBody');
+        
+        switch(featureType) {
+            case 'task-generation':
+                title.textContent = 'AI Task Generation Demo';
+                body.innerHTML = `
+                    <div class="text-center mb-4">
+                        <i class="fas fa-magic fa-3x text-primary mb-3"></i>
+                        <h4>Generate Task Descriptions with AI</h4>
+                        <p class="text-muted">See how Gemini creates detailed task descriptions from simple titles</p>
+                    </div>
+                    <div class="alert alert-info">
+                        <strong>How it works:</strong> Simply enter a task title, and our AI will generate a comprehensive description, 
+                        including implementation details, acceptance criteria, and potential challenges.
+                    </div>
+                    <div class="d-grid">
+                        <button class="btn btn-primary" onclick="goToBoard()">Try It on Your Demo Board</button>
+                    </div>
+                `;
+                break;
+                
+            case 'comment-summary':
+                title.textContent = 'Comment Summarization Demo';
+                body.innerHTML = `
+                    <div class="text-center mb-4">
+                        <i class="fas fa-comments fa-3x text-success mb-3"></i>
+                        <h4>AI Comment Summarization</h4>
+                        <p class="text-muted">Instantly understand long discussion threads</p>
+                    </div>
+                    <div class="alert alert-success">
+                        <strong>Smart Summaries:</strong> Our AI analyzes comment threads and provides concise summaries 
+                        of key decisions, action items, and important discussions.
+                    </div>
+                    <div class="d-grid">
+                        <button class="btn btn-success" onclick="goToBoard()">See Comments in Action</button>
+                    </div>
+                `;
+                break;
+                
+            case 'board-analytics':
+                title.textContent = 'AI Analytics Demo';
+                body.innerHTML = `
+                    <div class="text-center mb-4">
+                        <i class="fas fa-chart-line fa-3x text-warning mb-3"></i>
+                        <h4>Intelligent Project Analytics</h4>
+                        <p class="text-muted">AI-powered insights about your project performance</p>
+                    </div>
+                    <div class="alert alert-warning">
+                        <strong>Smart Analysis:</strong> Get AI-generated insights about bottlenecks, team performance, 
+                        prediction models, and optimization recommendations.
+                    </div>
+                    <div class="d-grid">
+                        <button class="btn btn-warning" onclick="goToAnalytics()">View Analytics Dashboard</button>
+                    </div>
+                `;
+                break;
+                
+            default:
+                title.textContent = 'Feature Demo';
+                body.innerHTML = `
+                    <div class="text-center">
+                        <h4>This feature is available in your demo board!</h4>
+                        <p class="text-muted">Navigate to your board to try it out.</p>
+                        <button class="btn btn-primary" onclick="goToBoard()">Go to Board</button>
+                    </div>
+                `;
+        }
+        
+        modal.show();
+    }
+
+    function goToBoard() {
+        window.location.href = '{% url "board_detail" featured_board.id %}';
+    }
+
+    function goToAnalytics() {
+        window.location.href = '{% url "board_analytics" featured_board.id %}';
+    }
+
+    function openTask(taskId) {
+        window.open(`/tasks/${taskId}/`, '_blank');
+    }
+
+    function showCollaboration() {
+        const modal = new bootstrap.Modal(document.getElementById('demoModal'));
+        const title = document.getElementById('demoModalTitle');
+        const body = document.getElementById('demoModalBody');
+        
+        title.textContent = 'Team Collaboration Features';
+        body.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-comment-dots fa-2x text-primary mb-3"></i>
+                            <h5>Smart Comments</h5>
+                            <p class="text-muted">AI-powered comment suggestions and summarization</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-user-plus fa-2x text-success mb-3"></i>
+                            <h5>Smart Assignment</h5>
+                            <p class="text-muted">AI suggests optimal team member assignments</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3 d-grid">
+                <button class="btn btn-primary" onclick="goToBoard()">Experience Team Features</button>
+            </div>
+        `;
+        modal.show();
+    }
+
+    // Add hover effects for feature cards
+    document.querySelectorAll('.feature-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.classList.add('active');
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.classList.remove('active');
+        });
+    });
+</script>
+{% endblock %}
