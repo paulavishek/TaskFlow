@@ -2,6 +2,10 @@
 Django==5.2.3
 django-allauth==65.9.0
 
+# Authentication and Security Dependencies
+PyJWT==2.9.0
+cryptography==44.0.0
+
 # UI and Form Enhancement
 django-crispy-forms==2.4
 crispy-bootstrap5==2025.6
