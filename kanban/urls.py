@@ -60,4 +60,11 @@ urlpatterns = [
     path('demo/tour/', views.demo_tour_guide, name='demo_tour_guide'),
     path('api/load-demo-data/', views.load_demo_data_api, name='load_demo_data_api'),
     path('api/clear-demo-data/', views.clear_demo_data_api, name='clear_demo_data_api'),
+    
+    # Cache Monitoring APIs
+    path('api/cache-metrics/', api_views.cache_metrics_api, name='cache_metrics_api'),
+    path('api/cache-metrics/daily/<str:date>/', api_views.daily_cache_metrics_api, name='daily_cache_metrics_api'),
+    
+    # Cache Monitoring Dashboard
+    path('admin/cache-dashboard/', views.cache_dashboard, name='cache_dashboard'),
 ]

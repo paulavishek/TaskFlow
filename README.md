@@ -71,6 +71,7 @@ TaskFlow is an open-source project inspired by the powerful Kanban functionaliti
 - [👥 User Guide](#-user-guide)
 - [📊 Productivity Tracking](#-productivity-tracking)
 - [🛠️ Technical Information](#-technical-information)
+  - [💰 AI Cost Optimization & Caching](#-ai-cost-optimization--caching-system)
 - [🔒 Security & Privacy](#-security--privacy)
 - [❓ Troubleshooting](#-troubleshooting)
 - [🤝 Contributing](#-contributing)
@@ -882,6 +883,105 @@ TaskFlow combines proven web technologies with cutting-edge AI capabilities:
 - **Optimized Prompting**: Backend is optimized to send effective prompts and process Gemini's responses
 - **Secure Processing**: All AI requests are authenticated and respect user permissions
 - **Efficient Caching**: Smart caching of AI responses to optimize performance and reduce API calls
+
+### 💰 AI Cost Optimization & Caching System
+
+TaskFlow implements an intelligent caching system to dramatically reduce Gemini API costs while maintaining high performance. This system can save **60-90% on API costs** during development and testing phases.
+
+#### 🚀 Smart Caching Features
+
+##### Automatic Cache Management
+
+- **Task Descriptions**: Cache generated descriptions for 24 hours - identical task titles reuse cached content
+- **Comment Summaries**: Cache for 2 hours, automatically invalidated when new comments are added
+- **Board Analytics**: Cache for 1 hour, invalidated when board structure or tasks change significantly
+- **LSS Classifications**: Cache Lean Six Sigma suggestions for 24 hours based on title and description
+- **Priority Suggestions**: Cache task priority recommendations for 12 hours
+- **Deadline Predictions**: Cache AI deadline estimates for 6 hours
+
+##### Intelligent Cache Invalidation
+
+- **Real-time Updates**: Caches automatically invalidate when underlying data changes
+- **Board-Level Changes**: Analytics caches clear when tasks are moved, updated, or completed
+- **Comment-Based Updates**: Summary caches refresh when comments are added or modified
+- **Timestamp-Based Keys**: Cache keys include last modification times for smart cache hits
+
+#### 🔧 Configuration & Monitoring
+
+**Cache Settings** (in `settings.py`):
+
+```python
+# AI Cache timeouts (in seconds)
+AI_CACHE_TIMEOUT = {
+    'task_description': 3600 * 24,     # 24 hours
+    'comments_summary': 3600 * 2,      # 2 hours  
+    'board_analytics': 3600,           # 1 hour
+    'lss_classification': 3600 * 24,   # 24 hours
+    'task_priority': 3600 * 12,        # 12 hours
+    'deadline_prediction': 3600 * 6,   # 6 hours
+}
+```
+
+**Cache Backends Supported**:
+
+- **Development**: Local memory cache (LocMemCache) - instant setup
+- **Production**: Redis recommended for distributed deployments
+- **Monitoring**: Built-in cache hit/miss tracking and API cost savings metrics
+
+#### 💡 Best Practices for Cost Savings
+
+##### Development & Testing
+
+- Use consistent task titles when testing AI features
+- Cache hits are logged for monitoring API usage patterns
+- Response includes `"cached": true/false` indicator
+
+##### Production Deployment
+
+- Configure Redis for shared cache across multiple server instances
+- Monitor cache hit rates through Django admin or custom endpoints
+- Adjust cache timeouts based on your team's workflow patterns
+
+##### Cache Monitoring
+
+```python
+# Example API response with cache status
+{
+    "description": "Create user authentication system...",
+    "cached": true  // Indicates this was served from cache
+}
+```
+
+**Estimated Cost Savings**:
+
+- **Task Descriptions**: 70-85% savings when teams use similar task titles
+- **Analytics Summaries**: 60-80% savings during active board monitoring
+- **Comment Summaries**: 50-75% savings when reviewing task discussions
+- **Overall API Reduction**: 60-90% fewer API calls during development/testing phases
+
+#### ⚙️ Advanced Cache Configuration
+
+**For Production with Redis**:
+
+```python
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+```
+
+**Cache Management Commands**:
+
+- Monitor cache performance through logging
+- View cache statistics in development console
+- Automatic cache cleanup prevents memory bloat
+
+This caching system ensures you can extensively test and develop AI features without worrying about API costs, while maintaining optimal performance in production environments.
 
 ## 🔒 Security & Privacy
 

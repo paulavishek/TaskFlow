@@ -250,3 +250,29 @@ GOOGLE_OAUTH2_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH2_CLIENT_SECRET', '')
 # Custom adapters for handling organization assignment
 ACCOUNT_ADAPTER = 'accounts.adapters.CustomAccountAdapter'
 SOCIALACCOUNT_ADAPTER = 'accounts.adapters.CustomSocialAccountAdapter'
+
+# Cache Configuration for AI API cost optimization
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'ai-cache',
+        'TIMEOUT': 3600,  # 1 hour default
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+            'CULL_FREQUENCY': 3,
+        }
+    }
+}
+
+# AI Cache Settings
+AI_CACHE_TIMEOUT = {
+    'task_description': 3600 * 24,  # 24 hours for task descriptions
+    'comments_summary': 3600 * 2,   # 2 hours for comment summaries
+    'board_analytics': 3600,        # 1 hour for board analytics
+    'lss_classification': 3600 * 24, # 24 hours for LSS classifications
+    'task_priority': 3600 * 12,     # 12 hours for task priorities
+    'deadline_prediction': 3600 * 6, # 6 hours for deadline predictions
+    'column_recommendations': 3600 * 24, # 24 hours for column recommendations
+    'task_breakdown': 3600 * 12,    # 12 hours for task breakdowns
+    'workflow_optimization': 3600 * 2, # 2 hours for workflow optimization
+}

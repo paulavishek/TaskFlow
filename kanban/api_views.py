@@ -33,12 +33,19 @@ from kanban.utils.ai_utils import (
     predict_task_completion,
     generate_project_timeline,    extract_tasks_from_transcript
 )
+from kanban.utils.cache_utils import (
+    get_cached_ai_response,
+    set_cached_ai_response,
+    invalidate_ai_cache,
+    invalidate_board_related_caches
+)
+from kanban.utils.cache_metrics import CacheMetrics
 
 @login_required
 @require_http_methods(["POST"])
 def generate_task_description_api(request):
     """
-    API endpoint to generate a task description using AI
+    API endpoint to generate a task description using AI with caching.
     """
     try:
         data = json.loads(request.body)
@@ -46,22 +53,33 @@ def generate_task_description_api(request):
         
         if not title:
             return JsonResponse({'error': 'Title is required'}, status=400)
-            
-        # Call AI util function to generate description
+        
+        # Check if the description is already cached
+        cached_description = get_cached_ai_response('task_description', title=title.lower().strip())
+        if cached_description:
+            logger.info(f"Cache hit for task description: {title}")
+            return JsonResponse({'description': cached_description, 'cached': True})
+        
+        # If not in cache, call the AI utility function
         description = generate_task_description(title)
         
         if not description:
             return JsonResponse({'error': 'Failed to generate description'}, status=500)
-            
-        return JsonResponse({'description': description})
+        
+        # Cache the new description
+        set_cached_ai_response('task_description', description, title=title.lower().strip())
+        logger.info(f"Cached new task description for: {title}")
+        
+        return JsonResponse({'description': description, 'cached': False})
     except Exception as e:
+        logger.error(f"Error in generate_task_description_api: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
 
 @login_required
 @require_http_methods(["GET"])
 def summarize_comments_api(request, task_id):
     """
-    API endpoint to summarize task comments using AI
+    API endpoint to summarize task comments using AI with smart caching.
     """
     try:
         # Get the task and verify user access
@@ -72,32 +90,50 @@ def summarize_comments_api(request, task_id):
         if not (board.created_by == request.user or request.user in board.members.all()):
             return JsonResponse({'error': 'Access denied'}, status=403)
         
+        # Get comments and their last update time for cache key
+        comments = task.comments.all().order_by('created_at')
+        if not comments.exists():
+            return JsonResponse({'summary': 'No comments to summarize.'})
+        
+        # Create cache key that includes task_id and last comment timestamp
+        last_comment_time = comments.last().created_at.timestamp()
+        cache_key_data = {'task_id': task_id, 'last_comment_time': last_comment_time}
+        
+        # Check for cached summary
+        cached_summary = get_cached_ai_response('comments_summary', **cache_key_data)
+        if cached_summary:
+            logger.info(f"Cache hit for comments summary: task {task_id}")
+            return JsonResponse({'summary': cached_summary, 'cached': True})
+        
         # Format comments for AI
         comments_data = []
-        for comment in task.comments.all().order_by('created_at'):
+        for comment in comments:
             comments_data.append({
                 'user': comment.user.username,
                 'content': comment.content,
                 'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M')
             })
             
-        if not comments_data:
-            return JsonResponse({'summary': 'No comments to summarize.'})
-            
         # Generate summary
         summary = summarize_comments(comments_data)
         
         if not summary:
             return JsonResponse({'error': 'Failed to generate summary'}, status=500)
-        return JsonResponse({'summary': summary})
+        
+        # Cache the summary
+        set_cached_ai_response('comments_summary', summary, **cache_key_data)
+        logger.info(f"Cached new comments summary for task: {task_id}")
+        
+        return JsonResponse({'summary': summary, 'cached': False})
     except Exception as e:
+        logger.error(f"Error in summarize_comments_api: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
 
 @login_required
 @require_http_methods(["POST"])
 def suggest_lss_classification_api(request):
     """
-    API endpoint to suggest Lean Six Sigma classification for a task
+    API endpoint to suggest Lean Six Sigma classification for a task with caching.
     """
     try:
         data = json.loads(request.body)
@@ -106,22 +142,39 @@ def suggest_lss_classification_api(request):
         
         if not title:
             return JsonResponse({'error': 'Title is required'}, status=400)
-            
+        
+        # Create cache key from title and description
+        cache_key_data = {
+            'title': title.lower().strip(),
+            'description': description.lower().strip() if description else ''
+        }
+        
+        # Check for cached classification
+        cached_suggestion = get_cached_ai_response('lss_classification', **cache_key_data)
+        if cached_suggestion:
+            logger.info(f"Cache hit for LSS classification: {title}")
+            return JsonResponse({**cached_suggestion, 'cached': True})
+        
         # Call AI util function to suggest classification
         suggestion = suggest_lean_classification(title, description)
         
         if not suggestion:
             return JsonResponse({'error': 'Failed to suggest classification'}, status=500)
-            
-        return JsonResponse(suggestion)
+        
+        # Cache the suggestion
+        set_cached_ai_response('lss_classification', suggestion, **cache_key_data)
+        logger.info(f"Cached new LSS classification for: {title}")
+        
+        return JsonResponse({**suggestion, 'cached': False})
     except Exception as e:
+        logger.error(f"Error in suggest_lss_classification_api: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
 
 @login_required
 @require_http_methods(["GET"])
 def summarize_board_analytics_api(request, board_id):
     """
-    API endpoint to summarize board analytics using AI
+    API endpoint to summarize board analytics using AI with smart caching.
     """
     try:
         # Get the board and verify user access
@@ -131,14 +184,31 @@ def summarize_board_analytics_api(request, board_id):
         if not (board.created_by == request.user or request.user in board.members.all()):
             return JsonResponse({'error': 'Access denied'}, status=403)
         
+        # Create cache key that considers board state changes
+        all_tasks = Task.objects.filter(column__board=board)
+        total_tasks = all_tasks.count()
+        
+        # Get last modification time of any task on this board
+        last_task_update = None
+        if all_tasks.exists():
+            last_task_update = all_tasks.latest('updated_at').updated_at.timestamp()
+        
+        cache_key_data = {
+            'board_id': board_id,
+            'total_tasks': total_tasks,
+            'last_update': last_task_update
+        }
+        
+        # Check for cached summary
+        cached_summary = get_cached_ai_response('board_analytics', **cache_key_data)
+        if cached_summary:
+            logger.info(f"Cache hit for board analytics: board {board_id}")
+            return JsonResponse({'summary': cached_summary, 'cached': True})
+        
         # Gather analytics data (same as in board_analytics view)
         from django.db.models import Count, Q
         from django.utils import timezone
         from datetime import timedelta
-        
-        # Get all tasks for this board
-        all_tasks = Task.objects.filter(column__board=board)
-        total_tasks = all_tasks.count()
         
         # Completed tasks
         completed_count = Task.objects.filter(
@@ -261,16 +331,21 @@ def summarize_board_analytics_api(request, board_id):
         
         if not summary:
             return JsonResponse({'error': 'Failed to generate analytics summary'}, status=500)
-            
-        return JsonResponse({'summary': summary})
+        
+        # Cache the summary
+        set_cached_ai_response('board_analytics', summary, **cache_key_data)
+        logger.info(f"Cached new board analytics summary for board: {board_id}")
+        
+        return JsonResponse({'summary': summary, 'cached': False})
     except Exception as e:
+        logger.error(f"Error in summarize_board_analytics_api: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
 
 @login_required
 @require_http_methods(["POST"])
 def suggest_task_priority_api(request):
     """
-    API endpoint to suggest optimal priority for a task using AI
+    API endpoint to suggest optimal priority for a task using AI with caching.
     """
     try:
         data = json.loads(request.body)
@@ -323,14 +398,35 @@ def suggest_task_priority_api(request):
             'current_priority': data.get('current_priority', 'medium')
         }
         
+        # Create cache key from task data and board context summary
+        cache_key_data = {
+            'title': title.lower().strip(),
+            'description': description.lower().strip() if description else '',
+            'due_date': due_date,
+            'board_id': board.id,
+            'board_urgent_count': board_context['urgent_count'],
+            'board_high_count': board_context['high_priority_count']
+        }
+        
+        # Check for cached suggestion
+        cached_suggestion = get_cached_ai_response('task_priority', **cache_key_data)
+        if cached_suggestion:
+            logger.info(f"Cache hit for task priority suggestion: {title}")
+            return JsonResponse({**cached_suggestion, 'cached': True})
+        
         # Call AI function
         suggestion = suggest_task_priority(task_data, board_context)
         
         if not suggestion:
             return JsonResponse({'error': 'Failed to suggest priority'}, status=500)
-            
-        return JsonResponse(suggestion)
+        
+        # Cache the suggestion
+        set_cached_ai_response('task_priority', suggestion, **cache_key_data)
+        logger.info(f"Cached new task priority suggestion for: {title}")
+        
+        return JsonResponse({**suggestion, 'cached': False})
     except Exception as e:
+        logger.error(f"Error in suggest_task_priority_api: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
 
 @login_required
@@ -992,4 +1088,55 @@ def process_transcript_file_api(request):
         
     except Exception as e:
         logger.error(f"Error in process_transcript_file_api: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def cache_metrics_api(request):
+    """
+    API endpoint to get comprehensive cache metrics and cost savings.
+    """
+    try:
+        # Check if user has permission (you might want to restrict this to admins)
+        if not request.user.is_staff:
+            return JsonResponse({'error': 'Access denied. Admin privileges required.'}, status=403)
+        
+        metrics = CacheMetrics.get_all_cache_metrics()
+        return JsonResponse({
+            'success': True,
+            'metrics': metrics,
+            'timestamp': timezone.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"Error in cache_metrics_api: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def daily_cache_metrics_api(request, date):
+    """
+    API endpoint to get cache metrics for a specific day.
+    """
+    try:
+        # Check if user has permission
+        if not request.user.is_staff:
+            return JsonResponse({'error': 'Access denied. Admin privileges required.'}, status=403)
+        
+        # Validate date format
+        try:
+            from datetime import datetime
+            datetime.strptime(date, '%Y-%m-%d')
+        except ValueError:
+            return JsonResponse({'error': 'Invalid date format. Use YYYY-MM-DD.'}, status=400)
+        
+        metrics = CacheMetrics.get_daily_metrics(date)
+        return JsonResponse({
+            'success': True,
+            'metrics': metrics,
+            'timestamp': timezone.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"Error in daily_cache_metrics_api: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
