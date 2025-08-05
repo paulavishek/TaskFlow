@@ -13,6 +13,11 @@ import json
 import google.generativeai as genai
 from django.conf import settings
 
+# Import API protection system
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+from api_protection_system import api_cost_protection, FUNCTION_COSTS
+
 # Setup logging
 logger = logging.getLogger(__name__)
 
@@ -40,6 +45,7 @@ def get_model():
         logger.error(f"Error getting Gemini model: {str(e)}")
         return None
 
+@api_cost_protection("generate_task_description", FUNCTION_COSTS["generate_task_description"])
 def generate_task_description(title: str) -> Optional[str]:
     """
     Generate a detailed task description and checklist from a task title.
@@ -80,6 +86,7 @@ def generate_task_description(title: str) -> Optional[str]:
         logger.error(f"Error generating task description: {str(e)}")
         return None
 
+@api_cost_protection("summarize_comments", FUNCTION_COSTS["summarize_comments"])
 def summarize_comments(comments: List[Dict]) -> Optional[str]:
     """
     Summarize a list of task comments.
@@ -118,6 +125,7 @@ def summarize_comments(comments: List[Dict]) -> Optional[str]:
         logger.error(f"Error summarizing comments: {str(e)}")
         return None
 
+@api_cost_protection("suggest_lean_classification", FUNCTION_COSTS["suggest_lean_classification"])
 def suggest_lean_classification(title: str, description: str) -> Optional[Dict]:
     """
     Suggest Lean Six Sigma classification for a task based on its title and description.
@@ -172,6 +180,7 @@ def suggest_lean_classification(title: str, description: str) -> Optional[Dict]:
         logger.error(f"Error suggesting lean classification: {str(e)}")
         return None
 
+@api_cost_protection("summarize_board_analytics", FUNCTION_COSTS["summarize_board_analytics"])
 def summarize_board_analytics(analytics_data: Dict) -> Optional[str]:
     """
     Generate an AI-powered summary of board analytics data.
@@ -247,6 +256,7 @@ def summarize_board_analytics(analytics_data: Dict) -> Optional[str]:
         logger.error(f"Error summarizing board analytics: {str(e)}")
         return None
 
+@api_cost_protection("suggest_task_priority", FUNCTION_COSTS["suggest_task_priority"])
 def suggest_task_priority(task_data: Dict, board_context: Dict) -> Optional[Dict]:
     """
     Suggest optimal priority level for a task based on context.
@@ -332,6 +342,7 @@ def suggest_task_priority(task_data: Dict, board_context: Dict) -> Optional[Dict
         logger.error(f"Error suggesting task priority: {str(e)}")
         return None
 
+@api_cost_protection("predict_realistic_deadline", FUNCTION_COSTS["predict_realistic_deadline"])
 def predict_realistic_deadline(task_data: Dict, team_context: Dict) -> Optional[Dict]:
     """
     Predict realistic completion timeline for a task based on historical data and context.
@@ -446,6 +457,7 @@ def predict_realistic_deadline(task_data: Dict, team_context: Dict) -> Optional[
         logger.error(f"Error predicting deadline: {str(e)}")
         return None
 
+@api_cost_protection("recommend_board_columns", FUNCTION_COSTS["recommend_board_columns"])
 def recommend_board_columns(board_data: Dict) -> Optional[Dict]:
     """
     Recommend optimal column structure for a new board based on project type and context.
@@ -523,6 +535,7 @@ def recommend_board_columns(board_data: Dict) -> Optional[Dict]:
         logger.error(f"Error recommending columns: {str(e)}")
         return None
 
+@api_cost_protection("suggest_task_breakdown", FUNCTION_COSTS["suggest_task_breakdown"])
 def suggest_task_breakdown(task_data: Dict) -> Optional[Dict]:
     """
     Suggest automated breakdown of a complex task into smaller subtasks.
@@ -598,6 +611,7 @@ def suggest_task_breakdown(task_data: Dict) -> Optional[Dict]:
         logger.error(f"Error suggesting task breakdown: {str(e)}")
         return None
 
+@api_cost_protection("analyze_workflow_optimization", FUNCTION_COSTS["analyze_workflow_optimization"])
 def analyze_workflow_optimization(board_analytics: Dict) -> Optional[Dict]:
     """
     Analyze board workflow and suggest optimizations based on patterns and bottlenecks.
@@ -696,6 +710,7 @@ def analyze_workflow_optimization(board_analytics: Dict) -> Optional[Dict]:
         return None
 
 
+@api_cost_protection("analyze_critical_path", FUNCTION_COSTS["analyze_critical_path"])
 def analyze_critical_path(board_data: Dict) -> Optional[Dict]:
     """
     Analyze task dependencies and identify critical path using AI.
@@ -1210,6 +1225,7 @@ def generate_project_timeline(board_data: Dict) -> Optional[Dict]:
         logger.error(f"Error generating project timeline: {str(e)}")
         return None
 
+@api_cost_protection("extract_tasks_from_transcript", FUNCTION_COSTS["extract_tasks_from_transcript"])
 def extract_tasks_from_transcript(transcript: str, meeting_context: Dict, board) -> Optional[Dict]:
     """
     Extract actionable tasks from meeting transcript using AI
@@ -1380,6 +1396,7 @@ def extract_text_from_file(file_path: str, file_type: str) -> Optional[str]:
         logger.error(f"Error extracting text from file {file_path}: {str(e)}")
         return None
 
+@api_cost_protection("enhance_task_description", FUNCTION_COSTS["enhance_task_description"])
 def enhance_task_description(task_data: Dict) -> Optional[Dict]:
     """
     Enhance a task description using AI to provide detailed context and checklist.
