@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'colorfield',
     'widget_tweaks',
+    'django_extensions',  # For SSL support in development
     
     # Django Allauth
     'allauth',

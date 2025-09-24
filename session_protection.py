@@ -31,8 +31,8 @@ class SessionBasedAPIProtection:
         
     def initialize_fresh_session(self):
         """Initialize a completely fresh session with zero costs"""
-        self.logger.info(f"🆕 STARTING FRESH SESSION: {self.session_id}")
-        self.logger.info(f"📊 Session limits: Daily=${self.daily_limit:.2f}, Monthly=${self.monthly_limit:.2f}")
+        self.logger.info(f"[NEW] STARTING FRESH SESSION: {self.session_id}")
+        self.logger.info(f"[LIMITS] Session limits: Daily=${self.daily_limit:.2f}, Monthly=${self.monthly_limit:.2f}")
         
         # Clean up old session files (optional - keeps last 5 sessions)
         self.cleanup_old_sessions()
@@ -49,7 +49,7 @@ class SessionBasedAPIProtection:
         }
         
         self.save_cost_tracking(fresh_data)
-        self.logger.info("✅ Fresh session initialized - all costs reset to $0.00")
+        self.logger.info("[SUCCESS] Fresh session initialized - all costs reset to $0.00")
         
     def cleanup_old_sessions(self):
         """Clean up old session files (keep last 5 sessions)"""
@@ -70,7 +70,7 @@ class SessionBasedAPIProtection:
             for filepath, _ in session_files[5:]:
                 try:
                     os.remove(filepath)
-                    self.logger.info(f"🧹 Cleaned up old session file: {os.path.basename(filepath)}")
+                    self.logger.info(f"[CLEANUP] Cleaned up old session file: {os.path.basename(filepath)}")
                 except:
                     pass
                     
@@ -159,14 +159,14 @@ class SessionBasedAPIProtection:
         data['api_calls'].append(call_record)
         
         # Log the cost
-        self.logger.info(f"💰 API_CALL: {function_name} = ${cost:.6f} | Session Total: ${data['session_costs']:.6f}")
+        self.logger.info(f"[COST] API_CALL: {function_name} = ${cost:.6f} | Session Total: ${data['session_costs']:.6f}")
         
         # Check limits (use session cost for both daily and monthly since it's per-session)
         daily_exceeded = data['session_costs'] > self.daily_limit
         
         if daily_exceeded:
-            self.logger.warning(f"🚨 SESSION_LIMIT_EXCEEDED: ${data['session_costs']:.6f} > ${self.daily_limit}")
-            self.logger.warning("🛑 ALL FURTHER API CALLS BLOCKED FOR THIS SESSION")
+            self.logger.warning(f"[LIMIT] SESSION_LIMIT_EXCEEDED: ${data['session_costs']:.6f} > ${self.daily_limit}")
+            self.logger.warning("[BLOCKED] ALL FURTHER API CALLS BLOCKED FOR THIS SESSION")
         
         self.save_cost_tracking(data)
         
@@ -278,15 +278,15 @@ if __name__ == "__main__":
     print(f"Session Remaining: ${status['session_remaining']:.6f}")
     print(f"Total API Calls: {status['total_api_calls']}")
     print(f"Development Mode: {status['development_mode']}")
-    print(f"Protection Status: {'🟢 ACTIVE' if status['protection_active'] else '🔴 INACTIVE'}")
+    print(f"Protection Status: {'[ACTIVE]' if status['protection_active'] else '[INACTIVE]'}")
     print()
-    print(f"📁 Session Files:")
+    print(f"[FILES] Session Files:")
     print(f"   Cost Tracking: {status['cost_file']}")
     print(f"   Session Log:   {status['log_file']}")
     print()
     if status['recent_calls']:
-        print("📋 Recent API Calls:")
+        print("[CALLS] Recent API Calls:")
         for call in status['recent_calls']:
             print(f"   {call['timestamp'][:19]} | {call['function']} | ${call['cost']:.6f}")
     else:
-        print("📋 No API calls made in this session yet")
+        print("[CALLS] No API calls made in this session yet")

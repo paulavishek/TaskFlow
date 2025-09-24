@@ -32,6 +32,11 @@ PyPDF2==3.0.1
 # HTTP Requests (for testing and integrations)
 requests==2.32.3
 
+# HTTPS Development Server Support
+django-extensions==4.1
+Werkzeug==3.1.3
+pyOpenSSL==25.3.0
+
 # Development and Testing Dependencies
 # (Optional - for development environment)
 # flake8==7.1.1
