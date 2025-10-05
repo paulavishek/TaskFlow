@@ -8,9 +8,9 @@ based on the AI functions implemented and provides cost optimization insights.
 import json
 from datetime import datetime
 
-# Gemini 1.5 Flash pricing (as of 2024)
+# Gemini 2.5 Flash pricing (as of 2025)
 # These are approximate - actual costs may vary based on region and current pricing
-GEMINI_15_FLASH_PRICING = {
+GEMINI_25_FLASH_PRICING = {
     'input_tokens_per_1k': 0.000075,    # $0.075 per 1M input tokens
     'output_tokens_per_1k': 0.0003,     # $0.30 per 1M output tokens
 }
@@ -81,8 +81,8 @@ AI_FUNCTIONS = {
 
 def calculate_cost_per_call(function_name, function_data):
     """Calculate cost per API call for a specific function"""
-    input_cost = (function_data['input_tokens'] / 1000) * GEMINI_15_FLASH_PRICING['input_tokens_per_1k']
-    output_cost = (function_data['output_tokens'] / 1000) * GEMINI_15_FLASH_PRICING['output_tokens_per_1k']
+    input_cost = (function_data['input_tokens'] / 1000) * GEMINI_25_FLASH_PRICING['input_tokens_per_1k']
+    output_cost = (function_data['output_tokens'] / 1000) * GEMINI_25_FLASH_PRICING['output_tokens_per_1k']
     return input_cost + output_cost
 
 def analyze_costs():
@@ -91,7 +91,7 @@ def analyze_costs():
     print("🤖 TASKFLOW GEMINI API COST ANALYSIS")
     print("=" * 80)
     print(f"Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"Pricing Model: Gemini 1.5 Flash")
+    print(f"Pricing Model: Gemini 2.5 Flash")
     print()
     
     total_cost_per_function = 0

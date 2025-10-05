@@ -19,7 +19,7 @@ except ImportError:
     def get_model():
         """Fallback if ai_utils not available"""
         import google.generativeai as genai
-        return genai.GenerativeModel('gemini-1.5-flash')
+        return genai.GenerativeModel('gemini-2.5-flash')
 
 # Example of how to modify your existing functions:
 
