@@ -40,7 +40,8 @@ except Exception as e:
 def get_model():
     """Get the Gemini model instance."""
     try:
-        return genai.GenerativeModel('gemini-1.5-flash')
+        # Use gemini-2.5-flash - stable version with great performance
+        return genai.GenerativeModel('gemini-2.5-flash')
     except Exception as e:
         logger.error(f"Error getting Gemini model: {str(e)}")
         return None
