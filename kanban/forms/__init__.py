@@ -32,8 +32,7 @@ class TaskForm(forms.ModelForm):
     class Meta:
         model = Task
         fields = [
-            'title', 'description', 'due_date', 'assigned_to', 'labels', 'priority',
-            'estimated_duration_hours', 'estimated_start_date', 'is_milestone', 'predecessors'
+            'title', 'description', 'due_date', 'assigned_to', 'labels', 'priority'
         ]
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
@@ -46,35 +45,7 @@ class TaskForm(forms.ModelForm):
             'assigned_to': forms.Select(attrs={'class': 'form-select'}),
             'labels': forms.SelectMultiple(attrs={'class': 'form-select'}),
             'priority': forms.Select(attrs={'class': 'form-select'}),
-            'estimated_duration_hours': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': '1',
-                'max': '999',
-                'placeholder': '8',
-                'title': 'How many hours you estimate this task will take'
-            }),
-            'estimated_start_date': forms.DateTimeInput(attrs={
-                'class': 'form-control',
-                'type': 'datetime-local',
-                'title': 'When you plan to start working on this task'
-            }),
-            'is_milestone': forms.CheckboxInput(attrs={
-                'class': 'form-check-input',
-                'title': 'Mark this task as an important project milestone'
-            }),
-            'predecessors': forms.SelectMultiple(attrs={
-                'class': 'form-select',
-                'size': '4',
-                'title': 'Select tasks that must be completed before this task can start'
-            }),
         }
-        help_texts = {
-            'estimated_duration_hours': 'Estimated time to complete this task (in hours)',
-            'estimated_start_date': 'Planned start date for this task',
-            'is_milestone': 'Check if this task represents an important project milestone',
-            'predecessors': 'Tasks that must be completed before this task can start',
-        }
-    
     def __init__(self, *args, **kwargs):
         board = kwargs.pop('board', None)
         super().__init__(*args, **kwargs)
@@ -82,25 +53,9 @@ class TaskForm(forms.ModelForm):
         if board:
             self.fields['labels'].queryset = TaskLabel.objects.filter(board=board)
             self.fields['assigned_to'].queryset = board.members.all()
-            
-            # For predecessors, show other tasks in the same board (excluding self)
-            tasks_queryset = Task.objects.filter(column__board=board)
-            if self.instance and self.instance.pk:
-                # Exclude self from predecessors list
-                tasks_queryset = tasks_queryset.exclude(pk=self.instance.pk)
-            
-            self.fields['predecessors'].queryset = tasks_queryset
-            self.fields['predecessors'].widget.choices = [
-                (task.id, f"{task.title} ({task.column.name})")
-                for task in tasks_queryset
-            ]
         
         # Add empty choice for assigned_to
         self.fields['assigned_to'].empty_label = "Not assigned"
-        
-        # Set default estimated duration if not set
-        if not self.instance.pk and not self.initial.get('estimated_duration_hours'):
-            self.fields['estimated_duration_hours'].initial = 8
 
 class CommentForm(forms.ModelForm):
     class Meta:

@@ -14,13 +14,7 @@ urlpatterns = [
     path('api/wizard/create-task/', views.wizard_create_task, name='wizard_create_task'),
     
     path('boards/', views.board_list, name='board_list'),
-    path('boards/create/', views.create_board, name='create_board'),    path('boards/<int:board_id>/', views.board_detail, name='board_detail'),
-    path('boards/<int:board_id>/analytics/', views.board_analytics, name='board_analytics'),
-    
-    # Advanced AI Features
-    path('boards/<int:board_id>/ai-resource-analysis/', views.ai_resource_analysis, name='ai_resource_analysis'),
-    path('boards/<int:board_id>/ai-timeline-management/', views.ai_timeline_management, name='ai_timeline_management'),
-    
+    path('boards/create/', views.create_board, name='create_board'),    path('boards/<int:board_id>/', views.board_detail, name='board_detail'),    path('boards/<int:board_id>/analytics/', views.board_analytics, name='board_analytics'),
     path('boards/<int:board_id>/edit/', views.edit_board, name='edit_board'),
     path('boards/<int:board_id>/create-task/', views.create_task, name='create_task'),
     path('boards/<int:board_id>/columns/<int:column_id>/create-task/', views.create_task, name='create_task_in_column'),
@@ -53,19 +47,7 @@ urlpatterns = [
     path('api/predict-deadline/', api_views.predict_deadline_api, name='predict_deadline_api'),
     path('api/recommend-columns/', api_views.recommend_columns_api, name='recommend_columns_api'),
     path('api/suggest-task-breakdown/', api_views.suggest_task_breakdown_api, name='suggest_task_breakdown_api'),
-    path('api/analyze-workflow-optimization/', api_views.analyze_workflow_optimization_api, name='analyze_workflow_optimization_api'),
-    path('api/create-subtasks/', api_views.create_subtasks_api, name='create_subtasks_api'),    # AI-Enhanced Timeline & Critical Path Analysis
-    path('api/analyze-critical-path/', api_views.analyze_critical_path_api, name='analyze_critical_path_api'),
-    path('api/predict-task-completion/', api_views.predict_task_completion_api, name='predict_task_completion_api'),
-    path('api/generate-project-timeline/', api_views.generate_project_timeline_api, name='generate_project_timeline_api'),
-    
-    # AI Resource Analysis APIs
-    path('api/analyze-resource-bottlenecks/', api_views.analyze_resource_bottlenecks_api, name='analyze_resource_bottlenecks_api'),
-    path('api/optimize-task-assignments/', api_views.optimize_task_assignments_api, name='optimize_task_assignments_api'),
-    path('api/balance-team-workload/', api_views.balance_team_workload_api, name='balance_team_workload_api'),
-    path('api/forecast-resource-needs/', api_views.forecast_resource_needs_api, name='forecast_resource_needs_api'),
-    path('api/suggest-resource-reallocation/', api_views.suggest_resource_reallocation_api, name='suggest_resource_reallocation_api'),
-    path('api/team-resource-overview/<int:board_id>/', api_views.team_resource_overview_api, name='team_resource_overview_api'),
+    path('api/analyze-workflow-optimization/', api_views.analyze_workflow_optimization_api, name='analyze_workflow_optimization_api'),    path('api/create-subtasks/', api_views.create_subtasks_api, name='create_subtasks_api'),
     
     # Meeting Transcript Extraction
     path('boards/<int:board_id>/meeting-transcript/', views.meeting_transcript_extraction, name='meeting_transcript_extraction'),

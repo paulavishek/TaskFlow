@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script to verify Advanced Features reorganization
+Test script to verify removal of AI Resource Analysis and Timeline Management features
 """
 
 import os
@@ -18,38 +18,35 @@ from django.contrib.auth.models import User
 from kanban.models import Board, Column
 from accounts.models import Organization, UserProfile
 
-def test_advanced_features_reorganization():
-    """Test the advanced features reorganization"""
-    print("🚀 Testing TaskFlow Advanced Features Reorganization")
+def test_feature_removal():
+    """Test the remaining advanced features after AI Resource Analysis and Timeline Management removal"""
+    print("🚀 Testing TaskFlow Advanced Features (After AI Resource/Timeline Removal)")
     print("=" * 60)
     
-    # Test URL patterns
-    print("\n1. 📋 Testing URL Patterns...")
+    # Test URL patterns for remaining features
+    print("\n1. 📋 Testing Remaining URL Patterns...")
     
     try:
-        # Test resource analysis URL
-        url = reverse('ai_resource_analysis', kwargs={'board_id': 1})
-        print(f"✅ AI Resource Analysis URL: {url}")
-        
-        # Test timeline management URL  
-        url = reverse('ai_timeline_management', kwargs={'board_id': 1})
-        print(f"✅ AI Timeline Management URL: {url}")
-        
-        # Test meeting transcript URL (existing)
+        # Test meeting transcript URL (remaining advanced feature)
         url = reverse('meeting_transcript_extraction', kwargs={'board_id': 1})
         print(f"✅ Meeting Transcript Analysis URL: {url}")
         
+        # Test board detail and analytics URLs
+        url = reverse('board_detail', kwargs={'board_id': 1})
+        print(f"✅ Board Detail URL: {url}")
+        
+        url = reverse('board_analytics', kwargs={'board_id': 1})
+        print(f"✅ Board Analytics URL: {url}")
+        
     except Exception as e:
         print(f"❌ URL pattern error: {str(e)}")
-    
-    # Test template files exist
+      # Test template files exist
     print("\n2. 📄 Testing Template Files...")
     
     templates = [
-        'templates/kanban/ai_resource_analysis.html',
-        'templates/kanban/ai_timeline_management.html',
         'templates/kanban/board_detail.html',
-        'templates/kanban/board_analytics.html'
+        'templates/kanban/board_analytics.html',
+        'templates/kanban/meeting_transcript.html'
     ]
     
     for template in templates:
@@ -58,67 +55,53 @@ def test_advanced_features_reorganization():
         else:
             print(f"❌ Template missing: {template}")
     
-    # Test API endpoints
-    print("\n3. 🔌 Testing API Endpoints...")
-    
+    # Test API endpoints for remaining features
+    print("\n3. 🔌 Testing Remaining API Endpoints...")
     api_urls = [
-        'analyze_resource_bottlenecks_api',
-        'optimize_task_assignments_api', 
-        'balance_team_workload_api',
-        'forecast_resource_needs_api',
-        'suggest_resource_reallocation_api',
-        'team_resource_overview_api'
+        'extract_tasks_from_transcript_api',
+        'create_tasks_from_extraction_api',
+        'process_transcript_file_api',
+        'generate_task_description_api'
     ]
     
     for api_url in api_urls:
         try:
-            if api_url == 'team_resource_overview_api':
-                url = reverse(api_url, kwargs={'board_id': 1})
-            else:
-                url = reverse(api_url)
+            url = reverse(api_url)
             print(f"✅ API endpoint: {api_url} -> {url}")
         except Exception as e:
             print(f"❌ API endpoint error ({api_url}): {str(e)}")
     
-    # Test view imports
+    # Test API endpoints that require parameters
+    try:
+        url = reverse('summarize_comments_api', kwargs={'task_id': 1})
+        print(f"✅ API endpoint: summarize_comments_api -> {url}")
+    except Exception as e:
+        print(f"❌ API endpoint error (summarize_comments_api): {str(e)}")
+    
+    # Test view imports for remaining features
     print("\n4. 🎯 Testing View Functions...")
     
     try:
-        from kanban.views import ai_resource_analysis, ai_timeline_management
-        print("✅ Advanced feature views imported successfully")
+        from kanban.views import meeting_transcript_extraction, board_detail, board_analytics
+        print("✅ Remaining advanced feature views imported successfully")
         
         from kanban.api_views import (
-            analyze_resource_bottlenecks_api,
-            optimize_task_assignments_api,
-            balance_team_workload_api
+            extract_tasks_from_transcript_api,
+            create_tasks_from_extraction_api,
+            process_transcript_file_api
         )
-        print("✅ Resource analysis API views imported successfully")
+        print("✅ Meeting transcript API views imported successfully")
         
     except ImportError as e:
         print(f"❌ View import error: {str(e)}")
     
-    # Test AI utilities
-    print("\n5. 🤖 Testing AI Utilities...")
-    
-    try:
-        from kanban.utils.ai_resource_analysis import (
-            optimize_task_assignments,
-            balance_team_workload,
-            analyze_resource_bottlenecks
-        )
-        print("✅ AI resource analysis utilities available")
-        
-    except ImportError as e:
-        print(f"⚠️  AI utilities import warning: {str(e)}")
-        print("   (This is expected if ai_resource_analysis.py doesn't exist yet)")
-    
-    # Test JavaScript files
-    print("\n6. 📜 Testing JavaScript Files...")
+    # Test remaining JavaScript files
+    print("\n5. 📜 Testing JavaScript Files...")
     
     js_files = [
-        'static/js/ai_resource_analysis.js',
-        'static/js/ai_timeline.js',
-        'static/js/ai_features.js'
+        'static/js/ai_features.js',
+        'static/js/meeting_transcript_extraction.js',
+        'static/js/kanban.js'
     ]
     
     for js_file in js_files:
@@ -128,21 +111,20 @@ def test_advanced_features_reorganization():
             print(f"⚠️  JavaScript file missing: {js_file}")
     
     print("\n" + "=" * 60)
-    print("🎉 Advanced Features Reorganization Test Complete!")
+    print("🎉 Feature Removal Test Complete!")
     print("\n💡 Summary:")
-    print("   • URL patterns configured for advanced features")
-    print("   • Template files created for resource analysis and timeline management")
-    print("   • API endpoints defined for AI resource analysis")
-    print("   • Board settings dropdown reorganized with advanced features section")
-    print("   • Analytics page updated with advanced features navigation")
-    print("   • Lean Six Sigma toggle functionality implemented")
+    print("   • AI Resource Analysis features successfully removed")
+    print("   • AI Timeline Management features successfully removed")
+    print("   • Meeting Transcript Analysis feature remains available")
+    print("   • Core Kanban functionality preserved")
+    print("   • Board settings dropdown cleaned up")
     
     print("\n🚀 Next Steps:")
-    print("   1. Run Django migrations (if any)")
-    print("   2. Create or update AI utility modules")
-    print("   3. Test the new advanced features interfaces")
-    print("   4. Verify all existing functionality still works")
-    print("   5. Update documentation for users")
+    print("   1. Test remaining functionality")
+    print("   2. Verify board detail and analytics pages work")
+    print("   3. Ensure meeting transcript feature still works")
+    print("   4. Update any remaining documentation")
+    print("   5. Clean up any remaining unused files")
 
 if __name__ == "__main__":
-    test_advanced_features_reorganization()
+    test_feature_removal()

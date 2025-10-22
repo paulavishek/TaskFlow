@@ -714,22 +714,17 @@ def analyze_critical_path(board_data: Dict) -> Optional[Dict]:
         tasks_info = board_data.get('tasks', [])
         if not tasks_info:
             return None
-            
-        # Format tasks for AI analysis
+              # Format tasks for AI analysis
         formatted_tasks = []
         for task in tasks_info:
             task_str = f"""
             Task ID: {task.get('id')}
             Title: {task.get('title')}
-            Duration: {task.get('estimated_duration_hours', 8)} hours
-            Start Date: {task.get('estimated_start_date', 'Not set')}
             Due Date: {task.get('due_date', 'Not set')}
             Progress: {task.get('progress', 0)}%
             Assigned To: {task.get('assigned_to', 'Unassigned')}
             Column: {task.get('column_name', 'Unknown')}
             Priority: {task.get('priority', 'medium')}
-            Dependencies: {', '.join([str(dep) for dep in task.get('predecessors', [])]) or 'None'}
-            Is Milestone: {task.get('is_milestone', False)}
             """
             formatted_tasks.append(task_str)
             prompt = f"""
@@ -839,13 +834,11 @@ def analyze_critical_path(board_data: Dict) -> Optional[Dict]:
                     total_duration = sum(task.get('estimated_duration_hours', 8) for task in tasks_info)
                     high_risk_tasks = len([task for task in tasks_info if task.get('priority') == 'high'])
                     
-                    return {
-                        "critical_path": [
+                    return {                        "critical_path": [
                             {
                                 "task_id": str(task.get('id')),
                                 "task_title": task.get('title', 'Unknown Task'),
                                 "position_in_path": idx + 1,
-                                "duration_hours": task.get('estimated_duration_hours', 8),
                                 "earliest_start": "2025-06-19 09:00",
                                 "earliest_finish": "2025-06-20 17:00"
                             }
@@ -935,18 +928,13 @@ def predict_task_completion(task_data: Dict, historical_data: List[Dict] = None)
         model = get_model()
         if not model:
             return None
-            
-        # Format current task data
+              # Format current task data
         task_info = f"""
         Task: {task_data.get('title')}
         Current Progress: {task_data.get('progress', 0)}%
-        Estimated Duration: {task_data.get('estimated_duration_hours', 8)} hours
-        Time Spent: {task_data.get('actual_duration_hours', 0)} hours
-        Start Date: {task_data.get('actual_start_date') or task_data.get('estimated_start_date', 'Not started')}
         Due Date: {task_data.get('due_date', 'Not set')}
         Priority: {task_data.get('priority', 'medium')}
         Assignee: {task_data.get('assigned_to', 'Unassigned')}
-        Dependencies: {len(task_data.get('predecessors', []))} predecessor tasks
         """
         
         # Format historical data if available

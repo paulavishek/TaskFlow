@@ -132,7 +132,6 @@ Test AI features with demo scripts:
 ```bash
 python demo_ai_features.py
 python demo_ai_analytics.py
-python demo_ai_resource_analysis.py
 ```
 
 ## Production Deployment
