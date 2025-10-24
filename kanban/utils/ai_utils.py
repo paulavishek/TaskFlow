@@ -53,7 +53,7 @@ def get_model():
         if _model_instance is None:
             # Create model with safety settings to ensure stateless requests
             # Each generate_content call should be independent
-            _model_instance = genai.GenerativeModel('gemini-1.5-flash')
+            _model_instance = genai.GenerativeModel('gemini-2.5-flash-lite')
             logger.info("Gemini model instance created (singleton)")
         return _model_instance
     except Exception as e:

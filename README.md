@@ -6,7 +6,7 @@
 
 ## 🚀 Why TaskFlow is Different
 
-TaskFlow isn't just another project management tool - it's your **Gemini-powered productivity partner** that understands your workflow and helps optimize it automatically. Powered by Google's advanced Gemini 1.5 Flash model, TaskFlow provides genuine AI intelligence that learns from your project details to deliver human-like recommendations and automation.
+TaskFlow isn't just another project management tool - it's your **Gemini-powered productivity partner** that understands your workflow and helps optimize it automatically. Powered by Google's advanced Gemini 2.5 Flash Lite model, TaskFlow provides genuine AI intelligence that learns from your project details to deliver human-like recommendations and automation.
 
 ### ✨ Features at a Glance
 
@@ -834,7 +834,7 @@ TaskFlow combines proven web technologies with cutting-edge AI capabilities:
 ### Core Technologies
 
 - **Backend Framework**: Django (Python web framework) with Gemini AI integration
-- **AI Processing**: Google Gemini 1.5 Flash API integration for intelligent recommendations and analytics
+- **AI Processing**: Google Gemini 2.5 Flash Lite API integration for intelligent recommendations and analytics
 - **Frontend**: HTML5, CSS3, JavaScript with Bootstrap for responsive design
 - **Database**: SQLite (development), PostgreSQL (production) with AI-optimized data handling
 - **Real-time Features**: WebSocket support for live updates and AI notifications
@@ -855,7 +855,7 @@ TaskFlow combines proven web technologies with cutting-edge AI capabilities:
 
 ### AI Architecture
 
-- **Gemini API Integration**: Core intelligence provided by Google's Gemini 1.5 Flash model for tasks like summarization, classification, and content generation
+- **Gemini API Integration**: Core intelligence provided by Google's Gemini 2.5 Flash Lite model for tasks like summarization, classification, and content generation
 - **Optimized Prompting**: Backend is optimized to send effective prompts and process Gemini's responses
 - **Secure Processing**: All AI requests are authenticated and respect user permissions
 - **Efficient Caching**: Smart caching of AI responses to optimize performance and reduce API calls
@@ -1077,7 +1077,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🤖 Gemini-Powered Features
 
-TaskFlow leverages Google's advanced Gemini 1.5 Flash model to make project management smarter, faster, and more efficient:
+TaskFlow leverages Google's advanced Gemini 2.5 Flash Lite model to make project management smarter, faster, and more efficient:
 
 ### 🧠 How Our Gemini AI Works
 
