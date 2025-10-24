@@ -25,6 +25,12 @@ TaskFlow isn't just another project management tool - it's your **Gemini-powered
 - Comprehensive analytics and reporting
 - Multi-organization support for enterprise use
 
+⚠️ **Advanced Management Features**
+- **Risk Management**: AI-powered risk assessment, likelihood/impact scoring, and mitigation strategies
+- **Resource Management**: Predictive team capacity forecasting and intelligent capacity alerts
+- **Requirements Management**: Hierarchical task dependencies, visual dependency trees, and AI-suggested relationships
+- **Stakeholder Management**: Stakeholder tracking, engagement monitoring, and Power/Interest matrix analysis
+
 🔒 **Enterprise-Ready Security**
 - Google OAuth integration for seamless authentication
 - Organization-based data isolation
@@ -43,6 +49,10 @@ TaskFlow is an open-source project inspired by the powerful Kanban functionaliti
 | **Gemini AI Analytics** | ✅ Predictive insights | ➖ Basic reporting | ➖ Standard analytics | ➖ Standard analytics | ➖ Standard analytics |
 | **Gemini AI Comment Summaries** | ✅ Automatic | ➖ Manual review | ➖ Manual review | ➖ Manual review | ➖ Manual review |
 | **Gemini AI Lean Six Sigma** | ✅ Process optimization | ➖ Not available | ➖ Not available | ➖ Not available | ➖ Not available |
+| **Risk Management** | ✅ AI-powered assessment | ➖ Limited/Manual | ✅ Available | ✅ Available | ➖ Limited |
+| **Resource Capacity Forecasting** | ✅ AI-predictive 2-3 week | ➖ Not available | ✅ Manual planning | ✅ Available | ✅ Available |
+| **Requirements/Dependencies** | ✅ AI-suggested hierarchy | ✅ Basic | ✅ Advanced | ✅ Advanced | ✅ Advanced |
+| **Stakeholder Management** | ✅ Power/Interest tracking | ➖ Not available | ✅ Limited | ➖ Not available | ➖ Not available |
 | **Kanban Boards** | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **Team Collaboration** | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **Google OAuth** | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -53,16 +63,23 @@ TaskFlow is an open-source project inspired by the powerful Kanban functionaliti
 **🚀 TaskFlow's Innovation Focus:**
 
 - **Deep Gemini Integration Experiment** - Exploring how Google's advanced language model can transform project workflows
+- **Comprehensive Management Suite** - Combining AI-powered risk, resource, requirements, and stakeholder management with Kanban methodology
+- **Enterprise-Grade Features** - Advanced forecasting, dependency tracking, and stakeholder engagement beyond traditional PM tools
 - **Open-Source AI Research** - Contributing to the community's understanding of AI in project management
 - **Privacy-Conscious AI** - Demonstrating how to leverage cloud AI while maintaining data control
 - **Educational Platform** - Perfect for learning modern AI integration patterns and Django development
 
-*Note: While major PM tools are rapidly evolving and integrating their own AI capabilities, TaskFlow is unique in its deep, open-source integration of Google's Gemini model across the entire project lifecycle—from initial board setup to final analytics. This project serves as an exploration of what's possible when AI is thoughtfully integrated into every aspect of project management.*
+*Note: While major PM tools are rapidly evolving and integrating their own AI capabilities, TaskFlow is unique in its deep, open-source integration of Google's Gemini model across the entire project lifecycle—from initial board setup to final analytics. This project serves as an exploration of what's possible when AI is thoughtfully integrated into every aspect of project management, complemented by sophisticated risk, resource, requirements, and stakeholder management systems.*
 
 ## Table of Contents
 
 - [✨ Features at a Glance](#-features-at-a-glance)
 - [🤖 AI-Powered Features](#-ai-powered-features)
+- [⚠️ Advanced Management Features](#-advanced-management-features)
+  - [🛡️ Risk Management](#-risk-management)
+  - [📦 Resource Management](#-resource-management)
+  - [📋 Requirements Management](#-requirements-management)
+  - [👥 Stakeholder Management](#-stakeholder-management)
 - [📋 Core Kanban Features](#-core-kanban-features)
 - [🚀 Getting Started](#-getting-started)
   - [⚡ Installation](#-installation)
@@ -182,6 +199,230 @@ Gemini Output: Detailed description with checklist including:
    - Follow-up requirements
    - Priority levels for each item
 3. Automatically create tasks from extracted information
+
+## ⚠️ Advanced Management Features
+
+TaskFlow now includes sophisticated management systems for risks, resources, requirements, and stakeholders—essential for enterprise-grade project management.
+
+### 🛡️ Risk Management
+
+**What it does:** AI-powered risk assessment and mitigation for complex projects. Automatically identifies, scores, and suggests strategies for project risks.
+
+**Key Features:**
+
+- **AI Risk Scoring**: Likelihood (1-3) × Impact (1-3) = Risk Score (1-9)
+  - Automatic calculation based on task context
+  - Multi-perspective analysis (technical, financial, operational, timeline)
+  - Real-time risk level indicators (Low/Medium/High/Critical)
+
+- **Smart Risk Indicators**: Track key metrics with:
+  - Customizable monitoring frequency
+  - Alert thresholds and escalation rules
+  - Cascading risk analysis across dependencies
+
+- **AI-Generated Mitigation Strategies**: Intelligent response strategies including:
+  - Strategy types: Avoid, Mitigate, Transfer, Accept
+  - Specific action steps and timelines
+  - Resource requirements and effectiveness estimates
+  - Priority levels for implementation
+
+- **Dependency Risk Analysis**:
+  - Identify critical task dependencies
+  - Evaluate cascading risks
+  - Find bottleneck areas
+  - Suggest parallel work opportunities
+
+**How to Use:**
+1. Open any task and navigate to the Risk Assessment section
+2. Click "Assess Risk with AI" to get intelligent scoring
+3. Review AI-generated mitigation strategies
+4. Implement recommended actions with built-in tracking
+5. Monitor risks with customizable indicators and alerts
+
+**Real Example:**
+```
+Task: "Integrate third-party payment gateway"
+AI Risk Assessment:
+• Likelihood: 2 (Integration complexity)
+• Impact: 3 (Financial transactions)
+• Risk Score: 6 (High Risk)
+
+Mitigation Strategies Generated:
+1. Mitigate: Implement comprehensive testing framework
+2. Transfer: Use vendor support team for integration
+3. Accept: Plan rollback procedure if needed
+```
+
+### 📦 Resource Management
+
+**What it does:** AI-powered team capacity forecasting and intelligent resource allocation. Predict bottlenecks and optimize team utilization.
+
+**Key Features:**
+
+- **Predictive Team Capacity Forecasting** (2-3 Week Outlook):
+  - AI predicts team workload for upcoming weeks
+  - Per-member capacity analysis with skill-based assignments
+  - Identifies over/under-utilization automatically
+  - Suggests task distribution for optimal balance
+  - Confidence metrics for predictions
+
+- **Smart Capacity Analysis**:
+  - Real-time team availability tracking
+  - Task-to-member skill matching recommendations
+  - Workload visualization across team members
+  - Historical velocity analysis for accurate forecasting
+
+- **Intelligent Capacity Alerts**:
+  - **Warning Level (80%)**: Alert when team reaches 80% capacity
+  - **Critical Level (100%+)**: Urgent alert for overbooked teams
+  - AI-generated recommendations for rebalancing
+  - Automatic flagging of at-risk tasks
+
+- **Resource Optimization Suggestions**:
+  - Identify tasks that could be parallelized
+  - Recommend task prioritization to meet deadlines
+  - Suggest skill development opportunities
+  - Prevent team burnout with early warnings
+
+**How to Use:**
+1. Navigate to the Forecasting Dashboard from your board
+2. View team capacity for the next 2-3 weeks
+3. Check capacity alerts for over-booked periods
+4. Use AI recommendations to rebalance workload
+5. Monitor utilization trends over time
+
+**Real Example:**
+```
+Week 1 Forecast:
+• Alice: 95% utilization (⚠️ Warning)
+• Bob: 60% utilization (✅ Available)
+• Total: 77.5% (✅ Healthy)
+
+AI Recommendation:
+"Move 'API Documentation' task from Alice to Bob. 
+Bob has 40% available capacity and API documentation 
+is marked compatible with his skill set."
+```
+
+### 📋 Requirements Management
+
+**What it does:** Hierarchical task structures with intelligent dependency management. Create complex project hierarchies and visualize task relationships.
+
+**Key Features:**
+
+- **Parent-Child Task Relationships**:
+  - Create unlimited nesting levels
+  - Automatic circular dependency prevention
+  - Real-time progress rollup from child to parent tasks
+  - Flexible reorganization without data loss
+
+- **Visual Dependency Tree**:
+  - Beautiful, interactive HTML visualization
+  - Color-coded nodes for quick status identification
+  - Expandable/collapsible tree structure
+  - Drag-and-drop reorganization support
+  - Export dependency diagrams for documentation
+
+- **AI-Suggested Task Dependencies**:
+  - Intelligent analysis of task descriptions
+  - Automatic suggestion of related tasks
+  - Parent-child relationship recommendations
+  - Smart task sequence optimization
+  - Prevent missed dependencies with AI analysis
+
+- **Dependency Conflict Detection**:
+  - Circular dependency prevention
+  - Critical path identification
+  - Bottleneck detection
+  - Timeline conflict alerts
+
+**How to Use:**
+1. Create a main parent task for your feature/component
+2. Click "Add Subtasks" to create child tasks
+3. Use "Suggest Dependencies with AI" for intelligent linking
+4. View the dependency tree by clicking "View Tree Diagram"
+5. Drag tasks to reorganize hierarchy as needed
+
+**Real Example:**
+```
+Parent Task: "Build User Authentication System"
+├── Design auth flow and security
+│   ├── Research OAuth providers
+│   └── Design token system
+├── Frontend implementation
+│   ├── Create login UI
+│   ├── Create signup UI
+│   └── Add password reset flow
+└── Backend development
+    ├── Implement token service
+    ├── Setup database schema
+    └── Create API endpoints
+
+AI Suggestion: "Frontend UI tasks depend on Design completion. 
+Recommend sequential execution to avoid rework."
+```
+
+### 👥 Stakeholder Management
+
+**What it does:** Comprehensive stakeholder engagement tracking with Power/Interest matrix analysis. Track involvement, satisfaction, and engagement metrics.
+
+**Key Features:**
+
+- **Project Stakeholders** (Smart Tagging):
+  - Add stakeholders to boards with roles and contact details
+  - Power/Interest matrix categorization
+  - Automatic stakeholder quadrant assignment:
+    - **Manage Closely**: High Power, High Interest
+    - **Keep Satisfied**: High Power, Low Interest
+    - **Keep Informed**: Low Power, High Interest
+    - **Monitor**: Low Power, Low Interest
+  - Track current vs. desired engagement levels
+
+- **Stakeholder Involvement Tracking**:
+  - Define involvement types: Owner, Contributor, Reviewer, Stakeholder, Beneficiary, Impacted
+  - Record involvement in specific tasks
+  - Satisfaction ratings for task outcomes
+  - Capture feedback and concerns
+  - Track engagement frequency and trends
+
+- **Engagement Records**:
+  - Detailed logging of engagement activities (meetings, emails, calls, presentations, surveys)
+  - Communication channel tracking
+  - Sentiment and satisfaction recording
+  - Follow-up management with completion tracking
+  - Complete audit trail of all interactions
+
+- **Engagement Metrics Dashboard**:
+  - Power/Interest quadrant distribution visualization
+  - Engagement level trends across stakeholders
+  - Frequency and satisfaction analytics
+  - Gap identification and recommendations
+  - Data-driven engagement strategy suggestions
+
+**How to Use:**
+1. Navigate to Stakeholders section in your board
+2. Click "Add Stakeholder" and fill in details (name, role, organization, contact)
+3. Set power and interest levels (AI suggests positions based on role)
+4. Track involvement in tasks and record engagement activities
+5. Monitor engagement metrics in the dashboard
+
+**Real Example:**
+```
+Project: "Mobile App Launch"
+
+Stakeholders:
+✓ CEO (Power: 3, Interest: 3) → Manage Closely
+  • Involvement: Sponsor, Strategic oversight
+  • Last engagement: Executive briefing (satisfied)
+  
+✓ Product Manager (Power: 2, Interest: 3) → Keep Satisfied
+  • Involvement: Feature owner, Requirements definition
+  • Engagement: Weekly sync meetings (satisfied)
+
+✓ End Users (Power: 1, Interest: 3) → Keep Informed
+  • Involvement: Beneficiary, Beta testing
+  • Engagement: User feedback sessions (moderately satisfied)
+```
 
 ## 📋 Core Kanban Features
 
