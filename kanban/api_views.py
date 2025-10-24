@@ -31,7 +31,11 @@ from kanban.utils.ai_utils import (
     analyze_workflow_optimization,
     analyze_critical_path,
     predict_task_completion,
-    generate_project_timeline,    extract_tasks_from_transcript
+    generate_project_timeline,    
+    extract_tasks_from_transcript,
+    calculate_task_risk_score,
+    generate_risk_mitigation_suggestions,
+    assess_task_dependencies_and_risks
 )
 
 @login_required
@@ -736,7 +740,183 @@ def create_subtasks_api(request):
         
         return JsonResponse(response_data)
         
-    except Exception as e:        return JsonResponse({'error': str(e)}, status=500)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def calculate_task_risk_api(request):
+    """
+    API endpoint to calculate AI-powered risk score for a task
+    """
+    try:
+        data = json.loads(request.body)
+        task_id = data.get('task_id')
+        title = data.get('title', '')
+        description = data.get('description', '')
+        priority = data.get('priority', 'medium')
+        board_id = data.get('board_id')
+        
+        if not title:
+            return JsonResponse({'error': 'Title is required'}, status=400)
+        
+        # If task_id provided, verify access
+        if task_id:
+            task = get_object_or_404(Task, id=task_id)
+            board = task.column.board
+        elif board_id:
+            board = get_object_or_404(Board, id=board_id)
+        else:
+            return JsonResponse({'error': 'Board ID or Task ID is required'}, status=400)
+        
+        # Check access
+        if not (board.created_by == request.user or request.user in board.members.all()):
+            return JsonResponse({'error': 'Access denied'}, status=403)
+        
+        # Get board context
+        board_context = f"Board: {board.name}. Description: {board.description or 'N/A'}"
+        
+        # Calculate risk score
+        risk_analysis = calculate_task_risk_score(title, description, priority, board_context)
+        
+        if not risk_analysis:
+            return JsonResponse({'error': 'Failed to calculate risk score'}, status=500)
+        
+        # If task_id provided, save the analysis to the task
+        if task_id:
+            task.risk_likelihood = risk_analysis.get('likelihood', {}).get('score')
+            task.risk_impact = risk_analysis.get('impact', {}).get('score')
+            task.risk_score = risk_analysis.get('risk_assessment', {}).get('risk_score')
+            task.risk_level = risk_analysis.get('risk_assessment', {}).get('risk_level', 'low').lower()
+            task.risk_indicators = risk_analysis.get('risk_indicators', [])
+            task.mitigation_suggestions = risk_analysis.get('mitigation_suggestions', [])
+            task.risk_analysis = risk_analysis
+            task.last_risk_assessment = timezone.now()
+            task.save()
+        
+        return JsonResponse({
+            'success': True,
+            'risk_analysis': risk_analysis,
+            'saved': bool(task_id)
+        })
+    except Exception as e:
+        logger.error(f"Error in calculate_task_risk_api: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def get_mitigation_suggestions_api(request):
+    """
+    API endpoint to get AI-generated mitigation suggestions for a high-risk task
+    """
+    try:
+        data = json.loads(request.body)
+        task_id = data.get('task_id')
+        title = data.get('title', '')
+        description = data.get('description', '')
+        risk_likelihood = data.get('risk_likelihood', 2)
+        risk_impact = data.get('risk_impact', 2)
+        risk_indicators = data.get('risk_indicators', [])
+        board_id = data.get('board_id')
+        
+        if not title:
+            return JsonResponse({'error': 'Title is required'}, status=400)
+        
+        # If task_id provided, verify access
+        if task_id:
+            task = get_object_or_404(Task, id=task_id)
+            board = task.column.board
+        elif board_id:
+            board = get_object_or_404(Board, id=board_id)
+        else:
+            return JsonResponse({'error': 'Board ID or Task ID is required'}, status=400)
+        
+        # Check access
+        if not (board.created_by == request.user or request.user in board.members.all()):
+            return JsonResponse({'error': 'Access denied'}, status=403)
+        
+        # Get mitigation suggestions
+        mitigation_suggestions = generate_risk_mitigation_suggestions(
+            title, 
+            description,
+            risk_likelihood,
+            risk_impact,
+            risk_indicators
+        )
+        
+        if not mitigation_suggestions:
+            return JsonResponse({'error': 'Failed to generate mitigation suggestions'}, status=500)
+        
+        # If task_id provided, update the task
+        if task_id:
+            task.mitigation_suggestions = mitigation_suggestions
+            task.save()
+        
+        return JsonResponse({
+            'success': True,
+            'mitigation_suggestions': mitigation_suggestions,
+            'count': len(mitigation_suggestions)
+        })
+    except Exception as e:
+        logger.error(f"Error in get_mitigation_suggestions_api: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def assess_task_dependencies_api(request):
+    """
+    API endpoint to assess task dependencies and cascading risks
+    """
+    try:
+        data = json.loads(request.body)
+        task_id = data.get('task_id')
+        board_id = data.get('board_id')
+        
+        if task_id:
+            task = get_object_or_404(Task, id=task_id)
+            board = task.column.board
+            task_title = task.title
+        elif board_id:
+            board = get_object_or_404(Board, id=board_id)
+            task_title = data.get('task_title', '')
+        else:
+            return JsonResponse({'error': 'Board ID or Task ID is required'}, status=400)
+        
+        # Check access
+        if not (board.created_by == request.user or request.user in board.members.all()):
+            return JsonResponse({'error': 'Access denied'}, status=403)
+        
+        # Get related tasks
+        all_tasks = Task.objects.filter(column__board=board).values(
+            'id', 'title', 'priority', 'column__name'
+        )[:20]  # Limit to avoid token overflow
+        
+        tasks_data = [
+            {
+                'id': t['id'],
+                'title': t['title'],
+                'priority': t['priority'],
+                'status': t['column__name']
+            }
+            for t in all_tasks
+        ]
+        
+        # Assess dependencies
+        dependency_analysis = assess_task_dependencies_and_risks(task_title, tasks_data)
+        
+        if not dependency_analysis:
+            return JsonResponse({'error': 'Failed to assess task dependencies'}, status=500)
+        
+        return JsonResponse({
+            'success': True,
+            'dependency_analysis': dependency_analysis
+        })
+    except Exception as e:
+        logger.error(f"Error in assess_task_dependencies_api: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
 
 # Meeting Transcript Extraction API Endpoints
 

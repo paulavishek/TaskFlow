@@ -1438,3 +1438,276 @@ def enhance_task_description(task_data: Dict) -> Optional[Dict]:
     except Exception as e:
         logger.error(f"Error enhancing task description: {str(e)}")
         return None
+
+
+def calculate_task_risk_score(task_title: str, task_description: str, 
+                               task_priority: str = 'medium', 
+                               board_context: str = '') -> Optional[Dict]:
+    """
+    Calculate AI-powered likelihood and impact scoring for a task using Gemini.
+    
+    Adapts risk management methodology from the risk management system to Kanban tasks.
+    
+    Args:
+        task_title: The title of the task
+        task_description: Detailed description of the task
+        task_priority: Current priority level (low/medium/high/urgent)
+        board_context: Optional context about the board/project
+        
+    Returns:
+        Dictionary with risk scores, level, indicators, and analysis or None if calculation fails
+    """
+    try:
+        prompt = f"""
+        As a project risk assessment expert, analyze this task and provide risk scoring using a 
+        Likelihood × Impact matrix approach (1-3 scale for each).
+        
+        TASK INFORMATION:
+        Title: {task_title}
+        Description: {task_description}
+        Priority: {task_priority}
+        {f'Board Context: {board_context}' if board_context else ''}
+        
+        SCORING CRITERIA:
+        
+        LIKELIHOOD SCALE (1-3):
+        - 1 (Low): 0-33% chance of risk occurring (task completion barrier)
+        - 2 (Medium): 34-66% chance of risk occurring 
+        - 3 (High): 67-100% chance of risk occurring
+        
+        IMPACT SCALE (1-3):
+        - 1 (Low): Minor impact on task/project (<10% effect)
+        - 2 (Medium): Moderate impact (10-25% effect)
+        - 3 (High): Major impact on task/project (>25% effect)
+        
+        ANALYSIS REQUIREMENTS:
+        1. Assess likelihood of task risks (delays, dependencies, resource issues)
+        2. Assess potential impact if risks occur
+        3. Identify key risk indicators to monitor
+        4. Suggest specific mitigation actions
+        5. Provide confidence level for assessment
+        
+        FORMAT YOUR RESPONSE AS JSON:
+        {{
+          "likelihood": {{
+            "score": 1-3,
+            "percentage_range": "XX-XX%",
+            "reasoning": "2-3 sentence explanation",
+            "key_factors": ["factor1", "factor2", "factor3"]
+          }},
+          "impact": {{
+            "score": 1-3,
+            "severity_level": "Low/Medium/High",
+            "reasoning": "2-3 sentence explanation",
+            "affected_areas": ["area1", "area2"]
+          }},
+          "risk_assessment": {{
+            "risk_score": 1-9,
+            "risk_level": "Low/Medium/High/Critical",
+            "priority_ranking": "routine|important|critical",
+            "summary": "Brief overall assessment"
+          }},
+          "risk_indicators": [
+            {{"indicator": "What to monitor", "frequency": "When/how often", "threshold": "Alert level"}}
+          ],
+          "mitigation_suggestions": [
+            {{"action": "Specific action", "timeline": "When", "priority": "high/medium/low"}}
+          ],
+          "confidence_level": "high|medium|low"
+        }}
+        """
+        
+        response_text = generate_ai_content(prompt)
+        if response_text:
+            # Handle code block formatting
+            if "```json" in response_text:
+                response_text = response_text.split("```json")[1].split("```")[0].strip()
+            elif "```" in response_text:
+                response_text = response_text.split("```")[1].split("```")[0].strip()
+            
+            # Try to find JSON in the response
+            json_start = response_text.find('{')
+            json_end = response_text.rfind('}')
+            
+            if json_start != -1 and json_end != -1 and json_end > json_start:
+                response_text = response_text[json_start:json_end + 1]
+            
+            try:
+                return json.loads(response_text)
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON parsing error in risk scoring: {e}")
+                return None
+        return None
+    except Exception as e:
+        logger.error(f"Error calculating task risk score: {str(e)}")
+        return None
+
+
+def generate_risk_mitigation_suggestions(task_title: str, task_description: str,
+                                        risk_likelihood: int, risk_impact: int,
+                                        risk_indicators: List[Dict] = None) -> Optional[List[Dict]]:
+    """
+    Generate AI-powered mitigation strategies for high-risk tasks.
+    
+    Args:
+        task_title: The title of the task
+        task_description: Detailed description of the task
+        risk_likelihood: Likelihood score (1-3)
+        risk_impact: Impact score (1-3)
+        risk_indicators: Optional list of risk indicators to consider
+        
+    Returns:
+        List of mitigation strategy dictionaries or None if generation fails
+    """
+    try:
+        # Map scores to text
+        likelihood_text = {1: "Low", 2: "Medium", 3: "High"}.get(risk_likelihood, "Medium")
+        impact_text = {1: "Low", 2: "Medium", 3: "High"}.get(risk_impact, "Medium")
+        risk_score = risk_likelihood * risk_impact
+        
+        indicators_text = ""
+        if risk_indicators:
+            indicators_list = "\n".join([f"- {ind.get('indicator', '')}" for ind in risk_indicators[:3]])
+            indicators_text = f"\nKey Risk Indicators:\n{indicators_list}"
+        
+        prompt = f"""
+        As a project risk management specialist, suggest specific mitigation strategies for this 
+        high-risk task. Focus on practical, actionable recommendations.
+        
+        TASK INFORMATION:
+        Title: {task_title}
+        Description: {task_description}
+        Risk Likelihood: {likelihood_text}
+        Risk Impact: {impact_text}
+        Overall Risk Score: {risk_score}/9
+        {indicators_text}
+        
+        MITIGATION STRATEGIES:
+        Provide 3-4 risk response strategies from these categories:
+        - AVOID: Change approach to eliminate the risk
+        - MITIGATE: Take actions to reduce likelihood or impact
+        - TRANSFER: Shift risk to someone else (delegation, outsourcing)
+        - ACCEPT: Plan to handle the risk if it occurs
+        
+        For each strategy, provide:
+        1. Specific action steps (what to do)
+        2. Implementation timeline (when/how long)
+        3. Estimated effectiveness (%)
+        4. Required resources
+        5. Responsible parties
+        
+        FORMAT YOUR RESPONSE AS JSON:
+        [
+          {{
+            "strategy_type": "Avoid|Mitigate|Transfer|Accept",
+            "title": "Strategy name",
+            "description": "What this strategy accomplishes",
+            "action_steps": ["step1", "step2", "step3"],
+            "timeline": "Timeframe for implementation",
+            "estimated_effectiveness": 75,
+            "resources_required": "What's needed",
+            "priority": "high|medium|low"
+          }}
+        ]
+        """
+        
+        response_text = generate_ai_content(prompt)
+        if response_text:
+            # Handle code block formatting
+            if "```json" in response_text:
+                response_text = response_text.split("```json")[1].split("```")[0].strip()
+            elif "```" in response_text:
+                response_text = response_text.split("```")[1].split("```")[0].strip()
+            
+            # Try to find JSON array in the response
+            json_start = response_text.find('[')
+            json_end = response_text.rfind(']')
+            
+            if json_start != -1 and json_end != -1 and json_end > json_start:
+                response_text = response_text[json_start:json_end + 1]
+            
+            try:
+                return json.loads(response_text)
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON parsing error in mitigation suggestions: {e}")
+                return None
+        return None
+    except Exception as e:
+        logger.error(f"Error generating mitigation suggestions: {str(e)}")
+        return None
+
+
+def assess_task_dependencies_and_risks(task_title: str, tasks_data: List[Dict]) -> Optional[Dict]:
+    """
+    Assess task dependencies and identify cascading risks.
+    
+    Args:
+        task_title: The primary task to analyze
+        tasks_data: List of related tasks with dependencies
+        
+    Returns:
+        Dictionary with dependency analysis and risk assessment or None if assessment fails
+    """
+    try:
+        # Format tasks for AI analysis
+        tasks_summary = "\n".join([
+            f"- {t.get('title', '')} (Priority: {t.get('priority', 'medium')}, Status: {t.get('status', '')})"
+            for t in tasks_data[:10]  # Limit to avoid token overflow
+        ])
+        
+        prompt = f"""
+        Analyze task dependencies and identify potential cascading risks for this task flow.
+        
+        PRIMARY TASK: {task_title}
+        
+        RELATED TASKS:
+        {tasks_summary}
+        
+        ANALYSIS REQUIREMENTS:
+        1. Identify critical dependencies (blocker tasks)
+        2. Assess risk of dependency delays
+        3. Identify potential bottlenecks
+        4. Suggest parallel work opportunities
+        5. Recommend mitigation for cascading risks
+        
+        FORMAT YOUR RESPONSE AS JSON:
+        {{
+          "critical_dependencies": [
+            {{"task": "task_name", "risk_level": "high|medium|low", "reason": "why it's critical"}}
+          ],
+          "cascading_risks": [
+            {{"risk": "specific risk", "origin_task": "task_name", "affected_tasks": ["tasks"], "severity": "high|medium|low"}}
+          ],
+          "bottleneck_areas": ["area1", "area2"],
+          "parallel_opportunities": ["what can be done in parallel"],
+          "mitigation_recommendations": [
+            {{"recommendation": "specific action", "priority": "high|medium|low", "effort": "low|medium|high"}}
+          ],
+          "overall_dependency_risk": "low|medium|high|critical"
+        }}
+        """
+        
+        response_text = generate_ai_content(prompt)
+        if response_text:
+            # Handle code block formatting
+            if "```json" in response_text:
+                response_text = response_text.split("```json")[1].split("```")[0].strip()
+            elif "```" in response_text:
+                response_text = response_text.split("```")[1].split("```")[0].strip()
+            
+            json_start = response_text.find('{')
+            json_end = response_text.rfind('}')
+            
+            if json_start != -1 and json_end != -1 and json_end > json_start:
+                response_text = response_text[json_start:json_end + 1]
+            
+            try:
+                return json.loads(response_text)
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON parsing error in dependency analysis: {e}")
+                return None
+        return None
+    except Exception as e:
+        logger.error(f"Error assessing task dependencies: {str(e)}")
+        return None
+

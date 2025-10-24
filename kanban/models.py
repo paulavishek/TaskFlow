@@ -116,6 +116,60 @@ class Task(models.Model):
         help_text="AI-suggested team members for collaborative tasks"
     )
     
+    # Risk Management Fields
+    risk_likelihood = models.IntegerField(
+        blank=True,
+        null=True,
+        validators=[MinValueValidator(1), MaxValueValidator(3)],
+        choices=[(1, 'Low'), (2, 'Medium'), (3, 'High')],
+        help_text="Risk likelihood score (1=Low, 2=Medium, 3=High)"
+    )
+    risk_impact = models.IntegerField(
+        blank=True,
+        null=True,
+        validators=[MinValueValidator(1), MaxValueValidator(3)],
+        choices=[(1, 'Low'), (2, 'Medium'), (3, 'High')],
+        help_text="Risk impact score (1=Low, 2=Medium, 3=High)"
+    )
+    risk_score = models.IntegerField(
+        blank=True,
+        null=True,
+        validators=[MinValueValidator(1), MaxValueValidator(9)],
+        help_text="AI-calculated risk score (Likelihood × Impact, range 1-9)"
+    )
+    risk_level = models.CharField(
+        max_length=10,
+        choices=[
+            ('low', 'Low'),
+            ('medium', 'Medium'),
+            ('high', 'High'),
+            ('critical', 'Critical'),
+        ],
+        blank=True,
+        null=True,
+        help_text="AI-determined risk level classification"
+    )
+    risk_indicators = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Key indicators to monitor for this risk (from AI analysis)"
+    )
+    mitigation_suggestions = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="AI-generated mitigation strategies and action plans"
+    )
+    risk_analysis = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Complete AI risk analysis including reasoning and factors"
+    )
+    last_risk_assessment = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="When AI last performed risk assessment for this task"
+    )
+    
     class Meta:
         ordering = ['position']
     
