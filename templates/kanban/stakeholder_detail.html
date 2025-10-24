@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ stakeholder.name }} - {{ board.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>{{ stakeholder.name }}</h1>
+            <p class="text-muted">{{ stakeholder.role }} {% if stakeholder.organization %}- {{ stakeholder.organization }}{% endif %}</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'stakeholder:stakeholder_update' board.id stakeholder.id %}" class="btn btn-outline-primary me-2">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
+            <a href="{% url 'stakeholder:engagement_record_create' board.id stakeholder.id %}" class="btn btn-success me-2">
+                <i class="bi bi-plus-lg"></i> Record Engagement
+            </a>
+            <a href="{% url 'stakeholder:stakeholder_list' board.id %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Stakeholder Info Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="m-0">Contact Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Email:</dt>
+                        <dd class="col-sm-7">
+                            {% if stakeholder.email %}
+                            <a href="mailto:{{ stakeholder.email }}">{{ stakeholder.email }}</a>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </dd>
+                        
+                        <dt class="col-sm-5">Phone:</dt>
+                        <dd class="col-sm-7">
+                            {% if stakeholder.phone %}
+                            {{ stakeholder.phone }}
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </dd>
+                        
+                        <dt class="col-sm-5">Status:</dt>
+                        <dd class="col-sm-7">
+                            {% if stakeholder.is_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </dd>
+                        
+                        <dt class="col-sm-5">Added:</dt>
+                        <dd class="col-sm-7">
+                            <small class="text-muted">{{ stakeholder.created_at|date:"M d, Y" }}</small>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Analysis Metrics -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="m-0">Analysis Metrics</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Influence:</dt>
+                        <dd class="col-sm-7">
+                            <span class="badge {% if stakeholder.influence_level == 'high' %}bg-danger{% elif stakeholder.influence_level == 'medium' %}bg-warning{% else %}bg-info{% endif %}">
+                                {{ stakeholder.get_influence_level_display|title }}
+                            </span>
+                        </dd>
+                        
+                        <dt class="col-sm-5">Interest:</dt>
+                        <dd class="col-sm-7">
+                            <span class="badge {% if stakeholder.interest_level == 'high' %}bg-success{% elif stakeholder.interest_level == 'medium' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                {{ stakeholder.get_interest_level_display|title }}
+                            </span>
+                        </dd>
+                        
+                        <dt class="col-sm-5">Quadrant:</dt>
+                        <dd class="col-sm-7">
+                            <span class="badge {% if quadrant == 'Manage Closely' %}bg-danger{% elif quadrant == 'Keep Satisfied' %}bg-warning{% elif quadrant == 'Keep Informed' %}bg-info{% else %}bg-secondary{% endif %}">
+                                {{ quadrant }}
+                            </span>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Engagement Status -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="m-0">Engagement Status</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-7">Current Engagement:</dt>
+                        <dd class="col-sm-5">
+                            <span class="badge bg-primary">{{ stakeholder.get_current_engagement_display|title }}</span>
+                        </dd>
+                        
+                        <dt class="col-sm-7">Desired Engagement:</dt>
+                        <dd class="col-sm-5">
+                            <span class="badge bg-light text-dark">{{ stakeholder.get_desired_engagement_display|title }}</span>
+                        </dd>
+                        
+                        <dt class="col-sm-7">Engagement Gap:</dt>
+                        <dd class="col-sm-5">
+                            {% if engagement_gap > 0 %}
+                            <span class="badge bg-danger">+{{ engagement_gap }}</span>
+                            {% elif engagement_gap < 0 %}
+                            <span class="badge bg-success">{{ engagement_gap }}</span>
+                            {% else %}
+                            <span class="badge bg-light text-dark">No Gap</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Engagement Metrics Summary -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="m-0">Engagement Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3>{{ total_engagements }}</h3>
+                                <p class="text-muted">Total Engagements</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3>{{ avg_satisfaction|floatformat:1 }}/5</h3>
+                                <p class="text-muted">Avg Satisfaction</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3>{{ task_involvements|length }}</h3>
+                                <p class="text-muted">Tasks Involved</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3>{% if metrics %}{{ metrics.calculate_engagement_health|floatformat:0 }}{% else %}—{% endif %}</h3>
+                                <p class="text-muted">Engagement Health</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Task Involvements -->
+    {% if task_involvements %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="m-0">Task Involvement</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Role</th>
+                                    <th>Engagement Status</th>
+                                    <th>Satisfaction</th>
+                                    <th>Last Engagement</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for involvement in task_involvements %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'task_detail' involvement.task.id %}">
+                                            {{ involvement.task.title }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">
+                                            {{ involvement.get_involvement_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">
+                                            {{ involvement.get_engagement_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if involvement.satisfaction_rating %}
+                                        <span class="badge {% if involvement.satisfaction_rating >= 4 %}bg-success{% elif involvement.satisfaction_rating >= 3 %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ involvement.satisfaction_rating }}/5
+                                        </span>
+                                        {% else %}
+                                        <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if involvement.last_engagement %}
+                                        <small class="text-muted">{{ involvement.last_engagement|date:"M d, Y" }}</small>
+                                        {% else %}
+                                        <small class="text-muted">Never</small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Engagement History -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="m-0">Engagement History</h5>
+                    <a href="{% url 'stakeholder:engagement_record_create' board.id stakeholder.id %}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus-lg"></i> Add Engagement
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if engagement_records %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Channel</th>
+                                    <th>Description</th>
+                                    <th>Sentiment</th>
+                                    <th>Satisfaction</th>
+                                    <th>Follow-up</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in engagement_records %}
+                                <tr>
+                                    <td><strong>{{ record.date|date:"M d, Y" }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">
+                                            {{ record.get_communication_channel_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <small>{{ record.description|truncatewords:10 }}</small>
+                                    </td>
+                                    <td>
+                                        {% if record.engagement_sentiment == 'positive' %}
+                                        <span class="badge bg-success">Positive</span>
+                                        {% elif record.engagement_sentiment == 'negative' %}
+                                        <span class="badge bg-danger">Negative</span>
+                                        {% else %}
+                                        <span class="badge bg-warning text-dark">Neutral</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if record.satisfaction_rating %}
+                                        <span class="badge {% if record.satisfaction_rating >= 4 %}bg-success{% elif record.satisfaction_rating >= 3 %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ record.satisfaction_rating }}/5
+                                        </span>
+                                        {% else %}
+                                        <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if record.follow_up_required %}
+                                        {% if record.follow_up_completed %}
+                                        <span class="badge bg-success">Done</span>
+                                        {% else %}
+                                        <span class="badge bg-warning text-dark">Due: {{ record.follow_up_date|date:"M d" }}</span>
+                                        {% endif %}
+                                        {% else %}
+                                        <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        No engagement records yet. <a href="{% url 'stakeholder:engagement_record_create' board.id stakeholder.id %}">Record one now</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin-bottom: 1rem;
+    }
+    
+    dl.row dt {
+        font-weight: 600;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}

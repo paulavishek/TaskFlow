@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Engagement Metrics - {{ board.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1><i class="bi bi-graph-up"></i> Stakeholder Engagement Metrics</h1>
+            <p class="text-muted">{{ board.name }}</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'stakeholder:engagement_analytics' board.id %}" class="btn btn-info">
+                <i class="bi bi-bar-chart"></i> Analytics
+            </a>
+            <a href="{% url 'stakeholder:stakeholder_list' board.id %}" class="btn btn-outline-primary">
+                <i class="bi bi-people-fill"></i> All Stakeholders
+            </a>
+        </div>
+    </div>
+    
+    <!-- Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="card-title">{{ total_stakeholders }}</h3>
+                    <p class="card-text text-muted">Total Stakeholders</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="card-title">{{ total_engagements }}</h3>
+                    <p class="card-text text-muted">Engagements Recorded</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="card-title">{{ avg_satisfaction_all|floatformat:1 }}/5</h3>
+                    <p class="card-text text-muted">Avg Satisfaction</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="card-title">{{ quadrant_distribution|length }}</h3>
+                    <p class="card-text text-muted">Quadrants Used</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quadrant Distribution Chart -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="m-0">Power/Interest Quadrant Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="quadrantChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Engagement Distribution -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="m-0">Engagement Level Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="engagementChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Detailed Metrics Table -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="m-0">Stakeholder Engagement Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                    <th>Quadrant</th>
+                                    <th>Total Engagements</th>
+                                    <th>Avg Satisfaction</th>
+                                    <th>Last Engagement</th>
+                                    <th>Gap</th>
+                                    <th>Tasks Involved</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for metric in stakeholder_metrics %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'stakeholder:stakeholder_detail' board.id metric.stakeholder.id %}">
+                                            <strong>{{ metric.stakeholder.name }}</strong>
+                                        </a>
+                                    </td>
+                                    <td>{{ metric.stakeholder.role }}</td>
+                                    <td>
+                                        {% with quadrant=metric.quadrant %}
+                                        <span class="badge {% if quadrant == 'Manage Closely' %}bg-danger{% elif quadrant == 'Keep Satisfied' %}bg-warning{% elif quadrant == 'Keep Informed' %}bg-info{% else %}bg-secondary{% endif %}">
+                                            {{ quadrant }}
+                                        </span>
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">{{ metric.total_engagements }}</span>
+                                    </td>
+                                    <td>
+                                        {% if metric.avg_satisfaction > 0 %}
+                                        <span class="badge {% if metric.avg_satisfaction >= 4 %}bg-success{% elif metric.avg_satisfaction >= 3 %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ metric.avg_satisfaction }}/5
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-light text-dark">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ metric.days_since_engagement }} days ago</small>
+                                    </td>
+                                    <td>
+                                        {% if metric.engagement_gap > 0 %}
+                                        <span class="badge bg-danger">+{{ metric.engagement_gap }}</span>
+                                        {% elif metric.engagement_gap < 0 %}
+                                        <span class="badge bg-success">{{ metric.engagement_gap }}</span>
+                                        {% else %}
+                                        <span class="badge bg-light text-dark">0</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ metric.tasks_involved }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js for visualizations -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fetch stakeholder data via API
+    fetch('{% url "stakeholder:stakeholder_api_data" board.id %}')
+        .then(response => response.json())
+        .then(data => {
+            // Create Quadrant Chart
+            const quadrantCtx = document.getElementById('quadrantChart').getContext('2d');
+            new Chart(quadrantCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(data.quadrant_dist),
+                    datasets: [{
+                        data: Object.values(data.quadrant_dist),
+                        backgroundColor: [
+                            '#dc3545',  // Manage Closely - red
+                            '#ffc107',  // Keep Satisfied - yellow
+                            '#0dcaf0',  // Keep Informed - cyan
+                            '#6c757d'   // Monitor - gray
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Create Engagement Distribution Chart
+            const engagementCtx = document.getElementById('engagementChart').getContext('2d');
+            new Chart(engagementCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(data.engagement_dist).map(k => k.charAt(0).toUpperCase() + k.slice(1)),
+                    datasets: [{
+                        label: 'Stakeholders',
+                        data: Object.values(data.engagement_dist),
+                        backgroundColor: '#0d6efd'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error fetching data:', error));
+});
+</script>
+
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin-bottom: 1rem;
+    }
+    
+    .card-header {
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
