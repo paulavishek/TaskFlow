@@ -1173,3 +1173,249 @@ def process_transcript_file_api(request):
     except Exception as e:
         logger.error(f"Error in process_transcript_file_api: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
+
+
+# ============================================================================
+# Task Dependency Management API Endpoints
+# ============================================================================
+
+@login_required
+@require_http_methods(["GET"])
+def get_task_dependencies_api(request, task_id):
+    """
+    Get all dependencies for a task (parents, children, related tasks)
+    """
+    try:
+        task = get_object_or_404(Task, id=task_id)
+        
+        # Verify user has access to this task's board
+        if not request.user in task.column.board.members.all() and task.column.board.created_by != request.user:
+            return JsonResponse({'error': 'Access denied'}, status=403)
+        
+        dependencies = {
+            'task_id': task.id,
+            'task_title': task.title,
+            'parent_task': None,
+            'subtasks': [],
+            'related_tasks': [],
+            'dependency_chain': task.dependency_chain,
+            'dependency_level': task.get_dependency_level()
+        }
+        
+        # Add parent task
+        if task.parent_task:
+            dependencies['parent_task'] = {
+                'id': task.parent_task.id,
+                'title': task.parent_task.title,
+                'status': task.parent_task.column.name if task.parent_task.column else 'Unknown'
+            }
+        
+        # Add subtasks
+        for subtask in task.subtasks.all():
+            dependencies['subtasks'].append({
+                'id': subtask.id,
+                'title': subtask.title,
+                'status': subtask.column.name if subtask.column else 'Unknown',
+                'assigned_to': subtask.assigned_to.username if subtask.assigned_to else 'Unassigned'
+            })
+        
+        # Add related tasks
+        for related in task.related_tasks.all():
+            dependencies['related_tasks'].append({
+                'id': related.id,
+                'title': related.title,
+                'status': related.column.name if related.column else 'Unknown'
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'dependencies': dependencies
+        })
+        
+    except Task.DoesNotExist:
+        return JsonResponse({'error': 'Task not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error in get_task_dependencies_api: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def set_parent_task_api(request, task_id):
+    """
+    Set a parent task for the given task
+    """
+    try:
+        task = get_object_or_404(Task, id=task_id)
+        
+        # Verify user has access
+        if not request.user in task.column.board.members.all() and task.column.board.created_by != request.user:
+            return JsonResponse({'error': 'Access denied'}, status=403)
+        
+        data = json.loads(request.body)
+        parent_id = data.get('parent_task_id')
+        
+        if parent_id is None:
+            # Remove parent
+            task.parent_task = None
+        else:
+            parent_task = get_object_or_404(Task, id=parent_id)
+            
+            # Check for circular dependency
+            if task.has_circular_dependency(parent_task):
+                return JsonResponse({
+                    'error': 'This would create a circular dependency',
+                    'success': False
+                }, status=400)
+            
+            task.parent_task = parent_task
+        
+        task.update_dependency_chain()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Parent task {'set to' if parent_id else 'removed from'} {task.title}',
+            'dependency_chain': task.dependency_chain
+        })
+        
+    except Task.DoesNotExist:
+        return JsonResponse({'error': 'Task not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error in set_parent_task_api: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def add_related_task_api(request, task_id):
+    """
+    Add a related task (non-hierarchical relationship)
+    """
+    try:
+        task = get_object_or_404(Task, id=task_id)
+        
+        # Verify user has access
+        if not request.user in task.column.board.members.all() and task.column.board.created_by != request.user:
+            return JsonResponse({'error': 'Access denied'}, status=403)
+        
+        data = json.loads(request.body)
+        related_id = data.get('related_task_id')
+        
+        if not related_id:
+            return JsonResponse({'error': 'No related task ID provided'}, status=400)
+        
+        related_task = get_object_or_404(Task, id=related_id)
+        
+        if task.id == related_task.id:
+            return JsonResponse({'error': 'Cannot relate a task to itself'}, status=400)
+        
+        task.related_tasks.add(related_task)
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Related task added to {task.title}'
+        })
+        
+    except Task.DoesNotExist:
+        return JsonResponse({'error': 'Task not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error in add_related_task_api: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def analyze_task_dependencies_api(request, task_id):
+    """
+    Analyze a task and suggest dependencies
+    """
+    try:
+        from kanban.utils.dependency_suggestions import analyze_and_suggest_dependencies
+        
+        task = get_object_or_404(Task, id=task_id)
+        
+        # Verify user has access
+        if not request.user in task.column.board.members.all() and task.column.board.created_by != request.user:
+            return JsonResponse({'error': 'Access denied'}, status=403)
+        
+        data = json.loads(request.body)
+        auto_link = data.get('auto_link', False)
+        
+        board = task.column.board if task.column else None
+        result = analyze_and_suggest_dependencies(task, board, auto_link)
+        
+        return JsonResponse({
+            'success': True,
+            'analysis': result,
+            'message': result.get('analysis', 'Analysis completed')
+        })
+        
+    except Task.DoesNotExist:
+        return JsonResponse({'error': 'Task not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error in analyze_task_dependencies_api: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_dependency_tree_api(request, task_id):
+    """
+    Get a hierarchical dependency tree for visualization
+    """
+    try:
+        from kanban.utils.dependency_suggestions import DependencyGraphGenerator
+        
+        task = get_object_or_404(Task, id=task_id)
+        
+        # Verify user has access
+        if not request.user in task.column.board.members.all() and task.column.board.created_by != request.user:
+            return JsonResponse({'error': 'Access denied'}, status=403)
+        
+        include_related = request.GET.get('include_related', 'false').lower() == 'true'
+        tree = DependencyGraphGenerator.generate_dependency_tree(task, include_subtasks=True, include_related=include_related)
+        
+        return JsonResponse({
+            'success': True,
+            'tree': tree
+        })
+        
+    except Task.DoesNotExist:
+        return JsonResponse({'error': 'Task not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error in get_dependency_tree_api: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_board_dependency_graph_api(request, board_id):
+    """
+    Get a full dependency graph for a board
+    """
+    try:
+        from kanban.utils.dependency_suggestions import DependencyGraphGenerator
+        
+        board = get_object_or_404(Board, id=board_id)
+        
+        # Verify user has access
+        if not request.user in board.members.all() and board.created_by != request.user:
+            return JsonResponse({'error': 'Access denied'}, status=403)
+        
+        root_task_id = request.GET.get('root_task_id')
+        if root_task_id:
+            root_task_id = int(root_task_id)
+        
+        graph = DependencyGraphGenerator.generate_dependency_graph(board, root_task_id)
+        
+        return JsonResponse({
+            'success': True,
+            'graph': graph
+        })
+        
+    except Board.DoesNotExist:
+        return JsonResponse({'error': 'Board not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error in get_board_dependency_graph_api: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+

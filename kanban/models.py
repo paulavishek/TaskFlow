@@ -170,11 +170,88 @@ class Task(models.Model):
         help_text="When AI last performed risk assessment for this task"
     )
     
+    # Task Dependency Management (adapted from ReqManager)
+    parent_task = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='subtasks',
+        help_text="Parent task for this subtask"
+    )
+    related_tasks = models.ManyToManyField(
+        'self',
+        blank=True,
+        symmetrical=False,
+        related_name='related_to',
+        help_text="Tasks that are related but not parent-child"
+    )
+    dependency_chain = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Ordered list of task IDs showing complete dependency chain"
+    )
+    
+    # AI-Generated Dependency Suggestions
+    suggested_dependencies = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="AI-suggested task dependencies based on description analysis"
+    )
+    last_dependency_analysis = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="When AI last analyzed this task for dependency suggestions"
+    )
+    
     class Meta:
         ordering = ['position']
     
     def __str__(self):
         return self.title
+    
+    def get_all_subtasks(self):
+        """Get all subtasks recursively"""
+        subtasks = list(self.subtasks.all())
+        for subtask in subtasks:
+            subtasks.extend(subtask.get_all_subtasks())
+        return subtasks
+    
+    def get_all_parent_tasks(self):
+        """Get all parent tasks up the hierarchy"""
+        parents = []
+        current = self.parent_task
+        while current:
+            parents.append(current)
+            current = current.parent_task
+        return parents
+    
+    def get_dependency_level(self):
+        """Get the nesting level of this task in the hierarchy"""
+        level = 0
+        current = self.parent_task
+        while current:
+            level += 1
+            current = current.parent_task
+        return level
+    
+    def has_circular_dependency(self, potential_parent):
+        """Check if setting a parent would create a circular dependency"""
+        if potential_parent is None:
+            return False
+        if potential_parent == self:
+            return True
+        return self in potential_parent.get_all_parent_tasks() or potential_parent in self.get_all_subtasks()
+    
+    def update_dependency_chain(self):
+        """Update the dependency chain based on parent relationships"""
+        chain = []
+        current = self
+        while current:
+            chain.insert(0, current.id)
+            current = current.parent_task
+        self.dependency_chain = chain
+        self.save()
 
 class Comment(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='comments')

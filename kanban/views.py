@@ -1642,3 +1642,80 @@ def reset_wizard(request):
             return redirect('organization_choice')
     
     return redirect('dashboard')
+
+
+# ============================================================================
+# Task Dependency Management Views
+# ============================================================================
+
+@login_required
+def view_dependency_tree(request, task_id):
+    """
+    Display the dependency tree for a task
+    """
+    try:
+        task = get_object_or_404(Task, id=task_id)
+        
+        # Check access permission
+        if request.user not in task.column.board.members.all() and task.column.board.created_by != request.user:
+            return HttpResponseForbidden("You don't have access to this board")
+        
+        # Get all relationships
+        parent_task = task.parent_task
+        subtasks = task.subtasks.all()
+        related_tasks = task.related_tasks.all()
+        dependency_level = task.get_dependency_level()
+        
+        context = {
+            'task': task,
+            'parent_task': parent_task,
+            'subtasks': subtasks,
+            'related_tasks': related_tasks,
+            'dependency_level': dependency_level,
+            'board': task.column.board,
+        }
+        
+        return render(request, 'kanban/dependency_tree.html', context)
+        
+    except Task.DoesNotExist:
+        messages.error(request, 'Task not found')
+        return redirect('dashboard')
+
+
+@login_required
+def board_dependency_graph(request, board_id):
+    """
+    Display the full dependency graph for a board
+    """
+    try:
+        board = get_object_or_404(Board, id=board_id)
+        
+        # Check access permission
+        if request.user not in board.members.all() and board.created_by != request.user:
+            return HttpResponseForbidden("You don't have access to this board")
+        
+        # Get all tasks with dependencies
+        tasks = Task.objects.filter(column__board=board).prefetch_related(
+            'parent_task', 'subtasks', 'related_tasks'
+        )
+        
+        # Count dependencies
+        parent_count = tasks.filter(parent_task__isnull=False).count()
+        related_count = 0
+        for task in tasks:
+            related_count += task.related_tasks.count()
+        
+        context = {
+            'board': board,
+            'tasks': tasks,
+            'parent_count': parent_count,
+            'related_count': related_count,
+            'total_tasks': tasks.count(),
+        }
+        
+        return render(request, 'kanban/board_dependency_graph.html', context)
+        
+    except Board.DoesNotExist:
+        messages.error(request, 'Board not found')
+        return redirect('dashboard')
+

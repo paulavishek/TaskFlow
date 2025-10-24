@@ -21,10 +21,10 @@ class TaskLabelAdmin(admin.ModelAdmin):
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ('title', 'column', 'priority', 'due_date', 'assigned_to', 'created_by')
+    list_display = ('title', 'column', 'priority', 'due_date', 'assigned_to', 'created_by', 'parent_task')
     list_filter = ('column', 'priority', 'due_date', 'created_at')
     search_fields = ('title', 'description')
-    filter_horizontal = ('labels',)
+    filter_horizontal = ('labels', 'related_tasks')
     
     fieldsets = (
         ('Basic Information', {
@@ -33,6 +33,16 @@ class TaskAdmin(admin.ModelAdmin):
         ('Timeline', {
             'fields': ('due_date',),
         }),
+        ('Task Dependencies', {
+            'fields': ('parent_task', 'related_tasks', 'dependency_chain'),
+            'classes': ('collapse',),
+            'description': 'Manage task relationships and dependencies'
+        }),
+        ('AI-Suggested Dependencies', {
+            'fields': ('suggested_dependencies', 'last_dependency_analysis'),
+            'classes': ('collapse',),
+            'description': 'AI analysis results for task dependencies'
+        }),
         ('AI Analysis Results', {
             'fields': ('ai_risk_score', 'ai_recommendations', 'last_ai_analysis'),
             'classes': ('collapse',),
@@ -40,7 +50,7 @@ class TaskAdmin(admin.ModelAdmin):
         }),
     )
     
-    readonly_fields = ('last_ai_analysis',)
+    readonly_fields = ('last_ai_analysis', 'last_dependency_analysis', 'dependency_chain')
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):

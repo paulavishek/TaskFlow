@@ -71,4 +71,12 @@ urlpatterns = [
     path('board/<int:board_id>/alerts/<int:alert_id>/resolve/', forecasting_views.resolve_alert, name='resolve_alert'),
     path('board/<int:board_id>/capacity-chart/', forecasting_views.team_capacity_chart, name='team_capacity_chart'),
     path('board/<int:board_id>/task/<int:task_id>/assignment-suggestion/', forecasting_views.task_assignment_suggestion, name='task_assignment_suggestion'),
+    
+    # Task Dependency Management API Endpoints
+    path('api/task/<int:task_id>/dependencies/', api_views.get_task_dependencies_api, name='get_task_dependencies_api'),
+    path('api/task/<int:task_id>/set-parent/', api_views.set_parent_task_api, name='set_parent_task_api'),
+    path('api/task/<int:task_id>/add-related/', api_views.add_related_task_api, name='add_related_task_api'),
+    path('api/task/<int:task_id>/analyze-dependencies/', api_views.analyze_task_dependencies_api, name='analyze_task_dependencies_api'),
+    path('api/task/<int:task_id>/dependency-tree/', api_views.get_dependency_tree_api, name='get_dependency_tree_api'),
+    path('api/board/<int:board_id>/dependency-graph/', api_views.get_board_dependency_graph_api, name='get_board_dependency_graph_api'),
 ]
