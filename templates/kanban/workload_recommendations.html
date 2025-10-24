@@ -1,0 +1,460 @@
+{% extends 'base.html' %}
+
+{% block title %}Workload Distribution Recommendations - {{ board.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .recommendations-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .rec-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .rec-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .summary-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .stat-box {
+        background: white;
+        padding: 15px;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #3498db;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        margin-top: 5px;
+    }
+
+    .filter-bar {
+        background: white;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .filter-label {
+        font-weight: 500;
+        color: #2c3e50;
+    }
+
+    .filter-button {
+        padding: 6px 12px;
+        border: 2px solid #ecf0f1;
+        border-radius: 4px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+    }
+
+    .filter-button.active {
+        border-color: #3498db;
+        background: #3498db;
+        color: white;
+    }
+
+    .filter-button:hover {
+        border-color: #3498db;
+    }
+
+    .recommendations-list {
+        display: grid;
+        gap: 15px;
+    }
+
+    .recommendation-card {
+        background: white;
+        border-radius: 6px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-left: 5px solid #3498db;
+        transition: all 0.2s;
+    }
+
+    .recommendation-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+    }
+
+    .recommendation-card.reassign {
+        border-left-color: #e74c3c;
+    }
+
+    .recommendation-card.defer {
+        border-left-color: #f39c12;
+    }
+
+    .recommendation-card.distribute {
+        border-left-color: #9b59b6;
+    }
+
+    .recommendation-card.optimize {
+        border-left-color: #27ae60;
+    }
+
+    .rec-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+
+    .rec-badge.reassign {
+        background: #fadbd8;
+        color: #c0392b;
+    }
+
+    .rec-badge.defer {
+        background: #fef5e7;
+        color: #d68910;
+    }
+
+    .rec-badge.distribute {
+        background: #ebdef0;
+        color: #6c3483;
+    }
+
+    .rec-badge.optimize {
+        background: #d5f4e6;
+        color: #1e8449;
+    }
+
+    .rec-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .rec-title-text {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-top: 5px;
+    }
+
+    .rec-priority {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #ecf0f1;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .rec-priority.high {
+        background: #fadbd8;
+        color: #c0392b;
+    }
+
+    .rec-description {
+        color: #555;
+        margin: 10px 0;
+        line-height: 1.6;
+    }
+
+    .rec-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #ecf0f1;
+    }
+
+    .detail-item {
+        font-size: 0.85rem;
+    }
+
+    .detail-label {
+        color: #7f8c8d;
+        font-weight: 500;
+        margin-bottom: 3px;
+    }
+
+    .detail-value {
+        color: #2c3e50;
+        font-weight: 600;
+    }
+
+    .affected-section {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #ecf0f1;
+    }
+
+    .affected-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #7f8c8d;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+    }
+
+    .affected-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .affected-tag {
+        background: #ecf0f1;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        color: #2c3e50;
+    }
+
+    .rec-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #ecf0f1;
+    }
+
+    .action-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .btn-view {
+        background: #3498db;
+        color: white;
+    }
+
+    .btn-view:hover {
+        background: #2980b9;
+    }
+
+    .btn-implement {
+        background: #27ae60;
+        color: white;
+    }
+
+    .btn-implement:hover {
+        background: #229954;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-pending {
+        background: #fef5e7;
+        color: #d68910;
+    }
+
+    .status-accepted {
+        background: #d5f4e6;
+        color: #1e8449;
+    }
+
+    .status-implemented {
+        background: #d6eaf8;
+        color: #1a5276;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #7f8c8d;
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+
+    @media (max-width: 768px) {
+        .rec-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .rec-header-row {
+            flex-direction: column;
+        }
+
+        .rec-priority {
+            width: 35px;
+            height: 35px;
+        }
+
+        .rec-actions {
+            flex-direction: column;
+        }
+
+        .action-btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="recommendations-container">
+    <div class="rec-header">
+        <div class="rec-title">💡 Workload Distribution Recommendations</div>
+        <a href="{% url 'forecast_dashboard' board.id %}" class="btn-action" style="padding: 8px 16px; background: #3498db; color: white; text-decoration: none; border-radius: 4px;">← Back to Forecast</a>
+    </div>
+
+    {% if summary %}
+    <div class="summary-stats">
+        <div class="stat-box">
+            <div class="stat-value">{{ summary.total_workload|floatformat:0 }}h</div>
+            <div class="stat-label">Total Workload</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ summary.team_utilization_percent|floatformat:0 }}%</div>
+            <div class="stat-label">Team Utilization</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ summary.overloaded_members }}</div>
+            <div class="stat-label">Overloaded Members</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ recommendations|length }}</div>
+            <div class="stat-label">Active Recommendations</div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if recommendations %}
+    <div class="recommendations-list">
+        {% for rec in recommendations %}
+        <div class="recommendation-card {{ rec.recommendation_type }}">
+            <div class="rec-badge {{ rec.recommendation_type }}">
+                {{ rec.get_recommendation_type_display }}
+            </div>
+
+            <div class="rec-header-row">
+                <div style="flex: 1;">
+                    <div class="rec-title-text">{{ rec.title }}</div>
+                    <div style="font-size: 0.85rem; color: #95a5a6; margin-top: 3px;">
+                        <span class="status-badge status-{{ rec.status }}">{{ rec.status|upper }}</span>
+                        <span style="margin-left: 10px;">Created {{ rec.created_at|timesince }} ago</span>
+                    </div>
+                </div>
+                <div class="rec-priority {% if rec.priority >= 7 %}high{% endif %}">
+                    {{ rec.priority }}
+                </div>
+            </div>
+
+            <div class="rec-description">
+                {{ rec.description }}
+            </div>
+
+            <div class="rec-details">
+                <div class="detail-item">
+                    <div class="detail-label">Capacity Savings</div>
+                    <div class="detail-value">{{ rec.expected_capacity_savings_hours|floatformat:1 }} hours</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Confidence</div>
+                    <div class="detail-value">{{ rec.confidence_score|floatformat:2 }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Affected Tasks</div>
+                    <div class="detail-value">{{ rec.affected_tasks.count }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Affected Team Members</div>
+                    <div class="detail-value">{{ rec.affected_users.count }}</div>
+                </div>
+            </div>
+
+            {% if rec.affected_tasks.count > 0 %}
+            <div class="affected-section">
+                <div class="affected-title">Affected Tasks</div>
+                <div class="affected-items">
+                    {% for task in rec.affected_tasks.all|slice:":3" %}
+                    <span class="affected-tag">{{ task.title }}</span>
+                    {% endfor %}
+                    {% if rec.affected_tasks.count > 3 %}
+                    <span class="affected-tag">+{{ rec.affected_tasks.count|add:"-3" }} more</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if rec.affected_users.count > 0 %}
+            <div class="affected-section">
+                <div class="affected-title">Team Members Involved</div>
+                <div class="affected-items">
+                    {% for user in rec.affected_users.all %}
+                    <span class="affected-tag">👤 {{ user.get_full_name|default:user.username }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="rec-actions">
+                <a href="{% url 'recommendation_detail' board.id rec.id %}" class="action-btn btn-view">View Details & Actions →</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">🎯</div>
+        <h3>No Recommendations Available</h3>
+        <p>Great news! Your team's workload is well balanced.</p>
+        <p>Recommendations will appear here when capacity issues are detected.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

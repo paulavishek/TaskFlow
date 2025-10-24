@@ -259,3 +259,149 @@ class MeetingTranscript(models.Model):
         
     def __str__(self):
         return f"{self.title} - {self.meeting_date}"
+
+
+class ResourceDemandForecast(models.Model):
+    """
+    Store predictive analytics for team member demand and workload
+    Adapted from ResourcePro for TaskFlow's kanban board
+    """
+    board = models.ForeignKey(Board, on_delete=models.CASCADE, related_name='forecasts')
+    forecast_date = models.DateField(auto_now_add=True, help_text="Date when forecast was generated")
+    period_start = models.DateField(help_text="Start date of forecast period")
+    period_end = models.DateField(help_text="End date of forecast period")
+    
+    # Resource info
+    resource_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='demand_forecasts', 
+                                     null=True, blank=True)
+    resource_role = models.CharField(max_length=100, help_text="Role/Title of the resource")
+    
+    # Forecast data
+    predicted_workload_hours = models.DecimalField(max_digits=8, decimal_places=2, 
+                                                   help_text="Predicted hours of work needed")
+    available_capacity_hours = models.DecimalField(max_digits=8, decimal_places=2,
+                                                  help_text="Available hours in period")
+    confidence_score = models.DecimalField(max_digits=3, decimal_places=2, default=0.5,
+                                         help_text="Confidence score (0.00-1.00)")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-forecast_date', 'resource_user']
+        verbose_name = 'Resource Demand Forecast'
+        verbose_name_plural = 'Resource Demand Forecasts'
+    
+    def __str__(self):
+        resource_name = self.resource_user.username if self.resource_user else self.resource_role
+        return f"Forecast for {resource_name} - {self.period_start} to {self.period_end}"
+    
+    @property
+    def is_overloaded(self):
+        """Check if workload exceeds capacity"""
+        return self.predicted_workload_hours > self.available_capacity_hours
+    
+    @property
+    def utilization_percentage(self):
+        """Calculate utilization percentage"""
+        if self.available_capacity_hours > 0:
+            return (self.predicted_workload_hours / self.available_capacity_hours) * 100
+        return 0
+
+
+class TeamCapacityAlert(models.Model):
+    """
+    Track alerts when team members or team is overloaded
+    """
+    ALERT_LEVEL_CHOICES = [
+        ('warning', 'Warning - 80-100% capacity'),
+        ('critical', 'Critical - Over 100% capacity'),
+        ('resolved', 'Resolved'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('acknowledged', 'Acknowledged'),
+        ('resolved', 'Resolved'),
+    ]
+    
+    board = models.ForeignKey(Board, on_delete=models.CASCADE, related_name='capacity_alerts')
+    forecast = models.ForeignKey(ResourceDemandForecast, on_delete=models.CASCADE, 
+                                related_name='alerts', null=True, blank=True)
+    
+    # Alert info
+    alert_type = models.CharField(max_length=20, choices=[
+        ('individual', 'Individual Overload'),
+        ('team', 'Team Overload'),
+    ], default='individual')
+    alert_level = models.CharField(max_length=20, choices=ALERT_LEVEL_CHOICES, default='warning')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    
+    # Context
+    resource_user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='capacity_alerts',
+                                     null=True, blank=True, help_text="User who is overloaded")
+    message = models.TextField(help_text="Alert message with details")
+    workload_percentage = models.IntegerField(default=0, help_text="Current utilization percentage")
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    acknowledged_at = models.DateTimeField(blank=True, null=True)
+    acknowledged_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='acknowledged_alerts',
+                                       null=True, blank=True)
+    resolved_at = models.DateTimeField(blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        resource_name = self.resource_user.username if self.resource_user else 'Team'
+        return f"{self.get_alert_type_display()} Alert for {resource_name} - {self.get_alert_level_display()}"
+
+
+class WorkloadDistributionRecommendation(models.Model):
+    """
+    AI-generated recommendations for optimal workload distribution
+    """
+    RECOMMENDATION_TYPE_CHOICES = [
+        ('reassign', 'Task Reassignment'),
+        ('defer', 'Defer/Postpone'),
+        ('distribute', 'Distribute to Multiple'),
+        ('hire', 'Hire/Allocate Resource'),
+        ('optimize', 'Optimize Timeline'),
+    ]
+    
+    board = models.ForeignKey(Board, on_delete=models.CASCADE, related_name='distribution_recommendations')
+    forecast = models.ForeignKey(ResourceDemandForecast, on_delete=models.CASCADE,
+                                related_name='recommendations', null=True, blank=True)
+    
+    recommendation_type = models.CharField(max_length=20, choices=RECOMMENDATION_TYPE_CHOICES)
+    priority = models.IntegerField(default=5, validators=[MinValueValidator(1), MaxValueValidator(10)],
+                                  help_text="Priority (1=low, 10=high)")
+    
+    # Recommendation details
+    title = models.CharField(max_length=200, help_text="Short title of recommendation")
+    description = models.TextField(help_text="Detailed recommendation description")
+    affected_tasks = models.ManyToManyField(Task, related_name='distribution_recommendations', blank=True)
+    affected_users = models.ManyToManyField(User, related_name='distribution_recommendations', blank=True)
+    
+    # Impact metrics
+    expected_capacity_savings_hours = models.DecimalField(max_digits=8, decimal_places=2, default=0,
+                                                         help_text="Hours this recommendation could save")
+    confidence_score = models.DecimalField(max_digits=3, decimal_places=2, default=0.75,
+                                         help_text="Confidence in recommendation (0-1)")
+    
+    # Status
+    status = models.CharField(max_length=20, default='pending', choices=[
+        ('pending', 'Pending Review'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+        ('implemented', 'Implemented'),
+    ])
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    implemented_at = models.DateTimeField(blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-priority', '-created_at']
+    
+    def __str__(self):
+        return f"{self.get_recommendation_type_display()}: {self.title}"

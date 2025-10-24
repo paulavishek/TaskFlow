@@ -1,0 +1,547 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Team Capacity Forecast - {{ board.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .forecast-container {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .forecast-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .forecast-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .forecast-period {
+        background: white;
+        padding: 10px 15px;
+        border-radius: 5px;
+        color: #666;
+        font-size: 0.95rem;
+    }
+
+    .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .metric-card {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid #3498db;
+    }
+
+    .metric-card.warning {
+        border-left-color: #f39c12;
+    }
+
+    .metric-card.critical {
+        border-left-color: #e74c3c;
+    }
+
+    .metric-label {
+        color: #7f8c8d;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+
+    .metric-value.warning {
+        color: #f39c12;
+    }
+
+    .metric-value.critical {
+        color: #e74c3c;
+    }
+
+    .metric-subtext {
+        font-size: 0.85rem;
+        color: #95a5a6;
+        margin-top: 5px;
+    }
+
+    .alerts-section {
+        margin-bottom: 30px;
+    }
+
+    .alerts-header {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #2c3e50;
+    }
+
+    .alert-item {
+        background: white;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        border-left: 4px solid #3498db;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .alert-item.warning {
+        border-left-color: #f39c12;
+        background: #fffbf0;
+    }
+
+    .alert-item.critical {
+        border-left-color: #e74c3c;
+        background: #fff5f5;
+    }
+
+    .alert-content {
+        flex: 1;
+    }
+
+    .alert-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+
+    .alert-message {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+    }
+
+    .alert-actions {
+        display: flex;
+        gap: 8px;
+        margin-left: 15px;
+    }
+
+    .alert-actions button {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-acknowledge {
+        background: #3498db;
+        color: white;
+    }
+
+    .btn-acknowledge:hover {
+        background: #2980b9;
+    }
+
+    .btn-resolve {
+        background: #27ae60;
+        color: white;
+    }
+
+    .btn-resolve:hover {
+        background: #229954;
+    }
+
+    .forecast-table {
+        width: 100%;
+        background: white;
+        border-collapse: collapse;
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .forecast-table thead {
+        background: #34495e;
+        color: white;
+    }
+
+    .forecast-table th {
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+
+    .forecast-table td {
+        padding: 12px;
+        border-bottom: 1px solid #ecf0f1;
+    }
+
+    .forecast-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    .team-member-name {
+        font-weight: 500;
+        color: #2c3e50;
+    }
+
+    .capacity-bar {
+        height: 24px;
+        background: #ecf0f1;
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .capacity-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #27ae60, #3498db);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .capacity-fill.warning {
+        background: linear-gradient(90deg, #f39c12, #e67e22);
+    }
+
+    .capacity-fill.critical {
+        background: linear-gradient(90deg, #e74c3c, #c0392b);
+    }
+
+    .utilization-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .utilization-badge.low {
+        background: #d5f4e6;
+        color: #27ae60;
+    }
+
+    .utilization-badge.medium {
+        background: #fef5e7;
+        color: #f39c12;
+    }
+
+    .utilization-badge.high {
+        background: #fadbd8;
+        color: #e74c3c;
+    }
+
+    .recommendations-section {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .recommendations-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #2c3e50;
+    }
+
+    .recommendation-item {
+        padding: 12px;
+        margin-bottom: 10px;
+        border-left: 4px solid #3498db;
+        background: #ecf0f1;
+        border-radius: 4px;
+    }
+
+    .recommendation-type {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 3px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-right: 8px;
+        text-transform: uppercase;
+        background: #3498db;
+        color: white;
+    }
+
+    .recommendation-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 5px 0;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .btn-action {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .btn-refresh {
+        background: #3498db;
+        color: white;
+    }
+
+    .btn-refresh:hover {
+        background: #2980b9;
+    }
+
+    .btn-recommendations {
+        background: #27ae60;
+        color: white;
+    }
+
+    .btn-recommendations:hover {
+        background: #229954;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #7f8c8d;
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+
+    @media (max-width: 768px) {
+        .forecast-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .metric-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .forecast-table {
+            font-size: 0.85rem;
+        }
+
+        .forecast-table th,
+        .forecast-table td {
+            padding: 8px;
+        }
+
+        .alert-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .alert-actions {
+            margin-left: 0;
+            margin-top: 10px;
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="forecast-container" data-board-id="{{ board.id }}">
+    <div class="forecast-header">
+        <div class="forecast-title">Team Capacity Forecast</div>
+        <div class="forecast-period">
+            📅 {{ period_start|date:"M d, Y" }} - {{ period_end|date:"M d, Y" }} (3 weeks)
+        </div>
+        <div class="action-buttons">
+            <button class="btn-action btn-refresh" onclick="location.reload();">🔄 Refresh</button>
+            <a href="{% url 'workload_recommendations' board.id %}" class="btn-action btn-recommendations">💡 View All Recommendations</a>
+        </div>
+    </div>
+
+    {% if summary %}
+    <!-- Key Metrics -->
+    <div class="metric-grid">
+        <div class="metric-card {% if summary.team_utilization_percent >= 100 %}critical{% elif summary.team_utilization_percent >= 80 %}warning{% endif %}">
+            <div class="metric-label">Team Utilization</div>
+            <div class="metric-value {% if summary.team_utilization_percent >= 100 %}critical{% elif summary.team_utilization_percent >= 80 %}warning{% endif %}">
+                {{ summary.team_utilization_percent|floatformat:0 }}%
+            </div>
+            <div class="metric-subtext">
+                {{ summary.total_workload|floatformat:0 }}h / {{ summary.total_capacity|floatformat:0 }}h
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-label">Team Members</div>
+            <div class="metric-value">{{ summary.total_members }}</div>
+            <div class="metric-subtext">{{ summary.overloaded_members }} overloaded</div>
+        </div>
+
+        <div class="metric-card {% if summary.critical_alerts > 0 %}critical{% elif summary.warning_alerts > 0 %}warning{% endif %}">
+            <div class="metric-label">Active Alerts</div>
+            <div class="metric-value {% if summary.critical_alerts > 0 %}critical{% elif summary.warning_alerts > 0 %}warning{% endif %}">
+                {{ summary.active_alerts }}
+            </div>
+            <div class="metric-subtext">
+                {{ summary.critical_alerts }} critical, {{ summary.warning_alerts }} warnings
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-label">Forecast Confidence</div>
+            <div class="metric-value">{{ summary.average_confidence|floatformat:2 }}</div>
+            <div class="metric-subtext">Based on historical data</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Alerts Section -->
+    {% if critical_alerts or warning_alerts %}
+    <div class="alerts-section">
+        <div class="alerts-header">⚠️ Active Alerts</div>
+        
+        {% for alert in critical_alerts %}
+        <div class="alert-item critical">
+            <div class="alert-content">
+                <div class="alert-title">🔴 CRITICAL: {{ alert.get_alert_type_display }}</div>
+                <div class="alert-message">{{ alert.message }}</div>
+            </div>
+            <div class="alert-actions">
+                <button class="btn-acknowledge" data-alert-id="{{ alert.id }}" data-action="acknowledge">Acknowledge</button>
+                {% if board.created_by == user %}
+                <button class="btn-resolve" data-alert-id="{{ alert.id }}" data-action="resolve">Resolve</button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+
+        {% for alert in warning_alerts %}
+        <div class="alert-item warning">
+            <div class="alert-content">
+                <div class="alert-title">🟡 WARNING: {{ alert.get_alert_type_display }}</div>
+                <div class="alert-message">{{ alert.message }}</div>
+            </div>
+            <div class="alert-actions">
+                <button class="btn-acknowledge" data-alert-id="{{ alert.id }}" data-action="acknowledge">Acknowledge</button>
+                {% if board.created_by == user %}
+                <button class="btn-resolve" data-alert-id="{{ alert.id }}" data-action="resolve">Resolve</button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Individual Forecasts -->
+    {% if forecasts %}
+    <div style="margin-top: 30px;">
+        <h3 style="margin-bottom: 15px; color: #2c3e50; font-weight: 600;">Team Member Forecasts</h3>
+        <table class="forecast-table">
+            <thead>
+                <tr>
+                    <th>Team Member</th>
+                    <th>Capacity</th>
+                    <th>Predicted Workload</th>
+                    <th>Utilization</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for forecast in forecasts %}
+                <tr>
+                    <td class="team-member-name">
+                        {{ forecast.resource_user.get_full_name|default:forecast.resource_role }}
+                    </td>
+                    <td>{{ forecast.available_capacity_hours|floatformat:1 }}h</td>
+                    <td>{{ forecast.predicted_workload_hours|floatformat:1 }}h</td>
+                    <td>
+                        <div class="capacity-bar">
+                            <div class="capacity-fill {% if forecast.utilization_percentage >= 100 %}critical{% elif forecast.utilization_percentage >= 80 %}warning{% endif %}"
+                                 data-utilization="{{ forecast.utilization_percentage|default:0 }}">
+                                {{ forecast.utilization_percentage|floatformat:0 }}%
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if forecast.is_overloaded %}
+                        <span class="utilization-badge high">🔴 Overloaded</span>
+                        {% elif forecast.utilization_percentage >= 80 %}
+                        <span class="utilization-badge medium">🟡 High</span>
+                        {% else %}
+                        <span class="utilization-badge low">🟢 Good</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📊</div>
+        <p>No forecasts available yet. Generate forecasts to see team capacity data.</p>
+        <button class="btn-action btn-refresh" onclick="location.reload();" style="margin-top: 10px;">Generate Forecasts</button>
+    </div>
+    {% endif %}
+
+    <!-- Top Recommendations -->
+    {% if recommendations %}
+    <div class="recommendations-section" style="margin-top: 30px;">
+        <div class="recommendations-title">💡 Top Recommendations</div>
+        {% for rec in recommendations %}
+        <div class="recommendation-item">
+            <div>
+                <span class="recommendation-type">{{ rec.get_recommendation_type_display }}</span>
+                <strong style="color: #2c3e50;">{{ rec.title }}</strong>
+                <span style="color: #7f8c8d; font-size: 0.85rem;">(Priority: {{ rec.priority }}/10)</span>
+            </div>
+            <div class="recommendation-title">{{ rec.description }}</div>
+            <div style="font-size: 0.85rem; color: #95a5a6; margin-top: 5px;">
+                💾 Could save ~{{ rec.expected_capacity_savings_hours|floatformat:1 }}h | 
+                Confidence: {{ rec.confidence_score|floatformat:2 }}
+            </div>
+            <div style="margin-top: 10px;">
+                <a href="{% url 'recommendation_detail' board.id rec.id %}" class="btn-action btn-recommendations" style="text-decoration: none; display: inline-block;">View Details</a>
+            </div>
+        </div>
+        {% endfor %}
+        <div style="text-align: center; margin-top: 15px;">
+            <a href="{% url 'workload_recommendations' board.id %}" style="color: #3498db; font-weight: 600; text-decoration: none;">View All Recommendations →</a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/forecast_dashboard.js' %}"></script>
+{% endblock %}

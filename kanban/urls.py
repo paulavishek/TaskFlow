@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from . import api_views
+from . import forecasting_views
 
 urlpatterns = [
     path('', views.welcome, name='welcome'),
@@ -59,4 +60,15 @@ urlpatterns = [
     path('api/kanban/calculate-task-risk/', api_views.calculate_task_risk_api, name='calculate_task_risk_api'),
     path('api/kanban/get-mitigation-suggestions/', api_views.get_mitigation_suggestions_api, name='get_mitigation_suggestions_api'),
     path('api/kanban/assess-task-dependencies/', api_views.assess_task_dependencies_api, name='assess_task_dependencies_api'),
+    
+    # Resource Demand Forecasting - NEW FEATURES
+    path('board/<int:board_id>/forecast/', forecasting_views.forecast_dashboard, name='forecast_dashboard'),
+    path('board/<int:board_id>/forecast/generate/', forecasting_views.generate_forecast, name='generate_forecast'),
+    path('board/<int:board_id>/recommendations/', forecasting_views.workload_recommendations, name='workload_recommendations'),
+    path('board/<int:board_id>/recommendation/<int:rec_id>/', forecasting_views.recommendation_detail, name='recommendation_detail'),
+    path('board/<int:board_id>/alerts/', forecasting_views.capacity_alerts, name='capacity_alerts'),
+    path('board/<int:board_id>/alerts/<int:alert_id>/acknowledge/', forecasting_views.acknowledge_alert, name='acknowledge_alert'),
+    path('board/<int:board_id>/alerts/<int:alert_id>/resolve/', forecasting_views.resolve_alert, name='resolve_alert'),
+    path('board/<int:board_id>/capacity-chart/', forecasting_views.team_capacity_chart, name='team_capacity_chart'),
+    path('board/<int:board_id>/task/<int:task_id>/assignment-suggestion/', forecasting_views.task_assignment_suggestion, name='task_assignment_suggestion'),
 ]

@@ -1,0 +1,463 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ recommendation.title }} - {{ board.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .detail-header {
+        background: white;
+        padding: 20px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .detail-breadcrumb {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        margin-bottom: 15px;
+    }
+
+    .detail-breadcrumb a {
+        color: #3498db;
+        text-decoration: none;
+    }
+
+    .detail-breadcrumb a:hover {
+        text-decoration: underline;
+    }
+
+    .detail-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .detail-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .detail-type-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .detail-type-badge.reassign {
+        background: #fadbd8;
+        color: #c0392b;
+    }
+
+    .detail-type-badge.defer {
+        background: #fef5e7;
+        color: #d68910;
+    }
+
+    .detail-type-badge.distribute {
+        background: #ebdef0;
+        color: #6c3483;
+    }
+
+    .detail-type-badge.optimize {
+        background: #d5f4e6;
+        color: #1e8449;
+    }
+
+    .detail-meta {
+        display: flex;
+        gap: 20px;
+        margin-top: 15px;
+        flex-wrap: wrap;
+    }
+
+    .meta-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .meta-label {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        margin-bottom: 3px;
+        font-weight: 500;
+    }
+
+    .meta-value {
+        font-size: 1rem;
+        color: #2c3e50;
+        font-weight: 500;
+    }
+
+    .detail-section {
+        background: white;
+        padding: 20px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #ecf0f1;
+    }
+
+    .description-text {
+        color: #555;
+        line-height: 1.8;
+        margin-bottom: 10px;
+    }
+
+    .info-box {
+        background: #f8f9fa;
+        padding: 15px;
+        border-left: 4px solid #3498db;
+        border-radius: 4px;
+        margin: 15px 0;
+    }
+
+    .info-box.warning {
+        border-left-color: #f39c12;
+        background: #fffbf0;
+    }
+
+    .info-box.success {
+        border-left-color: #27ae60;
+        background: #f0fdf4;
+    }
+
+    .task-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .task-item {
+        background: #f8f9fa;
+        padding: 12px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        border-left: 3px solid #3498db;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .task-name {
+        font-weight: 500;
+        color: #2c3e50;
+    }
+
+    .task-priority {
+        font-size: 0.85rem;
+        padding: 2px 6px;
+        border-radius: 3px;
+        background: #ecf0f1;
+        color: #7f8c8d;
+    }
+
+    .user-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .user-tag {
+        background: #ecf0f1;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        color: #2c3e50;
+    }
+
+    .action-panel {
+        background: white;
+        padding: 20px;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .btn-implement {
+        background: #27ae60;
+        color: white;
+    }
+
+    .btn-implement:hover {
+        background: #229954;
+    }
+
+    .btn-accept {
+        background: #3498db;
+        color: white;
+    }
+
+    .btn-accept:hover {
+        background: #2980b9;
+    }
+
+    .btn-reject {
+        background: #95a5a6;
+        color: white;
+    }
+
+    .btn-reject:hover {
+        background: #7f8c8d;
+    }
+
+    .btn-back {
+        background: #ecf0f1;
+        color: #2c3e50;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-back:hover {
+        background: #bdc3c7;
+    }
+
+    .status-info {
+        background: #f0fdf4;
+        border: 1px solid #86efac;
+        border-radius: 4px;
+        padding: 12px;
+        margin-bottom: 15px;
+        color: #166534;
+    }
+
+    .status-info.pending {
+        background: #fef5e7;
+        border-color: #ffd89b;
+        color: #d68910;
+    }
+
+    .status-info.rejected {
+        background: #fef2f2;
+        border-color: #fca5a5;
+        color: #991b1b;
+    }
+
+    .impact-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .impact-card {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        text-align: center;
+    }
+
+    .impact-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #3498db;
+    }
+
+    .impact-label {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        margin-top: 8px;
+    }
+
+    @media (max-width: 768px) {
+        .detail-title-row {
+            flex-direction: column;
+        }
+
+        .detail-meta {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .action-btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <div class="detail-header">
+        <div class="detail-breadcrumb">
+            <a href="{% url 'forecast_dashboard' board.id %}">📊 Forecast Dashboard</a>
+            <span> / </span>
+            <a href="{% url 'workload_recommendations' board.id %}">💡 Recommendations</a>
+            <span> / </span>
+            <span>{{ recommendation.title }}</span>
+        </div>
+
+        <div class="detail-title-row">
+            <div>
+                <span class="detail-type-badge {{ recommendation.recommendation_type }}">
+                    {{ recommendation.get_recommendation_type_display }}
+                </span>
+                <h1 class="detail-title" style="margin-top: 10px;">{{ recommendation.title }}</h1>
+            </div>
+        </div>
+
+        <div class="detail-meta">
+            <div class="meta-item">
+                <span class="meta-label">Status</span>
+                <span class="meta-value" style="text-transform: capitalize;">
+                    {% if recommendation.status == 'pending' %}
+                    🟡 {{ recommendation.status }}
+                    {% elif recommendation.status == 'accepted' %}
+                    🟢 {{ recommendation.status }}
+                    {% elif recommendation.status == 'implemented' %}
+                    ✅ {{ recommendation.status }}
+                    {% else %}
+                    ❌ {{ recommendation.status }}
+                    {% endif %}
+                </span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Priority</span>
+                <span class="meta-value">{{ recommendation.priority }}/10</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Confidence</span>
+                <span class="meta-value">{{ recommendation.confidence_score|floatformat:2 }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Created</span>
+                <span class="meta-value">{{ recommendation.created_at|date:"M d, Y" }}</span>
+            </div>
+        </div>
+    </div>
+
+    {% if recommendation.status == 'implemented' %}
+    <div class="status-info">
+        ✅ This recommendation has been implemented {{ recommendation.implemented_at|timesince }} ago
+    </div>
+    {% elif recommendation.status == 'accepted' %}
+    <div class="status-info">
+        🟢 This recommendation has been accepted and is ready to implement
+    </div>
+    {% elif recommendation.status == 'pending' %}
+    <div class="status-info pending">
+        ⏳ This recommendation is pending review and approval
+    </div>
+    {% elif recommendation.status == 'rejected' %}
+    <div class="status-info rejected">
+        ❌ This recommendation was rejected
+    </div>
+    {% endif %}
+
+    <!-- Description and Details -->
+    <div class="detail-section">
+        <div class="section-title">Recommendation Details</div>
+        <div class="description-text">{{ recommendation.description }}</div>
+
+        <div class="impact-section">
+            <div class="impact-card">
+                <div class="impact-number">{{ recommendation.expected_capacity_savings_hours|floatformat:1 }}h</div>
+                <div class="impact-label">Capacity Savings</div>
+            </div>
+            <div class="impact-card">
+                <div class="impact-number">{{ recommendation.affected_tasks.count }}</div>
+                <div class="impact-label">Affected Tasks</div>
+            </div>
+            <div class="impact-card">
+                <div class="impact-number">{{ recommendation.affected_users.count }}</div>
+                <div class="impact-label">Team Members</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Affected Tasks -->
+    {% if recommendation.affected_tasks.count > 0 %}
+    <div class="detail-section">
+        <div class="section-title">Affected Tasks ({{ recommendation.affected_tasks.count }})</div>
+        <ul class="task-list">
+            {% for task in recommendation.affected_tasks.all %}
+            <li class="task-item">
+                <span class="task-name">📝 {{ task.title }}</span>
+                <span class="task-priority">{{ task.get_priority_display }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- Affected Team Members -->
+    {% if recommendation.affected_users.count > 0 %}
+    <div class="detail-section">
+        <div class="section-title">Team Members Involved ({{ recommendation.affected_users.count }})</div>
+        <div class="user-list">
+            {% for user in recommendation.affected_users.all %}
+            <span class="user-tag">👤 {{ user.get_full_name|default:user.username }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Action Panel -->
+    {% if recommendation.status == 'pending' %}
+    <div class="action-panel">
+        <div class="section-title">Take Action</div>
+        <p style="color: #555; margin-bottom: 15px;">
+            Choose how to proceed with this recommendation:
+        </p>
+        <form method="POST" style="display: contents;">
+            {% csrf_token %}
+            <div class="action-buttons">
+                <button type="submit" name="action" value="accept" class="action-btn btn-accept">
+                    ✅ Accept Recommendation
+                </button>
+                <button type="submit" name="action" value="implement" class="action-btn btn-implement">
+                    🚀 Accept & Implement Now
+                </button>
+                <button type="submit" name="action" value="reject" class="action-btn btn-reject" onclick="return confirm('Are you sure you want to reject this recommendation?');">
+                    ❌ Reject
+                </button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Back Button -->
+    <div class="action-buttons">
+        <a href="{% url 'workload_recommendations' board.id %}" class="action-btn btn-back">← Back to Recommendations</a>
+    </div>
+
+</div>
+{% endblock %}
