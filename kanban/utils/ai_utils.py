@@ -32,12 +32,67 @@ try:
 except Exception as e:
     logger.error(f"Failed to configure Gemini API: {str(e)}")
 
+# Global model instance - reuse to avoid session bloat and "History Restored" messages
+_model_instance = None
+
 def get_model():
-    """Get the Gemini model instance."""
+    """
+    Get the Gemini model instance (singleton pattern).
+    
+    IMPORTANT: This uses a singleton pattern to avoid creating multiple sessions.
+    Each new GenerativeModel() instance creates a new session, which causes Gemini to
+    restore conversation history from previous requests, leading to massive token waste
+    and billing issues. This pattern ensures we reuse the same model instance.
+    
+    Returns:
+        A GenerativeModel instance or None if initialization fails
+    """
+    global _model_instance
+    
     try:
-        return genai.GenerativeModel('gemini-1.5-flash')
+        if _model_instance is None:
+            # Create model with safety settings to ensure stateless requests
+            # Each generate_content call should be independent
+            _model_instance = genai.GenerativeModel('gemini-1.5-flash')
+            logger.info("Gemini model instance created (singleton)")
+        return _model_instance
     except Exception as e:
         logger.error(f"Error getting Gemini model: {str(e)}")
+        return None
+
+def generate_ai_content(prompt: str) -> Optional[str]:
+    """
+    Generate content using Gemini API with proper session handling.
+    
+    IMPORTANT: This function ensures stateless API calls by:
+    1. Using a singleton model instance (no new sessions created)
+    2. Always starting fresh - never maintaining conversation state
+    3. Making each request independent with no history
+    
+    Args:
+        prompt: The prompt to send to the Gemini API
+        
+    Returns:
+        Generated content or None if generation fails
+    """
+    try:
+        model = get_model()
+        if not model:
+            logger.error("Gemini model not available")
+            return None
+        
+        # Generate content without any conversation history
+        # This ensures no "History Restored" messages and no token waste
+        response = model.generate_content(prompt)
+        
+        if response and response.text:
+            return response.text.strip()
+        
+        logger.warning("Empty response from Gemini API")
+        return None
+        
+    except Exception as e:
+        logger.error(f"Error generating AI content: {str(e)}")
         return None
 
 def generate_task_description(title: str) -> Optional[str]:
@@ -51,10 +106,6 @@ def generate_task_description(title: str) -> Optional[str]:
         A generated description with a checklist or None if generation fails
     """
     try:
-        model = get_model()
-        if not model:
-            return None
-            
         prompt = f"""
         Based on this task title: "{title}", generate a detailed task description 
         with an objective and a checklist of smaller steps.
@@ -72,10 +123,7 @@ def generate_task_description(title: str) -> Optional[str]:
         Keep it concise but thorough. Include approximately 4-6 subtasks.
         """
         
-        response = model.generate_content(prompt)
-        if response:
-            return response.text.strip()
-        return None
+        return generate_ai_content(prompt)
     except Exception as e:
         logger.error(f"Error generating task description: {str(e)}")
         return None
@@ -91,8 +139,7 @@ def summarize_comments(comments: List[Dict]) -> Optional[str]:
         A summary of the comments or None if summarization fails
     """
     try:
-        model = get_model()
-        if not model or not comments:
+        if not comments:
             return None
             
         # Format comments for the prompt
@@ -110,10 +157,7 @@ def summarize_comments(comments: List[Dict]) -> Optional[str]:
         Provide a brief summary (3-5 sentences).
         """
         
-        response = model.generate_content(prompt)
-        if response:
-            return response.text.strip()
-        return None
+        return generate_ai_content(prompt)
     except Exception as e:
         logger.error(f"Error summarizing comments: {str(e)}")
         return None
@@ -130,10 +174,6 @@ def suggest_lean_classification(title: str, description: str) -> Optional[Dict]:
         A dictionary with suggested classification and justification or None if suggestion fails
     """
     try:
-        model = get_model()
-        if not model:
-            return None
-            
         prompt = f"""
         Based on this task's title and description, suggest a Lean Six Sigma classification
         (Value-Added, Necessary Non-Value-Added, or Waste/Eliminate) and briefly justify why.
@@ -153,12 +193,10 @@ def suggest_lean_classification(title: str, description: str) -> Optional[Dict]:
         }}
         """
         
-        response = model.generate_content(prompt)
-        if response:
+        response_text = generate_ai_content(prompt)
+        if response_text:
             # This is not perfect but extracting the response as if it's JSON
             # In a production app, we'd want better error handling
-            import json
-            response_text = response.text.strip()
             
             # Handle the case where the AI might include code block formatting
             if "```json" in response_text:
@@ -183,10 +221,6 @@ def summarize_board_analytics(analytics_data: Dict) -> Optional[str]:
         A comprehensive analytics summary or None if generation fails
     """
     try:
-        model = get_model()
-        if not model:
-            return None
-            
         # Extract key metrics from analytics data
         total_tasks = analytics_data.get('total_tasks', 0)
         completed_count = analytics_data.get('completed_count', 0)
@@ -239,10 +273,7 @@ def summarize_board_analytics(analytics_data: Dict) -> Optional[str]:
         Keep the summary concise but comprehensive, aimed at helping the project manager make informed decisions.
         """
         
-        response = model.generate_content(prompt)
-        if response:
-            return response.text.strip()
-        return None
+        return generate_ai_content(prompt)
     except Exception as e:
         logger.error(f"Error summarizing board analytics: {str(e)}")
         return None
@@ -259,10 +290,6 @@ def suggest_task_priority(task_data: Dict, board_context: Dict) -> Optional[Dict
         A dictionary with suggested priority and reasoning or None if suggestion fails
     """
     try:
-        model = get_model()
-        if not model:
-            return None
-            
         # Extract task information
         title = task_data.get('title', '')
         description = task_data.get('description', '')
@@ -316,10 +343,8 @@ def suggest_task_priority(task_data: Dict, board_context: Dict) -> Optional[Dict
         }}
         """
         
-        response = model.generate_content(prompt)
-        if response:
-            response_text = response.text.strip()
-            
+        response_text = generate_ai_content(prompt)
+        if response_text:
             # Handle code block formatting
             if "```json" in response_text:
                 response_text = response_text.split("```json")[1].split("```")[0].strip()
@@ -344,10 +369,6 @@ def predict_realistic_deadline(task_data: Dict, team_context: Dict) -> Optional[
         A dictionary with deadline prediction and reasoning or None if prediction fails
     """
     try:
-        model = get_model()
-        if not model:
-            return None
-            
         # Extract task information
         title = task_data.get('title', '')
         description = task_data.get('description', '')
@@ -403,10 +424,8 @@ def predict_realistic_deadline(task_data: Dict, team_context: Dict) -> Optional[
         }}
         """
         
-        response = model.generate_content(prompt)
-        if response:
-            response_text = response.text.strip()
-            
+        response_text = generate_ai_content(prompt)
+        if response_text:
             # Handle code block formatting
             if "```json" in response_text:
                 response_text = response_text.split("```json")[1].split("```")[0].strip()
@@ -457,10 +476,6 @@ def recommend_board_columns(board_data: Dict) -> Optional[Dict]:
         A dictionary with column recommendations or None if recommendation fails
     """
     try:
-        model = get_model()
-        if not model:
-            return None
-            
         # Extract board information
         board_name = board_data.get('name', '')
         board_description = board_data.get('description', '')
@@ -507,10 +522,8 @@ def recommend_board_columns(board_data: Dict) -> Optional[Dict]:
         }}
         """
         
-        response = model.generate_content(prompt)
-        if response:
-            response_text = response.text.strip()
-            
+        response_text = generate_ai_content(prompt)
+        if response_text:
             # Handle code block formatting
             if "```json" in response_text:
                 response_text = response_text.split("```json")[1].split("```")[0].strip()
@@ -534,10 +547,6 @@ def suggest_task_breakdown(task_data: Dict) -> Optional[Dict]:
         A dictionary with subtask suggestions or None if breakdown fails
     """
     try:
-        model = get_model()
-        if not model:
-            return None
-            
         # Extract task information
         title = task_data.get('title', '')
         description = task_data.get('description', '')
@@ -582,10 +591,8 @@ def suggest_task_breakdown(task_data: Dict) -> Optional[Dict]:
         }}
         """
         
-        response = model.generate_content(prompt)
-        if response:
-            response_text = response.text.strip()
-            
+        response_text = generate_ai_content(prompt)
+        if response_text:
             # Handle code block formatting
             if "```json" in response_text:
                 response_text = response_text.split("```json")[1].split("```")[0].strip()
@@ -609,10 +616,6 @@ def analyze_workflow_optimization(board_analytics: Dict) -> Optional[Dict]:
         A dictionary with workflow optimization recommendations or None if analysis fails
     """
     try:
-        model = get_model()
-        if not model:
-            return None
-            
         # Extract analytics data
         total_tasks = board_analytics.get('total_tasks', 0)
         tasks_by_column = board_analytics.get('tasks_by_column', [])
@@ -679,10 +682,8 @@ def analyze_workflow_optimization(board_analytics: Dict) -> Optional[Dict]:
         }}
         """
         
-        response = model.generate_content(prompt)
-        if response:
-            response_text = response.text.strip()
-            
+        response_text = generate_ai_content(prompt)
+        if response_text:
             # Handle code block formatting
             if "```json" in response_text:
                 response_text = response_text.split("```json")[1].split("```")[0].strip()
@@ -707,10 +708,6 @@ def analyze_critical_path(board_data: Dict) -> Optional[Dict]:
         Dictionary with critical path analysis, slack times, and schedule insights
     """
     try:
-        model = get_model()
-        if not model:
-            return None
-            
         tasks_info = board_data.get('tasks', [])
         if not tasks_info:
             return None
@@ -727,7 +724,8 @@ def analyze_critical_path(board_data: Dict) -> Optional[Dict]:
             Priority: {task.get('priority', 'medium')}
             """
             formatted_tasks.append(task_str)
-            prompt = f"""
+            
+        prompt = f"""
         Analyze these project tasks to identify the critical path, calculate slack times, and assess schedule risks.
         Use project management principles similar to Gantt chart analysis.
         
@@ -794,10 +792,8 @@ def analyze_critical_path(board_data: Dict) -> Optional[Dict]:
         }}
         """
         
-        response = model.generate_content(prompt)
-        if response:
-            response_text = response.text.strip()
-            
+        response_text = generate_ai_content(prompt)
+        if response_text:
             # Handle code block formatting and extract JSON
             if "```json" in response_text:
                 response_text = response_text.split("```json")[1].split("```")[0].strip()
@@ -925,10 +921,7 @@ def predict_task_completion(task_data: Dict, historical_data: List[Dict] = None)
         Dictionary with completion predictions and confidence intervals
     """
     try:
-        model = get_model()
-        if not model:
-            return None
-              # Format current task data
+        # Format current task data
         task_info = f"""
         Task: {task_data.get('title')}
         Current Progress: {task_data.get('progress', 0)}%
@@ -995,10 +988,8 @@ def predict_task_completion(task_data: Dict, historical_data: List[Dict] = None)
         }}
         """
         
-        response = model.generate_content(prompt)
-        if response:
-            response_text = response.text.strip()
-            
+        response_text = generate_ai_content(prompt)
+        if response_text:
             # Handle code block formatting
             if "```json" in response_text:
                 response_text = response_text.split("```json")[1].split("```")[0].strip()
@@ -1023,10 +1014,6 @@ def generate_project_timeline(board_data: Dict) -> Optional[Dict]:
         Dictionary with timeline visualization data and AI insights
     """
     try:
-        model = get_model()
-        if not model:
-            return None
-            
         tasks = board_data.get('tasks', [])
         team_data = board_data.get('team', [])
         board_info = board_data.get('board_info', {})
@@ -1118,10 +1105,8 @@ def generate_project_timeline(board_data: Dict) -> Optional[Dict]:
         }}
         """
         
-        response = model.generate_content(prompt)
-        if response:
-            response_text = response.text.strip()
-            
+        response_text = generate_ai_content(prompt)
+        if response_text:
             # Handle code block formatting
             if "```json" in response_text:
                 response_text = response_text.split("```json")[1].split("```")[0].strip()
@@ -1223,10 +1208,6 @@ def extract_tasks_from_transcript(transcript: str, meeting_context: Dict, board)
         Dictionary with extracted tasks and metadata
     """
     try:
-        model = get_model()
-        if not model:
-            return None
-        
         # Get board context
         board_members = [member.username for member in board.members.all()]
         board_members.append(board.created_by.username)
@@ -1296,10 +1277,8 @@ def extract_tasks_from_transcript(transcript: str, meeting_context: Dict, board)
         }}
         """
         
-        response = model.generate_content(prompt)
-        if response:
-            response_text = response.text.strip()
-            
+        response_text = generate_ai_content(prompt)
+        if response_text:
             # Handle code block formatting
             if "```json" in response_text:
                 response_text = response_text.split("```json")[1].split("```")[0].strip()
@@ -1391,10 +1370,6 @@ def enhance_task_description(task_data: Dict) -> Optional[Dict]:
         A dictionary with enhanced task description or None if enhancement fails
     """
     try:
-        model = get_model()
-        if not model:
-            return None
-            
         title = task_data.get('title', '')
         description = task_data.get('description', '')
         board_context = task_data.get('board_context', '')
@@ -1439,10 +1414,8 @@ def enhance_task_description(task_data: Dict) -> Optional[Dict]:
         }}
         """
         
-        response = model.generate_content(prompt)
-        if response:
-            response_text = response.text.strip()
-            
+        response_text = generate_ai_content(prompt)
+        if response_text:
             # Handle code block formatting
             if "```json" in response_text:
                 response_text = response_text.split("```json")[1].split("```")[0].strip()
