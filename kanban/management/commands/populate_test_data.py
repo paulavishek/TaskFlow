@@ -4,7 +4,14 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from django.utils import timezone
 from accounts.models import Organization, UserProfile
-from kanban.models import Board, Column, TaskLabel, Task, Comment, TaskActivity
+from kanban.models import (
+    Board, Column, TaskLabel, Task, Comment, TaskActivity,
+    ResourceDemandForecast, TeamCapacityAlert, WorkloadDistributionRecommendation
+)
+from kanban.stakeholder_models import (
+    ProjectStakeholder, StakeholderTaskInvolvement, 
+    StakeholderEngagementRecord, EngagementMetrics, StakeholderTag
+)
 
 class Command(BaseCommand):
     help = 'Populate the database with test data'
@@ -21,7 +28,13 @@ class Command(BaseCommand):
         # Create test boards with columns, labels, tasks, and comments
         self.create_boards_and_content()
         
-        self.stdout.write(self.style.SUCCESS('Successfully populated the database!'))
+        # Create new feature demo data
+        self.create_risk_management_demo_data()
+        self.create_resource_management_demo_data()
+        self.create_stakeholder_management_demo_data()
+        self.create_task_dependency_demo_data()
+        
+        self.stdout.write(self.style.SUCCESS('Successfully populated the database with all features!'))
         
         # Print login credentials for easy testing
         self.stdout.write(self.style.SUCCESS('You can now log in with the following credentials:'))
@@ -29,6 +42,11 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('Username: john_doe, Password: test1234'))
         self.stdout.write(self.style.SUCCESS('Username: jane_smith, Password: test1234'))
         self.stdout.write(self.style.SUCCESS('Username: robert_johnson, Password: test1234'))
+        self.stdout.write(self.style.SUCCESS('\n📊 New Features Demo Data Created:'))
+        self.stdout.write(self.style.SUCCESS('  ✅ Risk Management - Task risk assessments'))
+        self.stdout.write(self.style.SUCCESS('  ✅ Resource Management - Team workload forecasts and alerts'))
+        self.stdout.write(self.style.SUCCESS('  ✅ Stakeholder Management - Stakeholders with engagement tracking'))
+        self.stdout.write(self.style.SUCCESS('  ✅ Requirements Management - Task dependencies and hierarchies'))
 
     def create_users(self):
         self.stdout.write('Creating users...')
@@ -804,3 +822,387 @@ class Command(BaseCommand):
                     activity_type='commented',
                     description=f"{task_data['assigned_to'].get_full_name() or task_data['assigned_to'].username} commented on this task"
                 )
+
+    def create_risk_management_demo_data(self):
+        """Create demo data for risk management features"""
+        self.stdout.write(self.style.NOTICE('Creating Risk Management demo data...'))
+        
+        # Get all tasks and assign risk assessments to some of them
+        tasks = Task.objects.all()[:15]  # Get first 15 tasks
+        
+        for task in tasks:
+            if random.random() < 0.7:  # 70% of tasks get risk data
+                # Risk assessment data
+                task.risk_likelihood = random.randint(1, 3)
+                task.risk_impact = random.randint(1, 3)
+                task.risk_score = task.risk_likelihood * task.risk_impact
+                
+                # Determine risk level
+                if task.risk_score <= 2:
+                    task.risk_level = 'low'
+                elif task.risk_score <= 4:
+                    task.risk_level = 'medium'
+                elif task.risk_score <= 6:
+                    task.risk_level = 'high'
+                else:
+                    task.risk_level = 'critical'
+                
+                # Risk indicators
+                task.risk_indicators = [
+                    'Monitor task progress weekly',
+                    'Track team member availability',
+                    'Check for dependencies',
+                    'Verify resource allocation'
+                ]
+                
+                # Mitigation suggestions
+                task.mitigation_suggestions = [
+                    {
+                        'strategy': 'Mitigate',
+                        'description': 'Allocate additional resources to reduce timeline',
+                        'timeline': '2 weeks',
+                        'effectiveness': '75%'
+                    },
+                    {
+                        'strategy': 'Mitigate',
+                        'description': 'Conduct technical review to identify potential issues early',
+                        'timeline': '1 week',
+                        'effectiveness': '60%'
+                    }
+                ]
+                
+                # Risk analysis details
+                task.risk_analysis = {
+                    'factors': ['Complexity', 'Team capacity', 'Timeline pressure', 'Dependencies'],
+                    'assessment': 'Task has moderate risk factors',
+                    'reasoning': f'Priority {task.priority} with {len(task.labels.all())} labels'
+                }
+                
+                task.last_risk_assessment = timezone.now()
+                task.save()
+                self.stdout.write(f'  Added risk assessment to: {task.title}')
+        
+        self.stdout.write(self.style.SUCCESS('✅ Risk Management demo data created'))
+
+    def create_resource_management_demo_data(self):
+        """Create demo data for resource management features"""
+        self.stdout.write(self.style.NOTICE('Creating Resource Management demo data...'))
+        
+        # Get boards for resource forecasting
+        for board in self.organizations['dev'].boards.all():
+            # Create forecasts for each team member
+            for user in [self.users['john_doe'], self.users['robert_johnson']]:
+                # Create a forecast for the next 4 weeks
+                forecast = ResourceDemandForecast.objects.create(
+                    board=board,
+                    resource_user=user,
+                    resource_role=user.get_full_name() or user.username,
+                    period_start=timezone.now().date(),
+                    period_end=(timezone.now() + timedelta(days=28)).date(),
+                    predicted_workload_hours=random.uniform(120, 160),
+                    available_capacity_hours=160.0,
+                    confidence_score=round(random.uniform(0.7, 0.95), 2)
+                )
+                self.stdout.write(f'  Created forecast for {user.username}')
+                
+                # Create capacity alerts if overloaded
+                if forecast.is_overloaded:
+                    alert_level = 'critical' if forecast.utilization_percentage > 120 else 'warning'
+                    TeamCapacityAlert.objects.create(
+                        board=board,
+                        forecast=forecast,
+                        alert_type='individual',
+                        alert_level=alert_level,
+                        resource_user=user,
+                        message=f'{user.get_full_name()} is at {forecast.utilization_percentage:.0f}% capacity',
+                        workload_percentage=int(forecast.utilization_percentage),
+                        status='active'
+                    )
+                    self.stdout.write(f'  Created capacity alert for {user.username}')
+            
+            # Create workload distribution recommendations
+            recommendation = WorkloadDistributionRecommendation.objects.create(
+                board=board,
+                recommendation_type='distribute',
+                priority=random.randint(5, 10),
+                title='Optimize Task Distribution',
+                description='Consider distributing high-priority tasks across multiple team members to balance workload',
+                status='pending',
+                expected_capacity_savings_hours=random.uniform(10, 30),
+                confidence_score=round(random.uniform(0.6, 0.9), 2)
+            )
+            self.stdout.write(f'  Created distribution recommendation')
+        
+        self.stdout.write(self.style.SUCCESS('✅ Resource Management demo data created'))
+
+    def create_stakeholder_management_demo_data(self):
+        """Create demo data for stakeholder engagement tracking"""
+        self.stdout.write(self.style.NOTICE('Creating Stakeholder Management demo data...'))
+        
+        # Get dev team board
+        board = self.organizations['dev'].boards.first()
+        if not board:
+            return
+        
+        # Create stakeholders
+        stakeholder_data = [
+            {
+                'name': 'Sarah Mitchell',
+                'role': 'Product Manager',
+                'organization': 'Product Team',
+                'email': 'sarah.mitchell@example.com',
+                'phone': '+1-555-0101',
+                'influence_level': 'high',
+                'interest_level': 'high',
+                'current_engagement': 'collaborate',
+                'desired_engagement': 'empower'
+            },
+            {
+                'name': 'Michael Chen',
+                'role': 'Tech Lead',
+                'organization': 'Dev Team',
+                'email': 'michael.chen@example.com',
+                'phone': '+1-555-0102',
+                'influence_level': 'high',
+                'interest_level': 'high',
+                'current_engagement': 'involve',
+                'desired_engagement': 'collaborate'
+            },
+            {
+                'name': 'Emily Rodriguez',
+                'role': 'QA Lead',
+                'organization': 'QA Team',
+                'email': 'emily.rodriguez@example.com',
+                'phone': '+1-555-0103',
+                'influence_level': 'medium',
+                'interest_level': 'high',
+                'current_engagement': 'consult',
+                'desired_engagement': 'involve'
+            },
+            {
+                'name': 'David Park',
+                'role': 'DevOps Engineer',
+                'organization': 'Infrastructure',
+                'email': 'david.park@example.com',
+                'phone': '+1-555-0104',
+                'influence_level': 'medium',
+                'interest_level': 'medium',
+                'current_engagement': 'inform',
+                'desired_engagement': 'involve'
+            },
+            {
+                'name': 'Lisa Thompson',
+                'role': 'UX Designer',
+                'organization': 'Design Team',
+                'email': 'lisa.thompson@example.com',
+                'phone': '+1-555-0105',
+                'influence_level': 'medium',
+                'interest_level': 'high',
+                'current_engagement': 'involve',
+                'desired_engagement': 'collaborate'
+            }
+        ]
+        
+        stakeholders = []
+        for data in stakeholder_data:
+            stakeholder, created = ProjectStakeholder.objects.get_or_create(
+                board=board,
+                email=data['email'],
+                defaults={
+                    'name': data['name'],
+                    'role': data['role'],
+                    'organization': data['organization'],
+                    'phone': data['phone'],
+                    'influence_level': data['influence_level'],
+                    'interest_level': data['interest_level'],
+                    'current_engagement': data['current_engagement'],
+                    'desired_engagement': data['desired_engagement'],
+                    'created_by': self.users['admin'],
+                    'is_active': True
+                }
+            )
+            stakeholders.append(stakeholder)
+            if created:
+                self.stdout.write(f'  Created stakeholder: {stakeholder.name}')
+        
+        # Create stakeholder tags
+        tags_data = ['Key Stakeholder', 'Executive', 'Technical', 'Quality Focus', 'Design Focus']
+        tags = []
+        for tag_name in tags_data:
+            tag, created = StakeholderTag.objects.get_or_create(
+                board=board,
+                name=tag_name,
+                defaults={
+                    'color': f'#{random.randint(0, 0xFFFFFF):06x}',
+                    'created_by': self.users['admin']
+                }
+            )
+            tags.append(tag)
+            if created:
+                self.stdout.write(f'  Created tag: {tag_name}')
+        
+        # Assign tags to stakeholders randomly
+        for stakeholder in stakeholders:
+            for _ in range(random.randint(1, 3)):
+                tag = random.choice(tags)
+                # Using the through model
+                from kanban.stakeholder_models import ProjectStakeholderTag
+                ProjectStakeholderTag.objects.get_or_create(
+                    stakeholder=stakeholder,
+                    tag=tag
+                )
+        
+        # Create task-stakeholder involvement for some tasks
+        tasks = Task.objects.filter(column__board=board)[:10]
+        for task in tasks:
+            for _ in range(random.randint(1, 3)):
+                stakeholder = random.choice(stakeholders)
+                involvement, created = StakeholderTaskInvolvement.objects.get_or_create(
+                    stakeholder=stakeholder,
+                    task=task,
+                    defaults={
+                        'involvement_type': random.choice(['owner', 'contributor', 'reviewer', 'stakeholder']),
+                        'engagement_status': random.choice(['informed', 'consulted', 'involved']),
+                        'satisfaction_rating': random.randint(3, 5),
+                        'engagement_count': random.randint(1, 5)
+                    }
+                )
+                if created:
+                    self.stdout.write(f'  Added {stakeholder.name} to task: {task.title}')
+        
+        # Create engagement records
+        from django.db import models as django_models
+        for stakeholder in stakeholders:
+            for _ in range(random.randint(2, 4)):
+                engagement = StakeholderEngagementRecord.objects.create(
+                    stakeholder=stakeholder,
+                    date=(timezone.now() - timedelta(days=random.randint(0, 30))).date(),
+                    description=random.choice([
+                        'Status update meeting',
+                        'Review session for deliverables',
+                        'Risk discussion and mitigation planning',
+                        'Feedback collection on current progress',
+                        'Planning session for next phase'
+                    ]),
+                    communication_channel=random.choice(['email', 'phone', 'meeting', 'video']),
+                    outcome='Discussed project status and next steps',
+                    engagement_sentiment=random.choice(['positive', 'neutral', 'positive']),
+                    satisfaction_rating=random.randint(3, 5),
+                    created_by=self.users['admin'],
+                    follow_up_required=random.choice([True, False])
+                )
+                self.stdout.write(f'  Created engagement record for {stakeholder.name}')
+        
+        # Create engagement metrics
+        from django.db import models as django_models
+        for stakeholder in stakeholders:
+            engagement_records = StakeholderEngagementRecord.objects.filter(stakeholder=stakeholder)
+            avg_satisfaction = engagement_records.aggregate(django_models.Avg('satisfaction_rating'))['satisfaction_rating__avg'] or 4
+            
+            metrics, created = EngagementMetrics.objects.get_or_create(
+                board=board,
+                stakeholder=stakeholder,
+                defaults={
+                    'total_engagements': engagement_records.count(),
+                    'engagements_this_month': engagement_records.filter(
+                        date__gte=(timezone.now() - timedelta(days=30)).date()
+                    ).count(),
+                    'average_satisfaction': round(avg_satisfaction, 2),
+                    'engagement_gap': stakeholder.get_engagement_gap(),
+                    'period_start': (timezone.now() - timedelta(days=90)).date(),
+                    'period_end': timezone.now().date()
+                }
+            )
+            if created:
+                self.stdout.write(f'  Created engagement metrics for {stakeholder.name}')
+        
+        self.stdout.write(self.style.SUCCESS('✅ Stakeholder Management demo data created'))
+
+    def create_task_dependency_demo_data(self):
+        """Create demo data for task dependencies and requirements management"""
+        self.stdout.write(self.style.NOTICE('Creating Task Dependencies demo data...'))
+        
+        # Get all tasks
+        all_tasks = list(Task.objects.all())
+        if len(all_tasks) < 5:
+            self.stdout.write('Not enough tasks for dependency demo data')
+            return
+        
+        # Create parent-child relationships (task hierarchy)
+        for i in range(0, min(10, len(all_tasks) - 1), 2):
+            parent_task = all_tasks[i]
+            child_task = all_tasks[i + 1]
+            
+            # Make child task a subtask
+            child_task.parent_task = parent_task
+            child_task.save()
+            child_task.update_dependency_chain()
+            
+            self.stdout.write(f'  Created dependency: {parent_task.title} -> {child_task.title}')
+        
+        # Create related task relationships (non-hierarchical)
+        for task in all_tasks[10:15]:
+            related_tasks = random.sample([t for t in all_tasks if t.id != task.id], k=min(2, len(all_tasks) - 1))
+            for related_task in related_tasks:
+                task.related_tasks.add(related_task)
+            self.stdout.write(f'  Added {len(related_tasks)} related tasks to: {task.title}')
+        
+        # Add resource skill requirements and AI suggestions
+        for task in all_tasks[:12]:
+            if task.priority in ['high', 'urgent']:
+                # Add required skills
+                task.required_skills = [
+                    {'name': random.choice(['Python', 'JavaScript', 'SQL', 'DevOps']), 'level': random.choice(['Intermediate', 'Advanced'])},
+                    {'name': random.choice(['Problem Solving', 'Communication', 'Team Work']), 'level': random.choice(['Intermediate', 'Advanced'])}
+                ]
+                
+                # Add skill match score
+                task.skill_match_score = random.randint(60, 95)
+                
+                # Add optimal assignee suggestions
+                available_users = [u for u in self.users.values() if u.id != task.created_by.id]
+                task.optimal_assignee_suggestions = [
+                    {
+                        'user_id': user.id,
+                        'username': user.username,
+                        'match_score': random.randint(70, 100),
+                        'reason': 'Skills match with task requirements'
+                    }
+                    for user in random.sample(available_users, k=min(2, len(available_users)))
+                ]
+                
+                # Add collaboration indicators
+                task.collaboration_required = random.choice([True, False])
+                if task.collaboration_required:
+                    task.suggested_team_members = [
+                        {
+                            'user_id': user.id,
+                            'username': user.username,
+                            'role': 'Collaborator'
+                        }
+                        for user in random.sample(available_users, k=min(2, len(available_users)))
+                    ]
+                
+                # Add complexity score
+                task.complexity_score = random.randint(1, 10)
+                
+                # Add suggested dependencies
+                other_tasks = [t for t in all_tasks if t.id != task.id]
+                if other_tasks:
+                    suggested_deps = random.sample(other_tasks, k=min(2, len(other_tasks)))
+                    task.suggested_dependencies = [
+                        {
+                            'task_id': dep.id,
+                            'title': dep.title,
+                            'reason': 'May need to be completed before this task',
+                            'confidence': round(random.uniform(0.6, 0.95), 2)
+                        }
+                        for dep in suggested_deps
+                    ]
+                    task.last_dependency_analysis = timezone.now()
+                
+                task.save()
+                self.stdout.write(f'  Enhanced task with resource and dependency data: {task.title}')
+        
+        self.stdout.write(self.style.SUCCESS('✅ Task Dependencies demo data created'))
+
