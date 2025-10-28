@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 from .models import Board, Column, Task, TaskLabel, Comment, TaskActivity
 from .forms import BoardForm, ColumnForm, TaskForm, TaskLabelForm, CommentForm, TaskMoveForm, TaskSearchForm
 from accounts.models import UserProfile
+from .stakeholder_models import StakeholderTaskInvolvement
 
 @login_required
 def dashboard(request):
@@ -419,6 +420,9 @@ def task_detail(request, task_id):
     # Get all activities for this task
     activities = TaskActivity.objects.filter(task=task)
     
+    # Get stakeholders involved in this task
+    stakeholders = StakeholderTaskInvolvement.objects.filter(task=task)
+    
     return render(request, 'kanban/task_detail.html', {
         'task': task,
         'board': board,
@@ -426,6 +430,7 @@ def task_detail(request, task_id):
         'comment_form': comment_form,
         'comments': comments,
         'activities': activities,
+        'stakeholders': stakeholders,
     })
 
 @login_required
