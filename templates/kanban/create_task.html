@@ -149,6 +149,37 @@
                             <div id="task-breakdown-result" class="d-none mt-2"></div>
                         </div>
                         
+                        <!-- Advanced Features Section -->
+                        <div class="card mb-3">
+                            <div class="card-header bg-light cursor-pointer" data-bs-toggle="collapse" data-bs-target="#advancedFeaturesSection">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-chevron-down me-2"></i>
+                                    <i class="fas fa-star text-warning"></i> Advanced Features (Optional)
+                                </h6>
+                            </div>
+                            <div id="advancedFeaturesSection" class="collapse">
+                                <div class="card-body">
+                                    <!-- 🛡️ Risk Assessment Info -->
+                                    <div class="alert alert-info mb-3">
+                                        <h6><i class="fas fa-shield-alt"></i> Risk & Resources</h6>
+                                        <p class="small mb-0">The system will automatically analyze this task for risks, complexity, and resource requirements. These will be displayed once the task is created.</p>
+                                    </div>
+
+                                    <!-- 👥 Stakeholder Involvement Info -->
+                                    <div class="alert alert-info mb-3">
+                                        <h6><i class="fas fa-users"></i> Stakeholder Management</h6>
+                                        <p class="small mb-0">After creating the task, you can add stakeholders to track their involvement and engagement with this task.</p>
+                                    </div>
+
+                                    <!-- 📋 Task Dependencies Info -->
+                                    <div class="alert alert-info mb-0">
+                                        <h6><i class="fas fa-link"></i> Task Dependencies</h6>
+                                        <p class="small mb-0">You can set parent tasks, subtasks, and related tasks to track dependencies. Configure these after creating the task.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="d-flex justify-content-between mt-4">
                             <a href="{% url 'board_detail' board.id %}" class="btn btn-outline-secondary">
                                 Cancel

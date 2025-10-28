@@ -185,7 +185,154 @@
                             </div>
                         </div>
                     </div>
-                </div>                {% if task.labels.all %}                <div>
+                </div>                <!-- 🛡️ Risk Management Section -->
+                {% if task.risk_level %}
+                <div class="mb-3 p-2 rounded border-2 {% if task.risk_level == 'critical' %}border-danger bg-danger{% elif task.risk_level == 'high' %}border-warning bg-warning{% elif task.risk_level == 'medium' %}border-info bg-info{% else %}border-success bg-success{% endif %} text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <label class="text-white-50 mb-1">Risk Assessment</label>
+                            <h6 class="mb-1">🛡️ Risk Level: <strong>{{ task.risk_level|title }}</strong></h6>
+                            <small>Score: {{ task.risk_score }}/9 | Likelihood: {{ task.risk_likelihood }}/3 | Impact: {{ task.risk_impact }}/3</small>
+                        </div>
+                    </div>
+                    {% if task.risk_indicators %}
+                    <div class="mt-2">
+                        <small class="text-white-50">Indicators to Monitor:</small>
+                        <ul class="small mb-0 mt-1">
+                            {% for indicator in task.risk_indicators %}
+                            <li>{{ indicator }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    {% if task.mitigation_suggestions %}
+                    <div class="mt-2">
+                        <small class="text-white-50">Mitigation Strategies:</small>
+                        <div class="small mt-1">
+                            {% for suggestion in task.mitigation_suggestions %}
+                            <div class="mb-1">
+                                <strong>{{ suggestion.strategy }}</strong>: {{ suggestion.description }} ({{ suggestion.timeline }})
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- 👥 Stakeholder Involvement Section -->
+                {% if stakeholders %}
+                <div class="mb-3">
+                    <label class="text-muted">👥 Stakeholders</label>
+                    <div class="p-2 bg-light rounded">
+                        {% for involvement in stakeholders %}
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white rounded border-start border-3" style="border-color: {{ involvement.stakeholder.board.id|add:involvement.stakeholder.id|stringformat:"05d"|slice:"-3:" }};">
+                            <div>
+                                <strong>{{ involvement.stakeholder.name }}</strong>
+                                <small class="d-block text-muted">{{ involvement.get_involvement_type_display }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-info">{{ involvement.get_engagement_status_display }}</span>
+                                {% if involvement.satisfaction_rating %}
+                                <small class="d-block text-warning mt-1">★ {{ involvement.satisfaction_rating }}/5</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- 📋 Dependencies & Requirements Section -->
+                {% if task.parent_task or task.subtasks.all or task.related_tasks.all or task.required_skills %}
+                <div class="mb-3">
+                    <label class="text-muted">📋 Dependencies & Requirements</label>
+                    <div class="p-2 bg-light rounded">
+                        {% if task.parent_task %}
+                        <div class="mb-2">
+                            <small class="text-muted">Parent Task:</small>
+                            <div class="p-1 bg-white rounded border-start border-3 border-primary">
+                                <a href="#" class="text-decoration-none"><strong>{{ task.parent_task.title }}</strong></a>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if task.subtasks.all %}
+                        <div class="mb-2">
+                            <small class="text-muted">Subtasks ({{ task.subtasks.count }}):</small>
+                            {% for subtask in task.subtasks.all %}
+                            <div class="p-1 bg-white rounded border-start border-3 border-success ms-2 mb-1">
+                                <a href="#" class="text-decoration-none text-muted"><small>{{ subtask.title }}</small></a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        {% if task.related_tasks.all %}
+                        <div class="mb-2">
+                            <small class="text-muted">Related Tasks ({{ task.related_tasks.count }}):</small>
+                            {% for related in task.related_tasks.all %}
+                            <span class="badge bg-secondary me-1">{{ related.title|truncatewords:3 }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        {% if task.required_skills %}
+                        <div>
+                            <small class="text-muted">Required Skills:</small>
+                            <div>
+                                {% for skill in task.required_skills %}
+                                <span class="badge bg-warning me-1 mt-1">{{ skill.name }} ({{ skill.level }})</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if task.complexity_score %}
+                        <div class="mt-2">
+                            <small class="text-muted">Complexity: </small>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: {% widthratio task.complexity_score 10 100 %}%"></div>
+                            </div>
+                            <small class="text-muted">{{ task.complexity_score }}/10</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- 📦 Resource Information -->
+                {% if task.skill_match_score or task.workload_impact or task.collaboration_required %}
+                <div class="mb-3">
+                    <label class="text-muted">📦 Resource Information</label>
+                    <div class="p-2 bg-light rounded">
+                        {% if task.skill_match_score %}
+                        <div class="mb-2">
+                            <small class="text-muted">Skill Match Score:</small>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: {{ task.skill_match_score }}%"></div>
+                            </div>
+                            <small class="text-muted">{{ task.skill_match_score }}%</small>
+                        </div>
+                        {% endif %}
+                        
+                        {% if task.workload_impact %}
+                        <div class="mb-2">
+                            <small class="text-muted">Workload Impact: </small>
+                            <span class="badge {% if task.workload_impact == 'critical' %}bg-danger{% elif task.workload_impact == 'high' %}bg-warning{% else %}bg-success{% endif %}">{{ task.get_workload_impact_display }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if task.collaboration_required %}
+                        <div>
+                            <small class="text-muted"><i class="fas fa-users me-1"></i>Collaboration Required</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if task.labels.all %}                <div>
                     <div class="d-flex justify-content-between align-items-center">
                         <label class="text-muted mb-0">Labels
                             <button type="button" class="btn btn-sm p-0" data-bs-toggle="modal" data-bs-target="#leanLabelsInfoModal">
