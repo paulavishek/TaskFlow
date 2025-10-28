@@ -1460,6 +1460,7 @@ def getting_started_wizard(request):
         return redirect('organization_choice')
 
 @login_required
+@login_required
 def complete_wizard(request):
     """
     Mark the wizard as completed for the user

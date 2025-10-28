@@ -186,13 +186,30 @@ document.addEventListener('DOMContentLoaded', function() {
         const skipBtn = document.createElement('li');
         skipBtn.className = 'nav-item';
         skipBtn.innerHTML = `
-            <a class="nav-link text-warning fw-bold" href="{% url 'complete_wizard' %}" onclick="return confirmSkip()" style="border: 1px solid #ffc107; border-radius: 20px; padding: 0.3rem 1rem; margin-left: 1rem;">
+            <a class="nav-link text-warning fw-bold" href="#" onclick="skipTutorial(); return false;" style="border: 1px solid #ffc107; border-radius: 20px; padding: 0.3rem 1rem; margin-left: 1rem;">
                 <i class="fas fa-forward me-1"></i> Skip Tutorial
             </a>
         `;
         navbar.appendChild(skipBtn);
     }
 });
+
+function skipTutorial() {
+    if (confirm('Are you sure you want to skip the tutorial? You can always access it later from the dashboard menu.')) {
+        // Create and submit a POST form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "complete_wizard" %}';
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfToken) {
+            form.appendChild(csrfToken.cloneNode(true));
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
 </script>
 
 <div class="wizard-container">
@@ -621,10 +638,6 @@ function setupTaskCreationForm() {
             spinner.style.display = 'none';
         });
     });
-}
-
-function confirmSkip() {
-    return confirm('Are you sure you want to skip the tutorial? You can always create boards and tasks from the dashboard.');
 }
 
 // Keyboard navigation
