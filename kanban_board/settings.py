@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     # Local apps
     'accounts',
     'kanban',
+    'ai_assistant',
 ]
 
 MIDDLEWARE = [
@@ -250,3 +251,79 @@ GOOGLE_OAUTH2_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH2_CLIENT_SECRET', '')
 # Custom adapters for handling organization assignment
 ACCOUNT_ADAPTER = 'accounts.adapters.CustomAccountAdapter'
 SOCIALACCOUNT_ADAPTER = 'accounts.adapters.CustomSocialAccountAdapter'
+
+# ============================================
+# AI PROJECT ASSISTANT CONFIGURATION
+# ============================================
+
+# AI Model API Keys
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
+
+# Google Custom Search API (for RAG - Retrieval Augmented Generation)
+GOOGLE_SEARCH_API_KEY = os.getenv('GOOGLE_SEARCH_API_KEY', '')
+GOOGLE_SEARCH_ENGINE_ID = os.getenv('GOOGLE_SEARCH_ENGINE_ID', '')
+ENABLE_WEB_SEARCH = os.getenv('ENABLE_WEB_SEARCH', 'True').lower() == 'true'
+
+# AI Assistant Settings
+AI_ASSISTANT_CONFIG = {
+    'DEFAULT_MODEL': 'gemini',  # 'gemini' or 'openai'
+    'MAX_HISTORY_LENGTH': 50,
+    'RESPONSE_TIMEOUT': 30,  # seconds
+    'ENABLE_WEB_SEARCH': ENABLE_WEB_SEARCH,
+    'KB_REFRESH_INTERVAL': 3600,  # 1 hour
+    'CACHE_TTL': 3600,  # 1 hour
+}
+
+# Logging for AI Assistant
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'ai_assistant.log'),
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'ai_assistant': {
+            'handlers': ['file', 'console'],
+            'level': os.getenv('LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+    },
+}
+
+# Cache Configuration (for caching AI responses and search results)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 300,
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000
+        }
+    }
+}
+
+# Create logs directory if it doesn't exist
+LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+if not os.path.exists(LOGS_DIR):
+    os.makedirs(LOGS_DIR)

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Recommendations - TaskFlow AI Assistant{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="fas fa-lightbulb me-2"></i> AI Recommendations</h2>
+            <p class="text-muted">Smart suggestions to optimize your projects</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <select class="form-select form-select-sm" id="status-filter">
+                <option value="pending">Pending</option>
+                <option value="accepted">Accepted</option>
+                <option value="rejected">Rejected</option>
+                <option value="all">All</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="row">
+        {% if recommendations %}
+            {% for rec in recommendations %}
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header {% if rec.potential_impact == 'critical' %}bg-danger{% elif rec.potential_impact == 'high' %}bg-warning{% else %}bg-info{% endif %} text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-{{ rec.recommendation_type|default:'info-circle' }} me-2"></i>
+                            {{ rec.get_recommendation_type_display }}
+                        </h6>
+                    </div>
+                    
+                    <div class="card-body">
+                        <h5 class="card-title">{{ rec.title }}</h5>
+                        <p class="card-text text-muted small">{{ rec.description|truncatewords:30 }}</p>
+                        
+                        <div class="mb-3">
+                            <small class="d-block">
+                                <strong>Impact:</strong>
+                                <span class="badge bg-{{ rec.potential_impact|lower }}">
+                                    {{ rec.get_potential_impact_display }}
+                                </span>
+                            </small>
+                            <small class="d-block">
+                                <strong>Confidence:</strong>
+                                <span class="badge bg-secondary">{{ rec.confidence_score|floatformat:0 }}%</span>
+                            </small>
+                        </div>
+                        
+                        {% if rec.status == 'pending' %}
+                        <div class="btn-group btn-group-sm w-100" role="group">
+                            <button type="button" class="btn btn-success" onclick="acceptRecommendation({{ rec.id }})">
+                                Accept
+                            </button>
+                            <button type="button" class="btn btn-danger" onclick="rejectRecommendation({{ rec.id }})">
+                                Reject
+                            </button>
+                        </div>
+                        {% else %}
+                        <span class="badge bg-{{ rec.status|default:'secondary' }} w-100">
+                            {{ rec.get_status_display }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                No recommendations yet. Keep using the AI Assistant to get smart recommendations!
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function acceptRecommendation(id) {
+        fetch(`/assistant/api/recommendations/${id}/accept/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        }).then(() => location.reload());
+    }
+    
+    function rejectRecommendation(id) {
+        fetch(`/assistant/api/recommendations/${id}/reject/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        }).then(() => location.reload());
+    }
+</script>
+{% endblock %}

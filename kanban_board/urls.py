@@ -25,6 +25,7 @@ urlpatterns = [
     path('stakeholder/', include('kanban.stakeholder_urls')),
     path('accounts/', include('accounts.urls')),
     path('accounts/', include('allauth.urls')),  # Add allauth URLs
+    path('assistant/', include('ai_assistant.urls')),  # AI Project Assistant URLs
 ]
 
 if settings.DEBUG:

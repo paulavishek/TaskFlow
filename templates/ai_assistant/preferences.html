@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Preferences - TaskFlow AI Assistant{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-cog me-2"></i> AI Assistant Preferences</h3>
+                </div>
+                
+                <div class="card-body">
+                    <form method="post" class="needs-validation">
+                        {% csrf_token %}
+                        
+                        <!-- Model Selection -->
+                        <h5 class="mb-3"><i class="fas fa-robot me-2"></i> Preferred AI Model</h5>
+                        <div class="mb-3">
+                            {{ form.preferred_model }}
+                            <small class="form-text text-muted d-block mt-2">
+                                Choose which AI model to use by default: Gemini (faster) or OpenAI (more capable)
+                            </small>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Feature Preferences -->
+                        <h5 class="mb-3"><i class="fas fa-sliders-h me-2"></i> Feature Preferences</h5>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.enable_web_search }}
+                                <label class="form-check-label" for="{{ form.enable_web_search.id_for_label }}">
+                                    Enable Web Search (RAG)
+                                </label>
+                            </div>
+                            <small class="form-text text-muted d-block mt-2">
+                                Allow the assistant to search the web for recent information
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.enable_task_insights }}
+                                <label class="form-check-label" for="{{ form.enable_task_insights.id_for_label }}">
+                                    Enable Task Insights
+                                </label>
+                            </div>
+                            <small class="form-text text-muted d-block mt-2">
+                                Get AI-powered insights about your tasks
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.enable_risk_alerts }}
+                                <label class="form-check-label" for="{{ form.enable_risk_alerts.id_for_label }}">
+                                    Enable Risk Alerts
+                                </label>
+                            </div>
+                            <small class="form-text text-muted d-block mt-2">
+                                Receive AI-detected risk alerts
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.enable_resource_recommendations }}
+                                <label class="form-check-label" for="{{ form.enable_resource_recommendations.id_for_label }}">
+                                    Enable Resource Recommendations
+                                </label>
+                            </div>
+                            <small class="form-text text-muted d-block mt-2">
+                                Get recommendations for resource optimization
+                            </small>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Notification Preferences -->
+                        <h5 class="mb-3"><i class="fas fa-bell me-2"></i> Notification Preferences</h5>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.notify_on_risk }}
+                                <label class="form-check-label" for="{{ form.notify_on_risk.id_for_label }}">
+                                    Notify on Risk Detection
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.notify_on_overload }}
+                                <label class="form-check-label" for="{{ form.notify_on_overload.id_for_label }}">
+                                    Notify on Team Overload
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.notify_on_dependency_issues }}
+                                <label class="form-check-label" for="{{ form.notify_on_dependency_issues.id_for_label }}">
+                                    Notify on Dependency Issues
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Display Preferences -->
+                        <h5 class="mb-3"><i class="fas fa-palette me-2"></i> Display Preferences</h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Theme</label>
+                            {{ form.theme }}
+                            <small class="form-text text-muted d-block mt-2">
+                                Choose how the interface appears
+                            </small>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label" for="{{ form.messages_per_page.id_for_label }}">
+                                Messages per Page
+                            </label>
+                            {{ form.messages_per_page }}
+                            <small class="form-text text-muted d-block mt-2">
+                                Number of messages to display per page in chat history
+                            </small>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i> Save Preferences
+                            </button>
+                            <a href="{% url 'ai_assistant:welcome' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i> Back
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if messages %}
+<div class="toast-container position-fixed top-0 end-0 p-3">
+    {% for message in messages %}
+    <div class="toast alert alert-{{ message.tags }}" role="alert">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

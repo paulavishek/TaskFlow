@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}AI Project Assistant - TaskFlow{% endblock %}
+
+{% block extra_css %}
+<style>
+    .welcome-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .welcome-content {
+        max-width: 900px;
+        margin: 0 auto;
+        text-align: center;
+        padding: 40px 20px;
+    }
+    
+    .assistant-icon {
+        font-size: 80px;
+        margin-bottom: 20px;
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+    }
+    
+    .welcome-title {
+        font-size: 48px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .welcome-subtitle {
+        font-size: 20px;
+        margin-bottom: 40px;
+        opacity: 0.9;
+    }
+    
+    .feature-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin: 40px 0;
+    }
+    
+    .feature-card {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 10px;
+        padding: 25px;
+        transition: all 0.3s ease;
+    }
+    
+    .feature-card:hover {
+        background: rgba(255,255,255,0.2);
+        transform: translateY(-5px);
+    }
+    
+    .feature-icon {
+        font-size: 40px;
+        margin-bottom: 15px;
+    }
+    
+    .feature-card h3 {
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+    
+    .feature-card p {
+        font-size: 14px;
+        opacity: 0.9;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        margin-top: 40px;
+        flex-wrap: wrap;
+    }
+    
+    .btn-new-chat {
+        background: white;
+        color: #667eea;
+        font-weight: bold;
+        padding: 12px 40px;
+        border-radius: 30px;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .btn-new-chat:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    
+    .recent-sessions {
+        margin-top: 50px;
+        text-align: left;
+    }
+    
+    .recent-sessions h3 {
+        font-size: 22px;
+        margin-bottom: 20px;
+    }
+    
+    .session-list {
+        background: rgba(255,255,255,0.1);
+        border-radius: 10px;
+        padding: 20px;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    .session-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .session-item:hover {
+        background: rgba(255,255,255,0.1);
+        border-radius: 5px;
+        padding-left: 16px;
+    }
+    
+    .session-item:last-child {
+        border-bottom: none;
+    }
+    
+    .session-title {
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    
+    .session-meta {
+        font-size: 12px;
+        opacity: 0.8;
+    }
+    
+    .session-link {
+        color: white;
+        text-decoration: none;
+        flex: 1;
+    }
+    
+    .session-link:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="welcome-container">
+    <div class="welcome-content">
+        <div class="assistant-icon">🤖</div>
+        
+        <h1 class="welcome-title">TaskFlow AI Assistant</h1>
+        <p class="welcome-subtitle">Your intelligent project management companion</p>
+        
+        <div class="feature-cards">
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Project Insights</h3>
+                <p>Get AI-powered analysis of your projects, tasks, and team performance</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3>Smart Search</h3>
+                <p>Find tasks, trends, and best practices with natural language</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">⚠️</div>
+                <h3>Risk Management</h3>
+                <p>Identify risks and get mitigation recommendations automatically</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3>Team Optimization</h3>
+                <p>Get recommendations for better resource allocation</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>Task Planning</h3>
+                <p>Optimize priorities, deadlines, and dependencies</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📈</div>
+                <h3>Real-time Data</h3>
+                <p>Access latest information through web search (RAG)</p>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="{% url 'ai_assistant:chat' %}" class="btn btn-new-chat">
+                <i class="fas fa-comments me-2"></i> Start New Chat
+            </a>
+            <a href="{% url 'ai_assistant:analytics' %}" class="btn btn-outline-light">
+                <i class="fas fa-chart-bar me-2"></i> View Analytics
+            </a>
+            <a href="{% url 'ai_assistant:preferences' %}" class="btn btn-outline-light">
+                <i class="fas fa-cog me-2"></i> Preferences
+            </a>
+        </div>
+        
+        {% if recent_sessions %}
+        <div class="recent-sessions">
+            <h3>Recent Conversations</h3>
+            <div class="session-list">
+                {% for session in recent_sessions %}
+                <div class="session-item">
+                    <a href="{% url 'ai_assistant:chat' %}?session={{ session.id }}" class="session-link">
+                        <div class="session-title">{{ session.title }}</div>
+                        <div class="session-meta">{{ session.message_count }} messages • {{ session.updated_at|timesince }} ago</div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
