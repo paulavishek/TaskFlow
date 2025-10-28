@@ -226,7 +226,7 @@
                     <label class="text-muted">👥 Stakeholders</label>
                     <div class="p-2 bg-light rounded">
                         {% for involvement in stakeholders %}
-                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white rounded border-start border-3" style="border-color: {{ involvement.stakeholder.board.id|add:involvement.stakeholder.id|stringformat:"05d"|slice:"-3:" }};">
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white rounded border-start border-3 border-info">
                             <div>
                                 <strong>{{ involvement.stakeholder.name }}</strong>
                                 <small class="d-block text-muted">{{ involvement.get_involvement_type_display }}</small>
@@ -292,7 +292,7 @@
                         <div class="mt-2">
                             <small class="text-muted">Complexity: </small>
                             <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-danger" role="progressbar" style="width: {% widthratio task.complexity_score 10 100 %}%"></div>
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: 70%;"></div>
                             </div>
                             <small class="text-muted">{{ task.complexity_score }}/10</small>
                         </div>
@@ -310,7 +310,7 @@
                         <div class="mb-2">
                             <small class="text-muted">Skill Match Score:</small>
                             <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-info" role="progressbar" style="width: {{ task.skill_match_score }}%"></div>
+                                <div class="progress-bar bg-info" role="progressbar" style="width: 85%;"></div>
                             </div>
                             <small class="text-muted">{{ task.skill_match_score }}%</small>
                         </div>
