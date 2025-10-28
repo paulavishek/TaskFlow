@@ -170,7 +170,7 @@ class AITaskRecommendation(models.Model):
         ('timeline', 'Timeline Optimization'),
     ]
     
-    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='ai_recommendations')
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='task_ai_recommendations')
     board = models.ForeignKey(Board, on_delete=models.CASCADE, related_name='task_recommendations')
     
     recommendation_type = models.CharField(max_length=30, choices=RECOMMENDATION_TYPE_CHOICES)

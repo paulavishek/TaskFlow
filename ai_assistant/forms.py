@@ -31,7 +31,6 @@ class UserPreferenceForm(forms.ModelForm):
     class Meta:
         model = UserPreference
         fields = [
-            'preferred_model',
             'enable_web_search',
             'enable_task_insights',
             'enable_risk_alerts',
@@ -43,9 +42,6 @@ class UserPreferenceForm(forms.ModelForm):
             'messages_per_page',
         ]
         widgets = {
-            'preferred_model': forms.RadioSelect(attrs={
-                'class': 'form-check-input',
-            }),
             'theme': forms.RadioSelect(attrs={
                 'class': 'form-check-input',
             }),

@@ -55,7 +55,7 @@ class AITaskRecommendationAdmin(admin.ModelAdmin):
 
 @admin.register(UserPreference)
 class UserPreferenceAdmin(admin.ModelAdmin):
-    list_display = ['user', 'preferred_model', 'enable_web_search', 'theme', 'updated_at']
-    list_filter = ['preferred_model', 'theme', 'enable_web_search']
+    list_display = ['user', 'enable_web_search', 'theme', 'updated_at']
+    list_filter = ['theme', 'enable_web_search']
     search_fields = ['user__username']
     readonly_fields = ['created_at', 'updated_at']
