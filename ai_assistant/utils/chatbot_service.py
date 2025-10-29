@@ -1,7 +1,7 @@
 import json
 import logging
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, Count
 from kanban.models import Task, Board
 from ai_assistant.models import ProjectKnowledgeBase
 from .ai_clients import GeminiClient
@@ -138,6 +138,82 @@ class TaskFlowChatbotService:
         prompt_lower = prompt.lower()
         return any(trigger in prompt_lower for trigger in project_triggers)
     
+    def _is_aggregate_query(self, prompt):
+        """
+        Detect if query is asking for aggregate/system-wide data
+        Examples: "How many total tasks?", "Tasks across all boards?"
+        """
+        aggregate_keywords = [
+            'total', 'all boards', 'across all', 'all projects',
+            'sum', 'count all', 'how many tasks', 'how many',
+            'total count', 'overall', 'entire', 'whole system'
+        ]
+        
+        prompt_lower = prompt.lower()
+        return any(kw in prompt_lower for kw in aggregate_keywords)
+    
+    def _get_aggregate_context(self, prompt):
+        """
+        Get system-wide aggregate data for queries like:
+        - "How many tasks in all boards?"
+        - "Total tasks?"
+        - "Task count across all projects?"
+        """
+        try:
+            # Only process if this looks like an aggregate query
+            if not self._is_aggregate_query(prompt):
+                return None
+            
+            # Get user's boards
+            user_boards = Board.objects.filter(
+                Q(created_by=self.user) | Q(members=self.user)
+            ).distinct()
+            
+            if not user_boards.exists():
+                return "You don't have access to any boards yet."
+            
+            # Get aggregate data
+            total_tasks = Task.objects.filter(
+                column__board__in=user_boards
+            ).count()
+            
+            # Get tasks by status
+            tasks_by_status = Task.objects.filter(
+                column__board__in=user_boards
+            ).values('column__name').annotate(
+                count=Count('id')
+            ).order_by('column__name')
+            
+            # Get tasks by board
+            tasks_by_board = Task.objects.filter(
+                column__board__in=user_boards
+            ).values('column__board__name').annotate(
+                count=Count('id')
+            ).order_by('-count')
+            
+            # Build context
+            context = f"""**System-Wide Task Analytics (All Your Projects):**
+
+- **Total Tasks:** {total_tasks}
+- **Total Boards:** {user_boards.count()}
+
+**Tasks by Status:**
+"""
+            for status in tasks_by_status:
+                context += f"  - {status['column__name']}: {status['count']}\n"
+            
+            context += "\n**Tasks by Board:**\n"
+            for board_stat in tasks_by_board:
+                context += f"  - {board_stat['column__board__name']}: {board_stat['count']}\n"
+            
+            context += f"\n**All Boards:** {', '.join([b.name for b in user_boards])}\n"
+            
+            return context
+        
+        except Exception as e:
+            logger.error(f"Error getting aggregate context: {e}")
+            return None
+    
     def generate_system_prompt(self):
         """Generate system prompt for AI model"""
         return """You are TaskFlow AI Project Assistant, an intelligent project management assistant. 
@@ -171,12 +247,20 @@ For suggestions, provide confidence levels and reasoning."""
             # Detect query type
             is_search_query = self._is_search_query(prompt)
             is_project_query = self._is_project_query(prompt)
+            is_aggregate_query = self._is_aggregate_query(prompt)
             
             # Build context
             context_parts = []
             
-            # Add TaskFlow project context
-            if is_project_query:
+            # Add aggregate context if this is a system-wide query
+            if is_aggregate_query:
+                aggregate_context = self._get_aggregate_context(prompt)
+                if aggregate_context:
+                    context_parts.append(aggregate_context)
+                    is_project_query = True
+            
+            # Add TaskFlow project context (for single board or if no aggregate context)
+            if is_project_query and not context_parts:
                 taskflow_context = self.get_taskflow_context(use_cache)
                 if taskflow_context:
                     context_parts.append(taskflow_context)
@@ -222,6 +306,7 @@ For suggestions, provide confidence levels and reasoning."""
                 'context': {
                     'is_project_query': is_project_query,
                     'is_search_query': is_search_query,
+                    'is_aggregate_query': is_aggregate_query,
                 }
             }
         
