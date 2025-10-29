@@ -11,7 +11,6 @@ TaskFlow isn't just another project management tool - it's your **Gemini-powered
 ### ✨ Features at a Glance
 
 🧠 **Gemini-Powered Intelligence**
-- **NEW:** Conversational AI Project Assistant with RAG capabilities and multi-session support
 - Smart Column Recommendations using Google's Gemini AI
 - Intelligent Task Assistant with Gemini-generated descriptions  
 - AI Analytics Summarization powered by advanced language understanding
@@ -97,53 +96,6 @@ TaskFlow is an open-source project inspired by the powerful Kanban functionaliti
 ## 🤖 AI-Powered Features
 
 TaskFlow leverages advanced AI to make project management smarter, faster, and more efficient:
-
-### 💬 **AI Project Assistant** *(Powered by Gemini with RAG)*
-
-**What it does:** An intelligent conversational assistant that understands your projects, tasks, and team dynamics to provide contextual recommendations and analysis. Uses Retrieval-Augmented Generation (RAG) to maintain a knowledge base of your project information for more accurate responses.
-
-**Key Features:**
-
-- **Smart Session Management**: Create and manage multiple conversation sessions with project context
-- **Retrieval-Augmented Generation (RAG)**: AI maintains a knowledge base of your project information for accurate, contextual responses
-- **Context-Aware Responses**: Assistant understands your board, tasks, risks, resources, and stakeholders
-- **Web Search Integration**: Optionally search the web for external information to supplement project knowledge
-- **Message Feedback**: Rate responses as helpful/unhelpful to improve assistant performance over time
-- **Usage Analytics**: Track your AI usage patterns and token consumption by date and feature
-- **Multi-Session Conversations**: Save and resume multiple conversation threads with different teams or projects
-
-**What the AI Assistant Can Help With:**
-
-- **Risk Analysis**: "What are the highest-risk tasks in this sprint?" → Analyzes all tasks, identifies risk factors, and suggests mitigation
-- **Team Management**: "Who should I assign this task to?" → Considers skills, workload, and availability
-- **Workload Balancing**: "Help me balance team capacity" → Reviews capacity forecasts and recommends reassignments
-- **Stakeholder Engagement**: "Summarize stakeholder concerns" → Pulls engagement records and sentiment analysis
-- **Project Progress**: "When will we finish?" → Calculates velocity and predicts completion dates
-- **Bottleneck Detection**: "What's blocking our progress?" → Identifies workflow constraints and suggests solutions
-- **Requirements Clarity**: "Break down this requirement" → Analyzes complex requirements and suggests subtasks
-- **Dependency Analysis**: "What tasks are blocking this one?" → Shows dependency chains and critical path
-
-**How to Use:**
-
-1. Navigate to **"AI Assistant"** from the main menu
-2. Start a new conversation or continue an existing session
-3. Select a project board for context (optional but recommended)
-4. Ask natural language questions about your project
-5. Rate responses to help improve accuracy
-6. Access conversation history for future reference
-
-**Example Conversations:**
-```
-User: "What are the high-risk tasks in this sprint?"
-Assistant: [Analyzes tasks and provides risk assessment]
-Risk Summary for Current Sprint:
-• Payment Integration: Risk Score 8/9 (Critical)
-  Recommendation: Implement comprehensive testing framework
-• API Migration: Risk Score 6/9 (High)
-  Recommendation: Create rollback procedure
-• UI Redesign: Risk Score 3/9 (Low)
-  Recommendation: Monitor stakeholder feedback
-```
 
 ### 🎯 **Smart Column Recommendations** *(Powered by Gemini)*
 
