@@ -164,10 +164,23 @@ class TaskFlowChatbotService:
             if not self._is_aggregate_query(prompt):
                 return None
             
-            # Get user's boards
-            user_boards = Board.objects.filter(
-                Q(created_by=self.user) | Q(members=self.user)
-            ).distinct()
+            # Get user's organization
+            try:
+                organization = self.user.profile.organization
+            except:
+                # Fallback if profile doesn't exist
+                organization = None
+            
+            # Get user's boards (filtered by organization if available)
+            if organization:
+                user_boards = Board.objects.filter(
+                    Q(organization=organization) & 
+                    (Q(created_by=self.user) | Q(members=self.user))
+                ).distinct()
+            else:
+                user_boards = Board.objects.filter(
+                    Q(created_by=self.user) | Q(members=self.user)
+                ).distinct()
             
             if not user_boards.exists():
                 return "You don't have access to any boards yet."
