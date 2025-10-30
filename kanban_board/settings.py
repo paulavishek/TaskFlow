@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'colorfield',
     'widget_tweaks',
+    'channels',  # Django Channels for WebSockets
     
     # Django Allauth
     'allauth',
@@ -75,6 +76,7 @@ INSTALLED_APPS = [
     'accounts',
     'kanban',
     'ai_assistant',
+    'messaging',
 ]
 
 MIDDLEWARE = [
@@ -311,6 +313,18 @@ LOGGING = {
     },
 }
 
+# Channels Configuration for WebSockets
+ASGI_APPLICATION = 'kanban_board.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
+
 # Cache Configuration (for caching AI responses and search results)
 CACHES = {
     'default': {
@@ -327,3 +341,4 @@ CACHES = {
 LOGS_DIR = os.path.join(BASE_DIR, 'logs')
 if not os.path.exists(LOGS_DIR):
     os.makedirs(LOGS_DIR)
+

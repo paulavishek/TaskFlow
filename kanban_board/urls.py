@@ -26,8 +26,10 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('accounts/', include('allauth.urls')),  # Add allauth URLs
     path('assistant/', include('ai_assistant.urls')),  # AI Project Assistant URLs
+    path('messaging/', include('messaging.urls')),  # Real-time messaging URLs
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+

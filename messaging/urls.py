@@ -1,0 +1,27 @@
+from django.urls import path
+from . import views
+
+app_name = 'messaging'
+
+urlpatterns = [
+    # Chat Rooms
+    path('board/<int:board_id>/rooms/', views.chat_room_list, name='chat_room_list'),
+    path('room/<int:room_id>/', views.chat_room_detail, name='chat_room_detail'),
+    path('board/<int:board_id>/rooms/create/', views.create_chat_room, name='create_chat_room'),
+    
+    # Messages
+    path('room/<int:room_id>/send/', views.send_chat_message, name='send_chat_message'),
+    path('room/<int:room_id>/history/', views.message_history, name='message_history'),
+    
+    # Task Thread Comments
+    path('task/<int:task_id>/comments/', views.task_thread_comments, name='task_thread_comments'),
+    path('task/<int:task_id>/comments/history/', views.task_comment_history, name='task_comment_history'),
+    
+    # Mentions
+    path('mentions/', views.get_mentions, name='get_mentions'),
+    
+    # Notifications
+    path('notifications/', views.notifications, name='notifications'),
+    path('notifications/<int:notification_id>/read/', views.mark_notification_read, name='mark_notification_read'),
+    path('notifications/count/', views.get_unread_notification_count, name='get_unread_notification_count'),
+]
