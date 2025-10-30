@@ -12,6 +12,7 @@ from kanban.stakeholder_models import (
     ProjectStakeholder, StakeholderTaskInvolvement, 
     StakeholderEngagementRecord, EngagementMetrics, StakeholderTag
 )
+from messaging.models import ChatRoom, ChatMessage
 
 class Command(BaseCommand):
     help = 'Populate the database with test data'
@@ -34,19 +35,44 @@ class Command(BaseCommand):
         self.create_stakeholder_management_demo_data()
         self.create_task_dependency_demo_data()
         
+        # Create chat room demo data
+        self.create_chat_rooms_demo_data()
+        
         self.stdout.write(self.style.SUCCESS('Successfully populated the database with all features!'))
         
         # Print login credentials for easy testing
-        self.stdout.write(self.style.SUCCESS('You can now log in with the following credentials:'))
-        self.stdout.write(self.style.SUCCESS('Username: admin, Password: admin123'))
-        self.stdout.write(self.style.SUCCESS('Username: john_doe, Password: test1234'))
-        self.stdout.write(self.style.SUCCESS('Username: jane_smith, Password: test1234'))
-        self.stdout.write(self.style.SUCCESS('Username: robert_johnson, Password: test1234'))
-        self.stdout.write(self.style.SUCCESS('\n📊 New Features Demo Data Created:'))
-        self.stdout.write(self.style.SUCCESS('  ✅ Risk Management - Task risk assessments'))
-        self.stdout.write(self.style.SUCCESS('  ✅ Resource Management - Team workload forecasts and alerts'))
-        self.stdout.write(self.style.SUCCESS('  ✅ Stakeholder Management - Stakeholders with engagement tracking'))
-        self.stdout.write(self.style.SUCCESS('  ✅ Requirements Management - Task dependencies and hierarchies'))
+        self.stdout.write(self.style.SUCCESS('\n' + '='*70))
+        self.stdout.write(self.style.SUCCESS('LOGIN CREDENTIALS FOR TESTING'))
+        self.stdout.write(self.style.SUCCESS('='*70))
+        
+        # Admin user
+        self.stdout.write(self.style.SUCCESS('\n👤 ADMIN USER:'))
+        self.stdout.write(self.style.SUCCESS('   Username: admin | Password: admin123'))
+        
+        # Dev Team Users
+        self.stdout.write(self.style.SUCCESS('\n👥 DEV TEAM USERS:'))
+        self.stdout.write(self.style.SUCCESS('   Username: john_doe | Password: JohnDoe@2024'))
+        self.stdout.write(self.style.SUCCESS('   Username: jane_smith | Password: JaneSmith@2024'))
+        self.stdout.write(self.style.SUCCESS('   Username: robert_johnson | Password: RobertJ@2024'))
+        self.stdout.write(self.style.SUCCESS('   Username: alice_williams | Password: AliceW@2024'))
+        self.stdout.write(self.style.SUCCESS('   Username: bob_martinez | Password: BobM@2024'))
+        
+        # Marketing Team Users
+        self.stdout.write(self.style.SUCCESS('\n🎨 MARKETING TEAM USERS:'))
+        self.stdout.write(self.style.SUCCESS('   Username: carol_anderson | Password: CarolA@2024'))
+        self.stdout.write(self.style.SUCCESS('   Username: david_taylor | Password: DavidT@2024'))
+        
+        # Features created
+        self.stdout.write(self.style.SUCCESS('\n' + '='*70))
+        self.stdout.write(self.style.SUCCESS('FEATURES CREATED:'))
+        self.stdout.write(self.style.SUCCESS('='*70))
+        self.stdout.write(self.style.SUCCESS('✅ Kanban Boards - Multiple boards with tasks'))
+        self.stdout.write(self.style.SUCCESS('✅ Risk Management - Task risk assessments'))
+        self.stdout.write(self.style.SUCCESS('✅ Resource Management - Team workload forecasts'))
+        self.stdout.write(self.style.SUCCESS('✅ Stakeholder Management - Stakeholder engagement'))
+        self.stdout.write(self.style.SUCCESS('✅ Requirements Management - Task dependencies'))
+        self.stdout.write(self.style.SUCCESS('✅ Chat Rooms - Multiple chat rooms with messages'))
+        self.stdout.write(self.style.SUCCESS('='*70 + '\n'))
 
     def create_users(self):
         self.stdout.write('Creating users...')
@@ -65,28 +91,64 @@ class Command(BaseCommand):
             admin_user = User.objects.get(username='admin')
             self.stdout.write('Admin user already exists')
         
-        # Create regular users
+        # Create regular users - Development Team
         test_users = [
             {
                 'username': 'john_doe',
-                'email': 'john@example.com',
-                'password': 'test1234',
+                'email': 'john.doe@devteam.com',
+                'password': 'JohnDoe@2024',
                 'first_name': 'John',
-                'last_name': 'Doe'
+                'last_name': 'Doe',
+                'org': 'dev'
             },
             {
                 'username': 'jane_smith',
-                'email': 'jane@example.com',
-                'password': 'test1234',
+                'email': 'jane.smith@devteam.com',
+                'password': 'JaneSmith@2024',
                 'first_name': 'Jane',
-                'last_name': 'Smith'
+                'last_name': 'Smith',
+                'org': 'dev'
             },
             {
                 'username': 'robert_johnson',
-                'email': 'robert@example.com',
-                'password': 'test1234',
+                'email': 'robert.johnson@devteam.com',
+                'password': 'RobertJ@2024',
                 'first_name': 'Robert',
-                'last_name': 'Johnson'
+                'last_name': 'Johnson',
+                'org': 'dev'
+            },
+            {
+                'username': 'alice_williams',
+                'email': 'alice.williams@devteam.com',
+                'password': 'AliceW@2024',
+                'first_name': 'Alice',
+                'last_name': 'Williams',
+                'org': 'dev'
+            },
+            {
+                'username': 'bob_martinez',
+                'email': 'bob.martinez@devteam.com',
+                'password': 'BobM@2024',
+                'first_name': 'Bob',
+                'last_name': 'Martinez',
+                'org': 'dev'
+            },
+            # Marketing Team
+            {
+                'username': 'carol_anderson',
+                'email': 'carol.anderson@marketingteam.com',
+                'password': 'CarolA@2024',
+                'first_name': 'Carol',
+                'last_name': 'Anderson',
+                'org': 'marketing'
+            },
+            {
+                'username': 'david_taylor',
+                'email': 'david.taylor@marketingteam.com',
+                'password': 'DavidT@2024',
+                'first_name': 'David',
+                'last_name': 'Taylor',
+                'org': 'marketing'
             }
         ]
         
@@ -101,7 +163,7 @@ class Command(BaseCommand):
                     first_name=user_data['first_name'],
                     last_name=user_data['last_name']
                 )
-                self.stdout.write(f'Created user: {user.username}')
+                self.stdout.write(f'Created user: {user.username} ({user.get_full_name()})')
             else:
                 user = User.objects.get(username=username)
                 self.stdout.write(f'User {user.username} already exists')
@@ -131,7 +193,7 @@ class Command(BaseCommand):
             marketing_org = Organization.objects.create(
                 name='Marketing Team',
                 domain='marketingteam.com',
-                created_by=self.users['jane_smith']
+                created_by=self.users['admin']
             )
             self.stdout.write(f'Created organization: {marketing_org.name}')
         else:
@@ -147,13 +209,13 @@ class Command(BaseCommand):
         # Create profiles for users if they don't exist
         for username, user in self.users.items():
             if not hasattr(user, 'profile'):
-                # Assign users to organizations
-                if username in ['admin', 'john_doe', 'robert_johnson']:
+                # Assign users to organizations based on their domain
+                if username in ['admin', 'john_doe', 'jane_smith', 'robert_johnson', 'alice_williams', 'bob_martinez']:
                     org = dev_org
                 else:
                     org = marketing_org
                 
-                is_admin = username in ['admin', 'jane_smith']
+                is_admin = username in ['admin', 'jane_smith', 'carol_anderson']
                 
                 profile = UserProfile.objects.create(
                     user=user,
@@ -185,8 +247,14 @@ class Command(BaseCommand):
             )
             self.stdout.write(f'Created board: {board.name}')
             
-            # Add members
-            board.members.add(self.users['john_doe'], self.users['robert_johnson'])
+            # Add all dev team members
+            board.members.add(
+                self.users['john_doe'],
+                self.users['jane_smith'],
+                self.users['robert_johnson'],
+                self.users['alice_williams'],
+                self.users['bob_martinez']
+            )
             
             # Create columns
             columns = [
@@ -400,7 +468,12 @@ class Command(BaseCommand):
             self.stdout.write(f'Created board: {board.name}')
             
             # Add members
-            board.members.add(self.users['admin'], self.users['john_doe'])
+            board.members.add(
+                self.users['admin'],
+                self.users['john_doe'],
+                self.users['jane_smith'],
+                self.users['alice_williams']
+            )
             
             # Create columns
             columns = [
@@ -570,11 +643,15 @@ class Command(BaseCommand):
                 name='Marketing Campaign',
                 description='Plan and track marketing campaigns',
                 organization=self.organizations['marketing'],
-                created_by=self.users['jane_smith']
+                created_by=self.users['carol_anderson']
             )
             self.stdout.write(f'Created board: {board.name}')
             
-            # Add members (just jane_smith for now)
+            # Add members (marketing team)
+            board.members.add(
+                self.users['carol_anderson'],
+                self.users['david_taylor']
+            )
             
             # Create columns
             columns = [
@@ -633,8 +710,7 @@ class Command(BaseCommand):
                 board_regular_labels[label_data['name']] = label
                 self.stdout.write(f'Created label: {label.name}')
             
-            # Create tasks for each column
-            # Ideas
+            # Create tasks for Ideas
             ideas_tasks = [
                 {
                     'title': 'Holiday social campaign concept',
@@ -642,8 +718,8 @@ class Command(BaseCommand):
                     'priority': 'medium',
                     'due_date': timezone.now() + timedelta(days=14),
                     'progress': 0,
-                    'created_by': self.users['jane_smith'],
-                    'assigned_to': self.users['jane_smith'],
+                    'created_by': self.users['carol_anderson'],
+                    'assigned_to': self.users['carol_anderson'],
                     'labels': [board_regular_labels['Social Media'], board_lean_labels['Value-Added']]
                 },
                 {
@@ -652,14 +728,14 @@ class Command(BaseCommand):
                     'priority': 'low',
                     'due_date': timezone.now() + timedelta(days=21),
                     'progress': 0,
-                    'created_by': self.users['jane_smith'],
-                    'assigned_to': self.users['jane_smith'],
+                    'created_by': self.users['david_taylor'],
+                    'assigned_to': self.users['david_taylor'],
                     'labels': [board_regular_labels['Content'], board_lean_labels['Value-Added']]
                 }
             ]
             self.create_tasks(ideas_tasks, board_columns['Ideas'])
             
-            # Planning
+            # Create tasks for Planning
             planning_tasks = [
                 {
                     'title': 'Q3 Email newsletter schedule',
@@ -667,14 +743,14 @@ class Command(BaseCommand):
                     'priority': 'high',
                     'due_date': timezone.now() + timedelta(days=5),
                     'progress': 15,
-                    'created_by': self.users['jane_smith'],
-                    'assigned_to': self.users['jane_smith'],
+                    'created_by': self.users['carol_anderson'],
+                    'assigned_to': self.users['carol_anderson'],
                     'labels': [board_regular_labels['Email'], board_lean_labels['Value-Added']]
                 }
             ]
             self.create_tasks(planning_tasks, board_columns['Planning'])
             
-            # In Progress
+            # Create tasks for In Progress
             in_progress_tasks = [
                 {
                     'title': 'Website redesign for Q4 launch',
@@ -682,8 +758,8 @@ class Command(BaseCommand):
                     'priority': 'high',
                     'due_date': timezone.now() + timedelta(days=10),
                     'progress': 40,
-                    'created_by': self.users['jane_smith'],
-                    'assigned_to': self.users['jane_smith'],
+                    'created_by': self.users['carol_anderson'],
+                    'assigned_to': self.users['david_taylor'],
                     'labels': [board_regular_labels['Design'], board_lean_labels['Value-Added']]
                 },
                 {
@@ -692,14 +768,14 @@ class Command(BaseCommand):
                     'priority': 'medium',
                     'due_date': timezone.now() + timedelta(days=3),
                     'progress': 60,
-                    'created_by': self.users['jane_smith'],
-                    'assigned_to': self.users['jane_smith'],
+                    'created_by': self.users['david_taylor'],
+                    'assigned_to': self.users['carol_anderson'],
                     'labels': [board_regular_labels['Analytics'], board_lean_labels['Necessary NVA']]
                 }
             ]
             self.create_tasks(in_progress_tasks, board_columns['In Progress'])
             
-            # Review
+            # Create tasks for Review
             review_tasks = [
                 {
                     'title': 'New product announcement email',
@@ -707,14 +783,14 @@ class Command(BaseCommand):
                     'priority': 'urgent',
                     'due_date': timezone.now() + timedelta(days=1),
                     'progress': 95,
-                    'created_by': self.users['jane_smith'],
-                    'assigned_to': self.users['jane_smith'],
+                    'created_by': self.users['carol_anderson'],
+                    'assigned_to': self.users['david_taylor'],
                     'labels': [board_regular_labels['Email'], board_lean_labels['Value-Added']]
                 }
             ]
             self.create_tasks(review_tasks, board_columns['Review'])
             
-            # Completed
+            # Create tasks for Completed
             completed_tasks = [
                 {
                     'title': 'Summer campaign graphics',
@@ -722,8 +798,8 @@ class Command(BaseCommand):
                     'priority': 'high',
                     'due_date': timezone.now() - timedelta(days=7),
                     'progress': 100,
-                    'created_by': self.users['jane_smith'],
-                    'assigned_to': self.users['jane_smith'],
+                    'created_by': self.users['carol_anderson'],
+                    'assigned_to': self.users['carol_anderson'],
                     'labels': [board_regular_labels['Design'], board_regular_labels['Social Media'], board_lean_labels['Value-Added']]
                 },
                 {
@@ -732,8 +808,8 @@ class Command(BaseCommand):
                     'priority': 'medium',
                     'due_date': timezone.now() - timedelta(days=10),
                     'progress': 100,
-                    'created_by': self.users['jane_smith'],
-                    'assigned_to': self.users['jane_smith'],
+                    'created_by': self.users['david_taylor'],
+                    'assigned_to': self.users['david_taylor'],
                     'labels': [board_regular_labels['Analytics'], board_lean_labels['Value-Added']]
                 },
                 {
@@ -742,8 +818,8 @@ class Command(BaseCommand):
                     'priority': 'low',
                     'due_date': timezone.now() - timedelta(days=3),
                     'progress': 100,
-                    'created_by': self.users['jane_smith'],
-                    'assigned_to': self.users['jane_smith'],
+                    'created_by': self.users['carol_anderson'],
+                    'assigned_to': self.users['carol_anderson'],
                     'labels': [board_regular_labels['Content'], board_lean_labels['Waste/Eliminate']]
                 }
             ]
@@ -1205,4 +1281,121 @@ class Command(BaseCommand):
                 self.stdout.write(f'  Enhanced task with resource and dependency data: {task.title}')
         
         self.stdout.write(self.style.SUCCESS('✅ Task Dependencies demo data created'))
+
+    def create_chat_rooms_demo_data(self):
+        """Create demo data for chat rooms and messaging features"""
+        self.stdout.write(self.style.NOTICE('Creating Chat Rooms demo data...'))
+        
+        # Create chat rooms for each board
+        for board in Board.objects.all():
+            # Define chat rooms for this board
+            chat_room_configs = [
+                {
+                    'name': 'General Discussion',
+                    'description': 'General discussion and announcements for the team',
+                },
+                {
+                    'name': 'Technical Support',
+                    'description': 'Technical questions and support',
+                },
+                {
+                    'name': 'Feature Planning',
+                    'description': 'Discuss and plan new features',
+                },
+                {
+                    'name': 'Random Chat',
+                    'description': 'Off-topic conversations and fun stuff',
+                }
+            ]
+            
+            for room_config in chat_room_configs:
+                # Create or get chat room
+                chat_room, created = ChatRoom.objects.get_or_create(
+                    board=board,
+                    name=room_config['name'],
+                    defaults={
+                        'description': room_config['description'],
+                        'created_by': self.users['admin']
+                    }
+                )
+                
+                if created:
+                    self.stdout.write(f'  Created chat room: {chat_room.name} in {board.name}')
+                    
+                    # Add board members to the chat room
+                    for member in board.members.all():
+                        chat_room.members.add(member)
+                    
+                    # Add admin to all rooms
+                    chat_room.members.add(self.users['admin'])
+                    
+                    # Create sample messages in the chat room
+                    self.create_sample_chat_messages(chat_room)
+        
+        self.stdout.write(self.style.SUCCESS('✅ Chat Rooms demo data created'))
+    
+    def create_sample_chat_messages(self, chat_room):
+        """Create sample messages in a chat room"""
+        # Sample message templates
+        messages_templates = {
+            'General Discussion': [
+                'Hi everyone! Let\'s keep each other updated on our progress.',
+                'I\'ll start working on the frontend components today.',
+                'Great work on the backend API! It\'s working perfectly.',
+                'Let\'s schedule a sync meeting for tomorrow morning.',
+                'Just deployed the latest changes to staging. Please test when you get a chance.'
+            ],
+            'Technical Support': [
+                'Can someone help me with the database migration?',
+                'I\'m getting an error on line 45. Any ideas?',
+                'Try updating your npm packages, that should fix it.',
+                'The API endpoint is throwing a 500 error. Working on it now.',
+                'Quick fix: Make sure your environment variables are properly set.'
+            ],
+            'Feature Planning': [
+                'We should add user authentication next sprint.',
+                'What about implementing a notification system?',
+                'I like the idea. Let\'s create a technical spec for it.',
+                'I can work on the UI components for notifications.',
+                'Sounds good! Let\'s plan this in the next refinement session.'
+            ],
+            'Random Chat': [
+                'Anyone up for coffee later?',
+                'Great news! We shipped the new feature! 🎉',
+                'Looking forward to the team lunch on Friday!',
+                'Anyone caught the latest tech news?',
+                'Just finished my morning jog. Feeling energized!'
+            ]
+        }
+        
+        # Get messages for this room
+        room_messages = messages_templates.get(chat_room.name, [])
+        if not room_messages:
+            return
+        
+        # Create messages from different users
+        available_users = list(chat_room.members.all())
+        if not available_users:
+            return
+        
+        # Create 3-5 messages per room
+        for i, message_content in enumerate(room_messages[:5]):
+            # Rotate through available users
+            author = available_users[i % len(available_users)]
+            
+            # Create message with timestamp spread across the past week
+            message_date = timezone.now() - timedelta(
+                days=random.randint(0, 7),
+                hours=random.randint(0, 23),
+                minutes=random.randint(0, 59)
+            )
+            
+            chat_message = ChatMessage.objects.create(
+                chat_room=chat_room,
+                author=author,
+                content=message_content,
+                created_at=message_date
+            )
+            
+            self.stdout.write(f'    Created message from {author.username} in {chat_room.name}')
 
