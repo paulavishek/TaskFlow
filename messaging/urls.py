@@ -4,10 +4,13 @@ from . import views
 app_name = 'messaging'
 
 urlpatterns = [
+    # Messaging Hub
+    path('', views.messaging_hub, name='hub'),
+    
     # Chat Rooms
     path('board/<int:board_id>/rooms/', views.chat_room_list, name='chat_room_list'),
-    path('room/<int:room_id>/', views.chat_room_detail, name='chat_room_detail'),
     path('board/<int:board_id>/rooms/create/', views.create_chat_room, name='create_chat_room'),
+    path('room/<int:room_id>/', views.chat_room_detail, name='chat_room_detail'),
     
     # Messages
     path('room/<int:room_id>/send/', views.send_chat_message, name='send_chat_message'),

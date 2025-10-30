@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Messaging Hub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .messaging-hub {
+        padding: 2rem 0;
+    }
+
+    .hub-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+    }
+
+    .hub-header h1 {
+        margin: 0;
+        font-size: 2rem;
+    }
+
+    .hub-header p {
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+    }
+
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .action-card {
+        background: white;
+        border: 2px solid #667eea;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+    }
+
+    .action-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.2);
+        background: #f8f9ff;
+    }
+
+    .action-card i {
+        font-size: 2.5rem;
+        color: #667eea;
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    .action-card h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.1rem;
+    }
+
+    .action-card p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #667eea;
+    }
+
+    .boards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .board-card {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .board-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-color: #667eea;
+    }
+
+    .board-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+
+    .board-members {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 1rem;
+    }
+
+    .board-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .board-actions a {
+        flex: 1;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        background: #f9f9f9;
+        border-radius: 8px;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: #ddd;
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    .notification-badge {
+        display: inline-block;
+        background: #dc3545;
+        color: white;
+        border-radius: 20px;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+
+    .notifications-mini {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .notification-mini-item {
+        padding: 0.75rem;
+        background: #f9f9f9;
+        border-left: 3px solid #667eea;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+
+    .notification-mini-item.unread {
+        background: #f0f4ff;
+    }
+
+    .help-box {
+        background: #e3f2fd;
+        border-left: 4px solid #2196F3;
+        padding: 1.5rem;
+        border-radius: 4px;
+        margin-bottom: 2rem;
+    }
+
+    .help-box h4 {
+        margin-top: 0;
+        color: #1976D2;
+    }
+
+    .help-box ul {
+        margin: 0.5rem 0;
+        padding-left: 1.5rem;
+    }
+
+    .help-box li {
+        margin: 0.25rem 0;
+        color: #333;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="messaging-hub">
+    <!-- Header -->
+    <div class="hub-header">
+        <h1><i class="fas fa-comments me-2"></i>Messaging Hub</h1>
+        <p>Connect with your team in real-time</p>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <a href="{% url 'board_list' %}" class="action-card">
+            <i class="fas fa-layer-group"></i>
+            <h3>View Boards</h3>
+            <p>Access chat rooms</p>
+        </a>
+        
+        <a href="{% url 'messaging:notifications' %}" class="action-card">
+            <i class="fas fa-bell"></i>
+            <h3>Notifications</h3>
+            <p>See all updates</p>
+        </a>
+    </div>
+
+    <!-- Help Box -->
+    <div class="help-box">
+        <h4><i class="fas fa-lightbulb me-2"></i>How to Use Messaging</h4>
+        <ul>
+            <li><strong>Chat Rooms:</strong> Click on a board, then "Messages" to see chat rooms</li>
+            <li><strong>Send Messages:</strong> Type in the message box and press Enter</li>
+            <li><strong>@Mention:</strong> Type @username to mention team members</li>
+            <li><strong>Task Comments:</strong> Open any task and scroll to Comments section</li>
+            <li><strong>Invite Users:</strong> When creating a room, select members from the dropdown</li>
+        </ul>
+    </div>
+
+    <!-- Notifications Preview -->
+    {% if unread_notifications %}
+    <div class="notifications-mini">
+        <h4><i class="fas fa-bell me-2"></i>Recent Notifications ({{ unread_notifications|length }})</h4>
+        {% for notification in unread_notifications|slice:":5" %}
+            <div class="notification-mini-item unread">
+                <strong>@{{ notification.sender.username }}</strong> mentioned you
+                <br>
+                <small class="text-muted">{{ notification.created_at|timesince }} ago</small>
+            </div>
+        {% endfor %}
+        <a href="{% url 'messaging:notifications' %}" class="btn btn-sm btn-primary mt-3">
+            <i class="fas fa-arrow-right me-1"></i> View All
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Your Boards Section -->
+    <div>
+        <h2 class="section-title"><i class="fas fa-layer-group me-2"></i>Your Boards</h2>
+        
+        {% if boards %}
+            <div class="boards-grid">
+                {% for board in boards %}
+                    <div class="board-card">
+                        <div class="board-name">{{ board.name }}</div>
+                        <div class="board-members">
+                            <i class="fas fa-users me-1"></i> {{ board.members.count }} members
+                        </div>
+                        <div class="board-actions">
+                            <a href="{% url 'messaging:chat_room_list' board_id=board.id %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-comments me-1"></i> Chat Rooms
+                            </a>
+                            <a href="{% url 'board_detail' board_id=board.id %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <h4>No Boards Yet</h4>
+                <p class="text-muted">You haven't joined any boards. Create or join a board to start collaborating!</p>
+                <a href="{% url 'board_list' %}" class="btn btn-primary mt-3">
+                    <i class="fas fa-plus me-1"></i> Create Board
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

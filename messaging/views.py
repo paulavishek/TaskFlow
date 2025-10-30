@@ -12,6 +12,22 @@ from .forms import ChatRoomForm, ChatMessageForm, TaskThreadCommentForm, Mention
 
 
 @login_required
+def messaging_hub(request):
+    """Main messaging hub showing all boards and recent notifications"""
+    user_boards = Board.objects.filter(members=request.user)
+    unread_notifications = Notification.objects.filter(
+        recipient=request.user,
+        is_read=False
+    ).order_by('-created_at')[:10]
+    
+    context = {
+        'boards': user_boards,
+        'unread_notifications': unread_notifications,
+    }
+    return render(request, 'messaging/messaging_hub.html', context)
+
+
+@login_required
 def chat_room_list(request, board_id):
     """List all chat rooms for a board"""
     board = get_object_or_404(Board, id=board_id)
