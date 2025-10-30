@@ -122,31 +122,83 @@
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
+    // Get current user ID from the page (set by Django template)
+    const currentUserId = {{ request.user.id }};
+    const currentUsername = '{{ request.user.username }}';
+
     // WebSocket connection for real-time updates
     const roomId = '{{ chat_room.id }}';
     const chatSocket = new WebSocket(
         'ws://' + window.location.host + '/ws/chat-room/' + roomId + '/'
     );
 
+    chatSocket.onopen = function(e) {
+        console.log('Chat connection established for room ' + roomId);
+    };
+
     chatSocket.onmessage = function(e) {
         const data = JSON.parse(e.data);
+        console.log('Message received:', data);
+        
         if (data.type === 'chat_message') {
-            // Add new message to the chat
+            // Add new message to the chat - delivered to ALL members regardless of mentions
             const messagesDiv = document.querySelector('.chat-messages');
             const messageEl = document.createElement('div');
             messageEl.classList.add('message');
+            
+            // Mark own messages with different styling
+            if (data.user_id === currentUserId) {
+                messageEl.classList.add('own');
+            }
+            
+            // Format timestamp
+            const messageDate = new Date(data.timestamp);
+            const timeString = messageDate.toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit'
+            });
+            
+            // Build mention indicators
+            let mentionHtml = '';
+            if (data.mentioned_users && data.mentioned_users.length > 0) {
+                mentionHtml = '<div class="mention-indicator"><small><i class="fas fa-at"></i> ' + 
+                              data.mentioned_users.join(', ') + '</small></div>';
+            }
+            
+            // Build broadcast indicator
+            let broadcastHtml = '';
+            if (data.is_broadcast && !data.mentioned_users) {
+                broadcastHtml = '<div class="broadcast-indicator"><small><i class="fas fa-users"></i> All Members</small></div>';
+            }
+            
             messageEl.innerHTML = `
                 <div class="message-author">${data.username}</div>
                 <div class="message-content">${data.message}</div>
-                <div class="message-time">${new Date(data.timestamp).toLocaleTimeString()}</div>
+                ${mentionHtml}
+                ${broadcastHtml}
+                <div class="message-time">${timeString}</div>
             `;
             messagesDiv.appendChild(messageEl);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
+        else if (data.type === 'user_typing') {
+            console.log(data.username + ' is typing...');
+        }
+        else if (data.type === 'user_join') {
+            console.log(data.username + ' joined the room');
+        }
+        else if (data.type === 'user_leave') {
+            console.log(data.username + ' left the room');
+        }
+    };
+
+    chatSocket.onerror = function(error) {
+        console.error('Chat socket error:', error);
     };
 
     chatSocket.onclose = function(e) {
-        console.error('Chat socket closed unexpectedly');
+        console.warn('Chat socket closed');
+        // Optionally show reconnection UI
     };
 
     // Send message on form submit
@@ -155,6 +207,7 @@
         const input = document.querySelector('input[name="message"]');
         const message = input.value.trim();
         if (message) {
+            // Send message via WebSocket
             chatSocket.send(JSON.stringify({
                 'type': 'chat_message',
                 'message': message
@@ -164,9 +217,19 @@
         }
     });
 
+    // Handle Enter key to send message
+    document.querySelector('input[name="message"]').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            document.querySelector('.chat-form').dispatchEvent(new Event('submit'));
+        }
+    });
+
     // Cleanup on page unload
     window.addEventListener('beforeunload', function() {
-        chatSocket.close();
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            chatSocket.close();
+        }
     });
 </script>
 {% endblock %}

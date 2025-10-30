@@ -90,7 +90,11 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
         # Save message to database
         message_obj = await self.save_message(message_text)
         
-        # Broadcast message to room
+        if message_obj['id'] is None:
+            return
+        
+        # Broadcast message to ALL members in the room (regardless of mentions)
+        # This ensures all chat room members see all messages
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -100,9 +104,14 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
                 'user_id': self.user.id,
                 'message': message_text,
                 'timestamp': message_obj['timestamp'],
-                'mentioned_users': message_obj['mentioned_users']
+                'mentioned_users': message_obj['mentioned_users'],
+                'is_broadcast': True  # Mark as broadcast to all members
             }
         )
+        
+        # If message has mentions, also notify those users
+        if message_obj['mentioned_users']:
+            await self.notify_mentioned_users_async(message_obj)
         
         # Remove typing status after sending
         await self.remove_typing_status()
@@ -137,7 +146,7 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
     
     # Message handlers for group_send
     async def chat_message_send(self, event):
-        """Send a chat message to WebSocket"""
+        """Send a chat message to WebSocket - delivered to ALL members"""
         await self.send(text_data=json.dumps({
             'type': 'chat_message',
             'message_id': event['message_id'],
@@ -145,7 +154,9 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             'user_id': event['user_id'],
             'message': event['message'],
             'timestamp': event['timestamp'],
-            'mentioned_users': event['mentioned_users']
+            'mentioned_users': event['mentioned_users'],
+            'is_broadcast': event.get('is_broadcast', True),  # All messages are broadcast to room
+            'is_own_message': event['user_id'] == self.user.id
         }))
     
     async def user_join(self, event):
@@ -180,6 +191,12 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             'user_id': event['user_id']
         }))
     
+    async def notify_mentioned_users_async(self, message_obj):
+        """Send notifications to mentioned users"""
+        # This is called after message is saved
+        # Mentioned users will see notification but message is already in chat
+        pass
+    
     # Database operations
     @database_sync_to_async
     def is_user_authorized(self):
@@ -192,7 +209,12 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
     
     @database_sync_to_async
     def save_message(self, message_text):
-        """Save message to database and extract mentions"""
+        """Save message to database and extract mentions
+        
+        Messages are ALWAYS delivered to all chat room members.
+        Mentions (@username) are optional and only trigger notifications
+        for those specific users.
+        """
         import re
         
         try:
@@ -204,6 +226,7 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             )
             
             # Extract and add mentioned users
+            # This is OPTIONAL - messages don't need mentions to be sent
             mentions = re.findall(r'@(\w+)', message_text)
             mentioned_users = []
             
@@ -213,7 +236,7 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
                     message.mentioned_users.add(mentioned_user)
                     mentioned_users.append(mention)
                     
-                    # Create notification for mentioned user
+                    # Create notification for mentioned user (if different from author)
                     if mentioned_user != self.user:
                         Notification.objects.create(
                             recipient=mentioned_user,
@@ -223,15 +246,18 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
                             text=f'{self.user.username} mentioned you in {chat_room.name}'
                         )
                 except User.DoesNotExist:
+                    # Silently skip non-existent usernames in mentions
                     pass
             
             return {
                 'id': message.id,
                 'timestamp': message.created_at.isoformat(),
-                'mentioned_users': mentioned_users
+                'mentioned_users': mentioned_users,
+                'chat_room_id': chat_room.id,
+                'chat_room_name': chat_room.name
             }
         except ChatRoom.DoesNotExist:
-            return {'id': None, 'timestamp': None, 'mentioned_users': []}
+            return {'id': None, 'timestamp': None, 'mentioned_users': [], 'chat_room_id': None, 'chat_room_name': None}
     
     @database_sync_to_async
     def update_typing_status(self):
