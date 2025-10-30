@@ -150,18 +150,23 @@
                     <div class="notification-actions">
                         {% if notification.task_thread_comment %}
                             <a href="{% url 'messaging:task_thread_comments' task_id=notification.task_thread_comment.task.id %}" 
-                               class="btn btn-sm btn-primary" onclick="markAsRead(event, {{ notification.id }})">
+                               class="btn btn-sm btn-primary"
+                               data-notification-id="{{ notification.id }}"
+                               onclick="markAsRead(event, this)">
                                 <i class="fas fa-arrow-right me-1"></i> View Comment
                             </a>
                         {% elif notification.chat_message %}
                             <a href="{% url 'messaging:chat_room_detail' room_id=notification.chat_message.chat_room.id %}" 
-                               class="btn btn-sm btn-primary" onclick="markAsRead(event, {{ notification.id }})">
+                               class="btn btn-sm btn-primary"
+                               data-notification-id="{{ notification.id }}"
+                               onclick="markAsRead(event, this)">
                                 <i class="fas fa-arrow-right me-1"></i> View Message
                             </a>
                         {% endif %}
                         {% if not notification.is_read %}
                             <button type="button" class="btn btn-sm btn-outline-secondary" 
-                                    onclick="markAsRead(event, {{ notification.id }})">
+                                    data-notification-id="{{ notification.id }}"
+                                    onclick="markAsRead(event, this)">
                                 <i class="fas fa-times me-1"></i> Dismiss
                             </button>
                         {% endif %}
@@ -179,8 +184,12 @@
 </div>
 
 <script>
-function markAsRead(event, notificationId) {
+function markAsRead(event, button) {
     event.preventDefault();
+    
+    // Get notification ID from the clicked element's data attribute
+    const notificationId = button.getAttribute('data-notification-id');
+    
     fetch(`/messaging/notifications/${notificationId}/read/`, {
         method: 'POST',
         headers: {
@@ -189,10 +198,11 @@ function markAsRead(event, notificationId) {
             'X-Requested-With': 'XMLHttpRequest'
         }
     }).then(() => {
-        // Redirect if link was clicked
-        if (event.target.closest('a')) {
-            window.location = event.target.closest('a').href;
+        // If it was a link click, redirect
+        if (button.tagName === 'A') {
+            window.location = button.href;
         } else {
+            // Otherwise just reload to update UI
             location.reload();
         }
     });

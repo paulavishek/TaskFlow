@@ -123,9 +123,9 @@
     }
 
     // WebSocket connection for real-time updates
-    const roomId = {{ chat_room.id }};
+    const roomId = '{{ chat_room.id }}';
     const chatSocket = new WebSocket(
-        `ws://${window.location.host}/ws/chat-room/${roomId}/`
+        'ws://' + window.location.host + '/ws/chat-room/' + roomId + '/'
     );
 
     chatSocket.onmessage = function(e) {
