@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Comments - {{ task.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .comments-section {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .comment {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background: #f9f9f9;
+        border-left: 3px solid #667eea;
+        border-radius: 4px;
+    }
+
+    .comment-author {
+        font-weight: 600;
+        color: #667eea;
+        font-size: 0.95rem;
+    }
+
+    .comment-content {
+        margin-top: 0.5rem;
+        color: #333;
+    }
+
+    .comment-time {
+        font-size: 0.8rem;
+        color: #999;
+        margin-top: 0.5rem;
+    }
+
+    .add-comment-form {
+        background: #f0f4ff;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h1><i class="fas fa-comments me-2"></i>{{ task.title }}</h1>
+    <p class="text-muted">Task Comments & Discussion</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="task-info mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Task Details</h6>
+                    <p class="mb-2">
+                        <strong>Description:</strong> {{ task.description|default:"No description" }}
+                    </p>
+                    <p class="mb-2">
+                        <strong>Status:</strong> 
+                        <span class="badge bg-primary">{{ task.column.title }}</span>
+                    </p>
+                    <p class="mb-0">
+                        <strong>Assigned to:</strong>
+                        {% if task.assigned_to %}
+                            {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+                        {% else %}
+                            <span class="text-muted">Unassigned</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="comments-section">
+            <h5 class="mb-4"><i class="fas fa-comments me-2"></i>Comments ({{ comments.count }})</h5>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="add-comment-form">
+                <h6 class="mb-3">Add a Comment</h6>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        {{ form.content }}
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-comment me-1"></i> Post Comment
+                    </button>
+                </form>
+            </div>
+
+            <div class="comments-list">
+                {% for comment in comments %}
+                    <div class="comment">
+                        <div class="comment-author">{{ comment.author.get_full_name|default:comment.author.username }}</div>
+                        <div class="comment-content">{{ comment.content }}</div>
+                        <div class="comment-time">{{ comment.created_at|date:"M d, Y g:i A" }}</div>
+                    </div>
+                {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <p><i class="fas fa-inbox me-2"></i>No comments yet. Be the first to comment!</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title"><i class="fas fa-info-circle me-2"></i>Tips</h6>
+                <ul class="small mb-0">
+                    <li>Use <code>@username</code> to mention team members</li>
+                    <li>Comments are visible to all board members</li>
+                    <li>Mentioned users receive notifications</li>
+                    <li>Comments are saved in real-time</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

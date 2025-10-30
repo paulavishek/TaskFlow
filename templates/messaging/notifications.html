@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notifications-container {
+        max-width: 600px;
+    }
+
+    .notification-item {
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        background: white;
+        border-left: 4px solid #667eea;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+
+    .notification-item:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .notification-item.unread {
+        background: #f0f4ff;
+        border-left-color: #764ba2;
+    }
+
+    .notification-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .notification-type {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background: #667eea;
+        color: white;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .notification-time {
+        font-size: 0.85rem;
+        color: #999;
+    }
+
+    .notification-text {
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+
+    .notification-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+
+    .notification-actions a {
+        font-size: 0.85rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: #ddd;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh notifications every 10 seconds
+    const refreshNotifications = function() {
+        fetch('{% url "messaging:get_unread_notification_count" %}')
+            .then(response => response.json())
+            .then(data => {
+                const badge = document.querySelector('.notification-badge');
+                if (badge) {
+                    if (data.count > 0) {
+                        badge.textContent = data.count;
+                        badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            });
+    };
+
+    // Refresh on page load
+    refreshNotifications();
+
+    // Refresh every 10 seconds
+    setInterval(refreshNotifications, 10000);
+
+    // Mark as read when clicking on notification
+    document.querySelectorAll('.notification-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            if (!e.target.closest('a')) {
+                const link = this.querySelector('a');
+                if (link) link.click();
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="notifications-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-bell me-2"></i>Notifications</h1>
+        {% if notifications %}
+            <a href="?mark_read=1" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-check-double me-1"></i> Mark All as Read
+            </a>
+        {% endif %}
+    </div>
+
+    {% if notifications %}
+        <div class="notifications-list">
+            {% for notification in notifications %}
+                <div class="notification-item {% if not notification.is_read %}unread{% endif %}">
+                    <div class="notification-header">
+                        <span class="notification-type">
+                            {% if notification.notification_type == 'mention' %}
+                                <i class="fas fa-at me-1"></i> Mention
+                            {% elif notification.notification_type == 'message' %}
+                                <i class="fas fa-comment me-1"></i> Message
+                            {% else %}
+                                <i class="fas fa-info-circle me-1"></i> Notification
+                            {% endif %}
+                        </span>
+                        <span class="notification-time" title="{{ notification.created_at }}">
+                            {{ notification.created_at|timesince }} ago
+                        </span>
+                    </div>
+
+                    <div class="notification-text">
+                        {{ notification.text }}
+                    </div>
+
+                    <div class="notification-actions">
+                        {% if notification.task_thread_comment %}
+                            <a href="{% url 'messaging:task_thread_comments' task_id=notification.task_thread_comment.task.id %}" 
+                               class="btn btn-sm btn-primary" onclick="markAsRead(event, {{ notification.id }})">
+                                <i class="fas fa-arrow-right me-1"></i> View Comment
+                            </a>
+                        {% elif notification.chat_message %}
+                            <a href="{% url 'messaging:chat_room_detail' room_id=notification.chat_message.chat_room.id %}" 
+                               class="btn btn-sm btn-primary" onclick="markAsRead(event, {{ notification.id }})">
+                                <i class="fas fa-arrow-right me-1"></i> View Message
+                            </a>
+                        {% endif %}
+                        {% if not notification.is_read %}
+                            <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                    onclick="markAsRead(event, {{ notification.id }})">
+                                <i class="fas fa-times me-1"></i> Dismiss
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <h4>No Notifications</h4>
+            <p class="text-muted">You're all caught up! Check back later for updates.</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function markAsRead(event, notificationId) {
+    event.preventDefault();
+    fetch(`/messaging/notifications/${notificationId}/read/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                          document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1],
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    }).then(() => {
+        // Redirect if link was clicked
+        if (event.target.closest('a')) {
+            window.location = event.target.closest('a').href;
+        } else {
+            location.reload();
+        }
+    });
+}
+</script>
+{% endblock %}

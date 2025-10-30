@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ chat_room.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: 600px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: white;
+        overflow: hidden;
+    }
+
+    .chat-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .chat-header h2 {
+        margin: 0;
+        font-size: 1.25rem;
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        background-color: #f9f9f9;
+    }
+
+    .message {
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: white;
+        border-radius: 8px;
+        border-left: 3px solid #667eea;
+    }
+
+    .message.own {
+        border-left-color: #764ba2;
+        background: #f0f4ff;
+    }
+
+    .message-author {
+        font-weight: 600;
+        color: #667eea;
+        font-size: 0.9rem;
+    }
+
+    .message.own .message-author {
+        color: #764ba2;
+    }
+
+    .message-content {
+        margin-top: 0.25rem;
+        color: #333;
+    }
+
+    .message-time {
+        font-size: 0.8rem;
+        color: #999;
+        margin-top: 0.25rem;
+    }
+
+    .chat-input-area {
+        padding: 1rem;
+        border-top: 1px solid #ddd;
+        background: white;
+    }
+
+    .chat-form {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .chat-form input {
+        flex: 1;
+    }
+
+    .chat-form button {
+        width: 45px;
+    }
+
+    .members-sidebar {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+    }
+
+    .members-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .members-list li {
+        padding: 0.5rem 0;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .members-list li:before {
+        content: "● ";
+        color: #667eea;
+        margin-right: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-scroll to bottom of messages
+    const chatMessages = document.querySelector('.chat-messages');
+    if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // WebSocket connection for real-time updates
+    const roomId = {{ chat_room.id }};
+    const chatSocket = new WebSocket(
+        `ws://${window.location.host}/ws/chat-room/${roomId}/`
+    );
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        if (data.type === 'chat_message') {
+            // Add new message to the chat
+            const messagesDiv = document.querySelector('.chat-messages');
+            const messageEl = document.createElement('div');
+            messageEl.classList.add('message');
+            messageEl.innerHTML = `
+                <div class="message-author">${data.username}</div>
+                <div class="message-content">${data.message}</div>
+                <div class="message-time">${new Date(data.timestamp).toLocaleTimeString()}</div>
+            `;
+            messagesDiv.appendChild(messageEl);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    // Send message on form submit
+    document.querySelector('.chat-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const input = document.querySelector('input[name="message"]');
+        const message = input.value.trim();
+        if (message) {
+            chatSocket.send(JSON.stringify({
+                'type': 'chat_message',
+                'message': message
+            }));
+            input.value = '';
+            input.focus();
+        }
+    });
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+        chatSocket.close();
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="mb-4">
+            <a href="{% url 'messaging:chat_room_list' board_id=chat_room.board.id %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i> Back to Rooms
+            </a>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-header">
+                <h2><i class="fas fa-comments me-2"></i>{{ chat_room.name }}</h2>
+                {% if chat_room.description %}
+                    <p class="mb-0 text-light">{{ chat_room.description }}</p>
+                {% endif %}
+            </div>
+
+            <div class="chat-messages" id="messages">
+                {% for message in messages %}
+                    <div class="message">
+                        <div class="message-author">{{ message.author.username }}</div>
+                        <div class="message-content">{{ message.content }}</div>
+                        <div class="message-time">{{ message.created_at|date:"g:i A" }}</div>
+                    </div>
+                {% empty %}
+                    <div class="text-center text-muted py-5">
+                        <p>No messages yet. Start the conversation!</p>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="chat-input-area">
+                <form class="chat-form" method="post" action="{% url 'messaging:send_chat_message' room_id=chat_room.id %}">
+                    {% csrf_token %}
+                    <input type="text" name="message" class="form-control" placeholder="Type your message... (use @username to mention)" required autofocus>
+                    <button type="submit" class="btn btn-primary" title="Send (or press Enter)">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="members-sidebar">
+            <h5><i class="fas fa-users me-2"></i> Members ({{ chat_room.members.count }})</h5>
+            <ul class="members-list">
+                {% for member in chat_room.members.all %}
+                    <li>
+                        {{ member.get_full_name|default:member.username }}
+                        {% if member == chat_room.created_by %}<span class="badge bg-primary">Creator</span>{% endif %}
+                    </li>
+                {% empty %}
+                    <li class="text-muted">No members</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="alert alert-info mt-3">
+            <small>
+                <i class="fas fa-info-circle me-1"></i>
+                Messages are updated in real-time. Use @username to mention someone.
+            </small>
+        </div>
+    </div>
+</div>
+{% endblock %}

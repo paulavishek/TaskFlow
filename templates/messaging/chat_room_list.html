@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Chat Rooms - {{ board.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-rooms-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .room-card {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .room-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .room-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #333;
+    }
+
+    .room-description {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 1rem;
+    }
+
+    .room-members {
+        font-size: 0.85rem;
+        color: #888;
+        margin-bottom: 1rem;
+    }
+
+    .room-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .room-actions a {
+        flex: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>Chat Rooms for {{ board.name }}</h1>
+        <p class="text-muted">Real-time team communication</p>
+    </div>
+    <a href="{% url 'messaging:create_chat_room' board_id=board.id %}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i> Create New Room
+    </a>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+{% if chat_rooms %}
+    <div class="chat-rooms-container">
+        {% for room in chat_rooms %}
+            <div class="room-card">
+                <div class="room-name">{{ room.name }}</div>
+                {% if room.description %}
+                    <div class="room-description">{{ room.description }}</div>
+                {% endif %}
+                <div class="room-members">
+                    <i class="fas fa-users me-1"></i>
+                    {{ room.members.count }} member{{ room.members.count|pluralize }}
+                </div>
+                <div class="room-actions">
+                    <a href="{% url 'messaging:chat_room_detail' room_id=room.id %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-comments me-1"></i> Open
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        No chat rooms yet. 
+        <a href="{% url 'messaging:create_chat_room' board_id=board.id %}">Create the first one</a>
+    </div>
+{% endif %}
+{% endblock %}
