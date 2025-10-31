@@ -307,3 +307,29 @@ def task_comment_history(request, task_id):
     ]
     
     return JsonResponse({'comments': comments_data})
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_unread_message_count(request):
+    """API endpoint to get unread message count for the current user"""
+    # Get all chat rooms the user is a member of
+    user_chat_rooms = ChatRoom.objects.filter(members=request.user)
+    
+    # Count total messages in all these rooms
+    # (In a production system, you'd track which messages the user has seen)
+    # For now, we'll count recent messages (last 24 hours) the user hasn't authored
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    recent_cutoff = timezone.now() - timedelta(hours=24)
+    
+    unread_count = 0
+    for room in user_chat_rooms:
+        # Count messages from last 24 hours that aren't from the current user
+        room_unread = room.messages.filter(
+            created_at__gte=recent_cutoff
+        ).exclude(author=request.user).count()
+        unread_count += room_unread
+    
+    return JsonResponse({'unread_count': unread_count})
