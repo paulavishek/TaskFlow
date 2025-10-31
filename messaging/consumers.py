@@ -93,6 +93,9 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
         if message_obj['id'] is None:
             return
         
+        # Get room creator info
+        room_creator_id = await self.get_room_creator_id()
+        
         # Broadcast message to ALL members in the room (regardless of mentions)
         # This ensures all chat room members see all messages
         await self.channel_layer.group_send(
@@ -105,7 +108,8 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
                 'message': message_text,
                 'timestamp': message_obj['timestamp'],
                 'mentioned_users': message_obj['mentioned_users'],
-                'is_broadcast': True  # Mark as broadcast to all members
+                'is_broadcast': True,  # Mark as broadcast to all members
+                'room_creator_id': room_creator_id
             }
         )
         
@@ -147,8 +151,12 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
     # Message handlers for group_send
     async def chat_message_send(self, event):
         """Send a chat message to WebSocket - delivered to ALL members"""
+        # Determine if current user is room creator
+        is_room_creator = event.get('room_creator_id') == self.user.id
+        
         await self.send(text_data=json.dumps({
             'type': 'chat_message',
+            'id': event['message_id'],
             'message_id': event['message_id'],
             'username': event['username'],
             'user_id': event['user_id'],
@@ -156,7 +164,8 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             'timestamp': event['timestamp'],
             'mentioned_users': event['mentioned_users'],
             'is_broadcast': event.get('is_broadcast', True),  # All messages are broadcast to room
-            'is_own_message': event['user_id'] == self.user.id
+            'is_own_message': event['user_id'] == self.user.id,
+            'is_room_creator': is_room_creator
         }))
     
     async def user_join(self, event):
@@ -206,6 +215,15 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             return chat_room.members.filter(id=self.user.id).exists()
         except ChatRoom.DoesNotExist:
             return False
+    
+    @database_sync_to_async
+    def get_room_creator_id(self):
+        """Get the room creator's user ID"""
+        try:
+            chat_room = ChatRoom.objects.get(id=self.room_id)
+            return chat_room.created_by.id
+        except ChatRoom.DoesNotExist:
+            return None
     
     @database_sync_to_async
     def save_message(self, message_text):

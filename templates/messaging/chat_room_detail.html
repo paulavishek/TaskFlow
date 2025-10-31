@@ -201,12 +201,23 @@
                 broadcastHtml = '<div class="broadcast-indicator"><small><i class="fas fa-users"></i> All Members</small></div>';
             }
             
+            // Build delete button (show for current user or if they're room creator)
+            let deleteButtonHtml = '';
+            if (data.user_id === currentUserId || data.is_room_creator) {
+                deleteButtonHtml = `<div class="message-actions">
+                    <button type="button" class="message-delete-btn" data-message-id="${data.id}" onclick="deleteMessage(${data.id})">
+                        <i class="fas fa-trash-alt"></i> Delete
+                    </button>
+                </div>`;
+            }
+            
             messageEl.innerHTML = `
                 <div class="message-author">${data.username}</div>
                 <div class="message-content">${data.message}</div>
                 ${mentionHtml}
                 ${broadcastHtml}
                 <div class="message-time">${timeString}</div>
+                ${deleteButtonHtml}
             `;
             messagesDiv.appendChild(messageEl);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -314,6 +325,9 @@
             <div class="chat-input-area">
                 <!-- File Upload Section -->
                 <div class="file-upload-section mb-2" style="display: none;" id="fileUploadSection">
+                    <div class="alert alert-info alert-sm mb-2 p-2" role="alert">
+                        <small><i class="fas fa-info-circle"></i> Files are uploaded to this room and visible to all members in the <strong>Files</strong> section on the right.</small>
+                    </div>
                     <form id="chatFileForm" method="post" action="{% url 'messaging:upload_chat_room_file' room_id=chat_room.id %}" enctype="multipart/form-data">
                         {% csrf_token %}
                         <div class="input-group input-group-sm">
@@ -576,12 +590,17 @@
         
         const formData = new FormData(this);
         const fileInput = document.querySelector('input[name="file"]');
+        const uploadBtn = this.querySelector('button[type="submit"]');
         
         // Validate file is selected
         if (!fileInput.files.length) {
             alert('Please select a file');
             return;
         }
+        
+        // Show loading state
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
         
         fetch('{% url "messaging:upload_chat_room_file" room_id=chat_room.id %}', {
             method: 'POST',
@@ -594,18 +613,37 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('File uploaded successfully!');
+                // Show success message
+                const successAlert = document.createElement('div');
+                successAlert.className = 'alert alert-success alert-dismissible fade show mt-2';
+                successAlert.innerHTML = `
+                    <i class="fas fa-check-circle me-2"></i> File "${data.filename}" uploaded successfully! Check the <strong>Files</strong> section on the right.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                this.parentElement.appendChild(successAlert);
+                
+                // Reset form
                 fileInput.value = '';
                 document.querySelector('textarea[name="description"]').value = '';
-                toggleFileUpload();
-                location.reload();
+                
+                // Auto-hide after 3 seconds
+                setTimeout(() => {
+                    toggleFileUpload();
+                }, 2000);
+                
+                // Refresh files list
+                setTimeout(() => location.reload(), 3000);
             } else {
                 alert('Upload failed: ' + JSON.stringify(data.errors));
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="fas fa-upload"></i>';
             }
         })
         .catch(error => {
             console.error('Error:', error);
             alert('Upload error: ' + error);
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '<i class="fas fa-upload"></i>';
         });
     });
 
