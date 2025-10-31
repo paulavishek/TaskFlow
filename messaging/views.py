@@ -58,6 +58,13 @@ def chat_room_detail(request, room_id):
         django_messages.error(request, 'You do not have access to this room.')
         return redirect('board_list')
     
+    # Mark all notifications related to this chat room as read
+    Notification.objects.filter(
+        recipient=request.user,
+        chat_message__chat_room=chat_room,
+        is_read=False
+    ).update(is_read=True)
+    
     # Get recent messages (last 50)
     chat_messages = chat_room.messages.all().order_by('-created_at')[:50]
     chat_messages = reversed(list(chat_messages))
@@ -176,6 +183,13 @@ def task_thread_comments(request, task_id):
                 return redirect('task_thread_comments', task_id=task_id)
     else:
         form = TaskThreadCommentForm()
+    
+    # Mark all notifications related to this task as read
+    Notification.objects.filter(
+        recipient=request.user,
+        task_thread_comment__task=task,
+        is_read=False
+    ).update(is_read=True)
     
     comments = task.thread_comments.all().order_by('-created_at')
     
@@ -461,8 +475,21 @@ def upload_chat_room_file(request, room_id):
             file_obj.save()
             
             # Create a system message to notify about file upload
-            file_icon = file_obj.get_file_icon()
-            system_message_text = f'📎 {request.user.username} uploaded <i class="fas {file_icon}"></i> {file_obj.filename}'
+            # Use emoji icons instead of HTML for plain text storage
+            file_icon_map = {
+                'pdf': '📄',
+                'doc': '📝',
+                'docx': '📝',
+                'xls': '📊',
+                'xlsx': '📊',
+                'ppt': '🎯',
+                'pptx': '🎯',
+                'jpg': '🖼️',
+                'jpeg': '🖼️',
+                'png': '🖼️',
+            }
+            file_icon = file_icon_map.get(file_obj.file_type.lower(), '📎')
+            system_message_text = f'📎 {request.user.username} uploaded {file_icon} {file_obj.filename}'
             ChatMessage.objects.create(
                 chat_room=chat_room,
                 author=request.user,
