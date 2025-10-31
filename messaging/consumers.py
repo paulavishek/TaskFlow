@@ -76,6 +76,8 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
                 await self.handle_typing(data)
             elif message_type == 'stop_typing':
                 await self.handle_stop_typing(data)
+            elif message_type == 'message_read':
+                await self.handle_message_read(data)
         
         except json.JSONDecodeError:
             pass
@@ -148,6 +150,30 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             }
         )
     
+    async def handle_message_read(self, data):
+        """Handle message read notification"""
+        message_id = data.get('message_id')
+        if not message_id:
+            return
+        
+        # Mark message as read in database
+        result = await self.mark_message_as_read(message_id)
+        
+        if result:
+            # Broadcast read status to all members
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'message_marked_read',
+                    'message_id': message_id,
+                    'username': self.user.username,
+                    'user_id': self.user.id,
+                    'read_count': result['read_count'],
+                    'total_members': result['total_members'],
+                    'all_read': result['all_read']
+                }
+            )
+    
     # Message handlers for group_send
     async def chat_message_send(self, event):
         """Send a chat message to WebSocket - delivered to ALL members"""
@@ -201,6 +227,18 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             'type': 'user_stop_typing',
             'username': event['username'],
             'user_id': event['user_id']
+        }))
+    
+    async def message_marked_read(self, event):
+        """Send message read status update to WebSocket"""
+        await self.send(text_data=json.dumps({
+            'type': 'message_marked_read',
+            'message_id': event['message_id'],
+            'username': event['username'],
+            'user_id': event['user_id'],
+            'read_count': event['read_count'],
+            'total_members': event['total_members'],
+            'all_read': event['all_read']
         }))
     
     async def notify_mentioned_users_async(self, message_obj):
@@ -303,6 +341,30 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             ).delete()
         except:
             pass
+    
+    @database_sync_to_async
+    def mark_message_as_read(self, message_id):
+        """Mark a message as read by the current user"""
+        try:
+            message = ChatMessage.objects.get(id=message_id)
+            message.read_by.add(self.user)
+            
+            total_members = message.chat_room.members.count()
+            read_count = message.read_by.count()
+            all_read = read_count >= total_members
+            
+            if all_read:
+                message.is_read = True
+                message.read_at = datetime.now()
+                message.save()
+            
+            return {
+                'read_count': read_count,
+                'total_members': total_members,
+                'all_read': all_read
+            }
+        except ChatMessage.DoesNotExist:
+            return None
 
 
 class TaskCommentConsumer(AsyncWebsocketConsumer):

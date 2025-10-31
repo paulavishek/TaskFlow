@@ -58,6 +58,12 @@ def chat_room_detail(request, room_id):
         django_messages.error(request, 'You do not have access to this room.')
         return redirect('board_list')
     
+    # Automatically mark all messages as read when user views the room
+    # (This is similar to WhatsApp, Telegram, etc. - viewing the room marks messages as read)
+    messages_to_mark = chat_room.messages.exclude(read_by=request.user).exclude(author=request.user)
+    for message in messages_to_mark:
+        message.read_by.add(request.user)
+    
     # Mark all notifications related to this chat room as read
     Notification.objects.filter(
         recipient=request.user,
@@ -71,10 +77,14 @@ def chat_room_detail(request, room_id):
     
     form = ChatMessageForm()
     
+    # Get list of message IDs that current user has read
+    read_message_ids = set(chat_room.messages.filter(read_by=request.user).values_list('id', flat=True))
+    
     context = {
         'chat_room': chat_room,
         'chat_messages': chat_messages,
         'form': form,
+        'read_message_ids': read_message_ids,
     }
     return render(request, 'messaging/chat_room_detail.html', context)
 
@@ -331,6 +341,7 @@ def task_comment_history(request, task_id):
 def get_unread_message_count(request):
     """API endpoint to get unread message count for the current user
     
+    Counts messages that the user hasn't marked as read yet.
     Optional query parameter:
     - board_id: If provided, only count messages from chat rooms in this board
     """
@@ -347,23 +358,111 @@ def get_unread_message_count(request):
         except (ValueError, TypeError):
             pass  # Invalid board_id, ignore the filter
     
-    # Count total messages in all these rooms
-    # (In a production system, you'd track which messages the user has seen)
-    # For now, we'll count recent messages (last 24 hours) the user hasn't authored
-    from django.utils import timezone
-    from datetime import timedelta
-    
-    recent_cutoff = timezone.now() - timedelta(hours=24)
-    
+    # Count total unread messages
+    # Messages are unread if: the user hasn't marked them as read AND they're not from the user
     unread_count = 0
     for room in user_chat_rooms:
-        # Count messages from last 24 hours that aren't from the current user
-        room_unread = room.messages.filter(
-            created_at__gte=recent_cutoff
-        ).exclude(author=request.user).count()
+        # Count messages from this room that the current user hasn't read
+        room_unread = room.messages.exclude(read_by=request.user).exclude(author=request.user).count()
         unread_count += room_unread
     
     return JsonResponse({'unread_count': unread_count})
+
+
+@login_required
+@require_http_methods(["POST"])
+def mark_chat_message_read(request, message_id):
+    """Mark a specific chat message as read by the current user"""
+    message = get_object_or_404(ChatMessage, id=message_id)
+    
+    # Check if user is member of the room
+    if request.user not in message.chat_room.members.all():
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    # Mark message as read by this user
+    message.read_by.add(request.user)
+    
+    # Check if all members have read it
+    chat_room = message.chat_room
+    total_members = chat_room.members.count()
+    read_count = message.read_by.count()
+    
+    all_read = read_count >= total_members
+    
+    if all_read:
+        message.is_read = True
+        message.read_at = timezone.now()
+        message.save()
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'message_id': message_id,
+            'read_count': read_count,
+            'total_members': total_members,
+            'all_read': all_read
+        })
+    
+    return redirect('messaging:chat_room_detail', room_id=message.chat_room.id)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_unread_message_count_v2(request):
+    """API endpoint to get count of unread messages for the current user
+    
+    This counts messages that haven't been marked as read by the user.
+    Optional query parameter:
+    - board_id: If provided, only count messages from chat rooms in this board
+    """
+    board_id = request.GET.get('board_id')
+    
+    # Get all chat rooms the user is a member of
+    user_chat_rooms = ChatRoom.objects.filter(members=request.user)
+    
+    # If board_id is provided, filter to only that board
+    if board_id:
+        try:
+            board_id = int(board_id)
+            user_chat_rooms = user_chat_rooms.filter(board_id=board_id)
+        except (ValueError, TypeError):
+            pass
+    
+    # Count messages the user hasn't marked as read
+    unread_count = 0
+    for room in user_chat_rooms:
+        # Count messages that the current user hasn't read
+        unread_msgs = room.messages.exclude(read_by=request.user).exclude(author=request.user).count()
+        unread_count += unread_msgs
+    
+    return JsonResponse({'unread_count': unread_count})
+
+
+@login_required
+@require_http_methods(["POST"])
+def mark_room_messages_read(request, room_id):
+    """Mark all messages in a chat room as read by the current user"""
+    chat_room = get_object_or_404(ChatRoom, id=room_id)
+    
+    if request.user not in chat_room.members.all():
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    # Get all messages the user hasn't read
+    messages_to_mark = chat_room.messages.exclude(read_by=request.user)
+    
+    count = 0
+    for message in messages_to_mark:
+        message.read_by.add(request.user)
+        count += 1
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'room_id': room_id,
+            'messages_marked_read': count
+        })
+    
+    return redirect('messaging:chat_room_detail', room_id=room_id)
 
 
 @login_required

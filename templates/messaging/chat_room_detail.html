@@ -79,6 +79,26 @@
         display: flex;
     }
 
+    .message-read-btn {
+        color: #28a745;
+        cursor: pointer;
+        border: none;
+        background: none;
+        padding: 0;
+        font-size: 0.8rem;
+        text-decoration: underline;
+    }
+
+    .message-read-btn:hover {
+        color: #1e7e34;
+    }
+
+    .message-read-btn.read {
+        color: #999;
+        cursor: default;
+        text-decoration: line-through;
+    }
+
     .message-delete-btn {
         color: #dc3545;
         cursor: pointer;
@@ -175,6 +195,8 @@
             const messagesDiv = document.querySelector('.chat-messages');
             const messageEl = document.createElement('div');
             messageEl.classList.add('message');
+            messageEl.setAttribute('data-message-id', data.id);
+            messageEl.setAttribute('data-read-by', '1');  // Only sender has "read" it
             
             // Mark own messages with different styling
             if (data.user_id === currentUserId) {
@@ -201,13 +223,30 @@
                 broadcastHtml = '<div class="broadcast-indicator"><small><i class="fas fa-users"></i> All Members</small></div>';
             }
             
+            // Build read status
+            let readStatusHtml = '<div class="message-read-status"><small class="text-muted"><i class="fas fa-check"></i> Read by 1/{{ chat_room.members.count }}</small></div>';
+            
+            // Build read button (show for other users)
+            let readButtonHtml = '';
+            if (data.user_id !== currentUserId) {
+                readButtonHtml = `<button type="button" class="message-read-btn" data-message-id="${data.id}" onclick="markMessageAsRead(${data.id})">
+                    <i class="fas fa-check"></i> Mark as Read
+                </button>`;
+            }
+            
             // Build delete button (show for current user or if they're room creator)
             let deleteButtonHtml = '';
             if (data.user_id === currentUserId || data.current_user_is_room_creator) {
-                deleteButtonHtml = `<div class="message-actions">
-                    <button type="button" class="message-delete-btn" data-message-id="${data.id}" onclick="deleteMessage(${data.id})">
-                        <i class="fas fa-trash-alt"></i> Delete
-                    </button>
+                deleteButtonHtml = `<button type="button" class="message-delete-btn" data-message-id="${data.id}" onclick="deleteMessage(${data.id})">
+                    <i class="fas fa-trash-alt"></i> Delete
+                </button>`;
+            }
+            
+            let actionsHtml = '';
+            if (readButtonHtml || deleteButtonHtml) {
+                actionsHtml = `<div class="message-actions">
+                    ${readButtonHtml}
+                    ${deleteButtonHtml}
                 </div>`;
             }
             
@@ -217,10 +256,26 @@
                 ${mentionHtml}
                 ${broadcastHtml}
                 <div class="message-time">${timeString}</div>
-                ${deleteButtonHtml}
+                ${readStatusHtml}
+                ${actionsHtml}
             `;
             messagesDiv.appendChild(messageEl);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        else if (data.type === 'message_marked_read') {
+            // Update message read status
+            const messageEl = document.querySelector(`[data-message-id="${data.message_id}"]`);
+            if (messageEl) {
+                messageEl.setAttribute('data-read-by', data.read_count);
+                const readStatusEl = messageEl.querySelector('.message-read-status');
+                if (readStatusEl) {
+                    if (data.all_read) {
+                        readStatusEl.innerHTML = '<small class="text-success"><i class="fas fa-check-double"></i> Read by all</small>';
+                    } else {
+                        readStatusEl.innerHTML = `<small class="text-muted"><i class="fas fa-check"></i> Read by ${data.read_count}/${data.total_members}</small>`;
+                    }
+                }
+            }
         }
         else if (data.type === 'user_typing') {
             console.log(data.username + ' is typing...');
@@ -303,17 +358,27 @@
 
             <div class="chat-messages" id="messages">
                 {% for message in chat_messages %}
-                    <div class="message" data-message-id="{{ message.id }}">
+                    <div class="message" data-message-id="{{ message.id }}" data-read-by="{{ message.read_by.count }}">
                         <div class="message-author">{{ message.author.username }}</div>
                         <div class="message-content">{{ message.content }}</div>
                         <div class="message-time">{{ message.created_at|date:"g:i A" }}</div>
-                        {% if user == message.author or user == chat_room.created_by or user.is_staff %}
+                        {% if message.is_read %}
+                            <div class="message-read-status"><small class="text-success"><i class="fas fa-check-double"></i> Read by all</small></div>
+                        {% else %}
+                            <div class="message-read-status"><small class="text-muted"><i class="fas fa-check"></i> Read by {{ message.read_by.count }}/{{ chat_room.members.count }}</small></div>
+                        {% endif %}
                         <div class="message-actions">
+                            {% if user != message.author and message.id not in read_message_ids %}
+                                <button type="button" class="message-read-btn" data-message-id="{{ message.id }}" onclick="markMessageAsRead({{ message.id }})">
+                                    <i class="fas fa-check"></i> Mark as Read
+                                </button>
+                            {% endif %}
+                            {% if user == message.author or user == chat_room.created_by or user.is_staff %}
                             <button type="button" class="message-delete-btn" data-message-id="{{ message.id }}" onclick="deleteMessage({{ message.id }})">
                                 <i class="fas fa-trash-alt"></i> Delete
                             </button>
+                            {% endif %}
                         </div>
-                        {% endif %}
                     </div>
                 {% empty %}
                     <div class="text-center text-muted py-5">
@@ -474,6 +539,44 @@
 
 <script>
     let messageToDeleteId = null;
+
+    function markMessageAsRead(messageId) {
+        // Send read notification via WebSocket
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            chatSocket.send(JSON.stringify({
+                'type': 'message_read',
+                'message_id': messageId
+            }));
+        }
+        
+        // Also send to server via HTTP for persistence
+        fetch(`{% url 'messaging:mark_chat_message_read' message_id=0 %}`.replace('0', messageId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Message marked as read:', data);
+                // Update UI
+                const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+                if (messageEl) {
+                    const readBtn = messageEl.querySelector('.message-read-btn');
+                    if (readBtn) {
+                        readBtn.classList.add('read');
+                        readBtn.disabled = true;
+                        readBtn.innerHTML = '<i class="fas fa-check"></i> Read';
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error marking message as read:', error);
+        });
+    }
 
     function deleteMessage(messageId) {
         const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);

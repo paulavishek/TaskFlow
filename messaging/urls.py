@@ -32,6 +32,10 @@ urlpatterns = [
     path('messages/unread-count/', views.get_unread_message_count, name='get_unread_message_count'),
     path('messages/go-to-unread/', views.go_to_first_unread_room, name='go_to_first_unread_room'),
     
+    # Mark Messages as Read
+    path('message/<int:message_id>/read/', views.mark_chat_message_read, name='mark_chat_message_read'),
+    path('room/<int:room_id>/mark-read/', views.mark_room_messages_read, name='mark_room_messages_read'),
+    
     # Delete Messages
     path('message/<int:message_id>/delete/', views.delete_chat_message, name='delete_chat_message'),
     path('room/<int:room_id>/clear/', views.clear_chat_room_messages, name='clear_chat_room_messages'),

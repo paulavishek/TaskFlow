@@ -79,6 +79,11 @@ class ChatMessage(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     
+    # Message read status tracking
+    is_read = models.BooleanField(default=False)
+    read_by = models.ManyToManyField(User, related_name='read_messages', blank=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+    
     # @mention support
     mentioned_users = models.ManyToManyField(User, related_name='mentioned_in_chat', blank=True)
     
@@ -96,6 +101,18 @@ class ChatMessage(models.Model):
         import re
         mentions = re.findall(r'@(\w+)', self.content)
         return list(set(mentions))  # Remove duplicates
+    
+    def mark_as_read(self, user):
+        """Mark message as read by a specific user"""
+        self.read_by.add(user)
+        if self.read_by.count() == self.chat_room.members.count():
+            self.is_read = True
+            self.read_at = timezone.now()
+            self.save()
+    
+    def get_unread_count(self):
+        """Get number of users who haven't read this message"""
+        return self.chat_room.members.count() - self.read_by.count()
     
     def notify_mentioned_users(self):
         """Create notifications for mentioned users"""
