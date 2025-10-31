@@ -101,7 +101,7 @@
             </div>
             <div class="card-body">
                 <!-- File Upload Form -->
-                <form id="taskFileForm" method="post" action="{% url 'upload_task_file' task_id=task.id %}" enctype="multipart/form-data" style="display: none;" id="fileUploadSection">
+                <form id="taskFileForm" method="post" action="{% url 'upload_task_file' task_id=task.id %}" enctype="multipart/form-data" style="display: none;">
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="fileInput" class="form-label">Select File</label>
@@ -705,8 +705,23 @@
 
     // File Management Functions
     function toggleFileUpload() {
-        const form = document.getElementById('fileUploadSection');
+        const form = document.getElementById('taskFileForm');
         form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 
     document.getElementById('taskFileForm')?.addEventListener('submit', function(e) {
@@ -724,7 +739,8 @@
             method: 'POST',
             body: formData,
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrftoken')
             }
         })
         .then(response => response.json())
