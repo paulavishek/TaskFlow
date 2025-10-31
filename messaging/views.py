@@ -56,14 +56,14 @@ def chat_room_detail(request, room_id):
         return redirect('board_list')
     
     # Get recent messages (last 50)
-    messages = chat_room.messages.all().order_by('-created_at')[:50]
-    messages = reversed(list(messages))
+    chat_messages = chat_room.messages.all().order_by('-created_at')[:50]
+    chat_messages = reversed(list(chat_messages))
     
     form = ChatMessageForm()
     
     context = {
         'chat_room': chat_room,
-        'messages': messages,
+        'chat_messages': chat_messages,
         'form': form,
     }
     return render(request, 'messaging/chat_room_detail.html', context)

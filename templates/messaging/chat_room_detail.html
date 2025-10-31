@@ -252,7 +252,7 @@
             </div>
 
             <div class="chat-messages" id="messages">
-                {% for message in messages %}
+                {% for message in chat_messages %}
                     <div class="message">
                         <div class="message-author">{{ message.author.username }}</div>
                         <div class="message-content">{{ message.content }}</div>
