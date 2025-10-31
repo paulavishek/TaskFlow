@@ -333,3 +333,54 @@ def get_unread_message_count(request):
         unread_count += room_unread
     
     return JsonResponse({'unread_count': unread_count})
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def delete_chat_message(request, message_id):
+    """Delete a specific chat message"""
+    message = get_object_or_404(ChatMessage, id=message_id)
+    
+    # Check if user is the author or a room creator
+    chat_room = message.chat_room
+    is_creator = request.user == chat_room.created_by
+    is_author = request.user == message.author
+    
+    if not (is_author or is_creator or request.user.is_staff):
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    message_id = message.id
+    message.delete()
+    
+    return JsonResponse({
+        'success': True,
+        'message': f'Message deleted successfully',
+        'message_id': message_id
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def clear_chat_room_messages(request, room_id):
+    """Delete all messages in a chat room"""
+    chat_room = get_object_or_404(ChatRoom, id=room_id)
+    
+    # Check if user is room creator or staff
+    if request.user != chat_room.created_by and not request.user.is_staff:
+        return JsonResponse({'error': 'Unauthorized - only room creator can clear all messages'}, status=403)
+    
+    # Get count before deletion
+    count = chat_room.messages.count()
+    
+    # Delete all messages
+    chat_room.messages.all().delete()
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'message': f'{count} messages deleted successfully',
+            'count': count
+        })
+    else:
+        django_messages.success(request, f'All {count} messages have been deleted from the room.')
+        return redirect('messaging:chat_room_detail', room_id=room_id)

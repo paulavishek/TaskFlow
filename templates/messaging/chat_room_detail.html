@@ -68,6 +68,52 @@
         margin-top: 0.25rem;
     }
 
+    .message-actions {
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+        display: none;
+        gap: 0.5rem;
+    }
+
+    .message:hover .message-actions {
+        display: flex;
+    }
+
+    .message-delete-btn {
+        color: #dc3545;
+        cursor: pointer;
+        border: none;
+        background: none;
+        padding: 0;
+        font-size: 0.8rem;
+        text-decoration: underline;
+    }
+
+    .message-delete-btn:hover {
+        color: #c82333;
+    }
+
+    .chat-header-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .clear-messages-btn {
+        background: #dc3545;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: white;
+    }
+
+    .clear-messages-btn:hover {
+        background: #c82333;
+    }
+
     .chat-input-area {
         padding: 1rem;
         border-top: 1px solid #ddd;
@@ -251,12 +297,28 @@
                 {% endif %}
             </div>
 
+            {% if user == chat_room.created_by or user.is_staff %}
+            <div class="chat-header-actions">
+                <div></div>
+                <button type="button" class="clear-messages-btn" data-bs-toggle="modal" data-bs-target="#clearAllModal">
+                    <i class="fas fa-trash me-1"></i> Clear All Messages
+                </button>
+            </div>
+            {% endif %}
+
             <div class="chat-messages" id="messages">
                 {% for message in chat_messages %}
-                    <div class="message">
+                    <div class="message" data-message-id="{{ message.id }}">
                         <div class="message-author">{{ message.author.username }}</div>
                         <div class="message-content">{{ message.content }}</div>
                         <div class="message-time">{{ message.created_at|date:"g:i A" }}</div>
+                        {% if user == message.author or user == chat_room.created_by or user.is_staff %}
+                        <div class="message-actions">
+                            <button type="button" class="message-delete-btn" data-message-id="{{ message.id }}" onclick="deleteMessage({{ message.id }})">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </button>
+                        </div>
+                        {% endif %}
                     </div>
                 {% empty %}
                     <div class="text-center text-muted py-5">
@@ -300,4 +362,141 @@
         </div>
     </div>
 </div>
+
+<!-- Modal for Clear All Messages Confirmation -->
+<div class="modal fade" id="clearAllModal" tabindex="-1" aria-labelledby="clearAllModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="clearAllModalLabel">
+                    <i class="fas fa-trash me-2"></i> Clear All Messages
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Are you sure you want to delete all messages from this room?</strong></p>
+                <p class="text-muted">This action cannot be undone. All {{ chat_messages|length }} messages will be permanently deleted.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="clearAllMessages({{ chat_room.id }})">
+                    <i class="fas fa-trash me-1"></i> Delete All Messages
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Delete Single Message Confirmation -->
+<div class="modal fade" id="deleteMessageModal" tabindex="-1" aria-labelledby="deleteMessageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteMessageModalLabel">
+                    <i class="fas fa-trash me-2"></i> Delete Message
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Delete this message?</strong></p>
+                <p class="text-muted" id="messagePreview"></p>
+                <p class="text-muted small">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteMessage()">
+                    <i class="fas fa-trash me-1"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let messageToDeleteId = null;
+
+    function deleteMessage(messageId) {
+        const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+        const content = messageEl.querySelector('.message-content').textContent;
+        
+        messageToDeleteId = messageId;
+        document.getElementById('messagePreview').textContent = content.substring(0, 100) + (content.length > 100 ? '...' : '');
+        
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteMessageModal'));
+        deleteModal.show();
+    }
+
+    function confirmDeleteMessage() {
+        if (!messageToDeleteId) return;
+
+        fetch(`{% url 'messaging:delete_chat_message' message_id=0 %}`.replace('0', messageToDeleteId), {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove message from DOM
+                const messageEl = document.querySelector(`[data-message-id="${messageToDeleteId}"]`);
+                messageEl.style.opacity = '0.5';
+                messageEl.style.textDecoration = 'line-through';
+                
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('deleteMessageModal')).hide();
+                
+                // Reload messages
+                setTimeout(() => {
+                    location.reload();
+                }, 500);
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting message');
+        });
+    }
+
+    function clearAllMessages(roomId) {
+        fetch(`/messages/room/${roomId}/clear/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('clearAllModal')).hide();
+                
+                // Show success message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.setAttribute('role', 'alert');
+                alertDiv.innerHTML = `
+                    <i class="fas fa-check-circle me-2"></i> ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('main').insertBefore(alertDiv, document.querySelector('main').firstChild);
+                
+                // Reload page
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error clearing messages');
+        });
+    }
+</script>
+
 {% endblock %}
