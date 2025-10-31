@@ -368,11 +368,9 @@
                             <div class="message-read-status"><small class="text-muted"><i class="fas fa-check"></i> Read by {{ message.read_by.count }}/{{ chat_room.members.count }}</small></div>
                         {% endif %}
                         <div class="message-actions">
-                            {% if user != message.author and message.id not in read_message_ids %}
-                                <button type="button" class="message-read-btn" data-message-id="{{ message.id }}" onclick="markMessageAsRead({{ message.id }})">
-                                    <i class="fas fa-check"></i> Mark as Read
-                                </button>
-                            {% endif %}
+                            <button type="button" class="message-read-btn" data-message-id="{{ message.id }}" onclick="markMessageAsRead({{ message.id }})">
+                                <i class="fas fa-check"></i> Mark as Read
+                            </button>
                             {% if user == message.author or user == chat_room.created_by or user.is_staff %}
                             <button type="button" class="message-delete-btn" data-message-id="{{ message.id }}" onclick="deleteMessage({{ message.id }})">
                                 <i class="fas fa-trash-alt"></i> Delete
@@ -482,7 +480,7 @@
         <div class="alert alert-info mt-3">
             <small>
                 <i class="fas fa-info-circle me-1"></i>
-                Messages are updated in real-time. Use @username to mention someone.
+                <strong>Message Status:</strong> Hover over messages and click "Mark as Read" to mark them. The notification badge will update based on unread messages. Messages are updated in real-time. Use @username to mention someone.
             </small>
         </div>
     </div>
@@ -568,8 +566,23 @@
                     if (readBtn) {
                         readBtn.classList.add('read');
                         readBtn.disabled = true;
+                        readBtn.textContent = '';
                         readBtn.innerHTML = '<i class="fas fa-check"></i> Read';
+                        
+                        // Update read status display
+                        const readStatus = messageEl.querySelector('.message-read-status');
+                        if (readStatus) {
+                            readStatus.innerHTML = `<small class="text-muted"><i class="fas fa-check"></i> Read by ${data.read_count}/${data.total_members}</small>`;
+                            if (data.all_read) {
+                                readStatus.innerHTML = '<small class="text-success"><i class="fas fa-check-double"></i> Read by all</small>';
+                            }
+                        }
                     }
+                }
+                
+                // Update the notification badge in navbar
+                if (typeof updateUnreadMessageCount === 'function') {
+                    setTimeout(updateUnreadMessageCount, 500);
                 }
             }
         })

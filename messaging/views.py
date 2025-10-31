@@ -58,12 +58,6 @@ def chat_room_detail(request, room_id):
         django_messages.error(request, 'You do not have access to this room.')
         return redirect('board_list')
     
-    # Automatically mark all messages as read when user views the room
-    # (This is similar to WhatsApp, Telegram, etc. - viewing the room marks messages as read)
-    messages_to_mark = chat_room.messages.exclude(read_by=request.user).exclude(author=request.user)
-    for message in messages_to_mark:
-        message.read_by.add(request.user)
-    
     # Mark all notifications related to this chat room as read
     Notification.objects.filter(
         recipient=request.user,
