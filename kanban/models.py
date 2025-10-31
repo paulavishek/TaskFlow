@@ -482,3 +482,55 @@ class WorkloadDistributionRecommendation(models.Model):
     
     def __str__(self):
         return f"{self.get_recommendation_type_display()}: {self.title}"
+
+
+class TaskFile(models.Model):
+    """File attachments for tasks"""
+    ALLOWED_FILE_TYPES = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png']
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+    
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='file_attachments')
+    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='task_file_uploads')
+    file = models.FileField(upload_to='tasks/%Y/%m/%d/')
+    filename = models.CharField(max_length=255)
+    file_size = models.BigIntegerField(help_text="File size in bytes")
+    file_type = models.CharField(max_length=10, help_text="File extension")
+    description = models.TextField(blank=True, null=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    deleted_at = models.DateTimeField(blank=True, null=True)  # Soft delete
+    
+    class Meta:
+        ordering = ['-uploaded_at']
+        indexes = [
+            models.Index(fields=['task', 'uploaded_at']),
+            models.Index(fields=['uploaded_by', 'uploaded_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.filename} for {self.task.title}"
+    
+    def is_deleted(self):
+        """Check if file is soft-deleted"""
+        return self.deleted_at is not None
+    
+    def get_file_icon(self):
+        """Get Bootstrap icon class based on file type"""
+        icon_map = {
+            'pdf': 'fa-file-pdf',
+            'doc': 'fa-file-word',
+            'docx': 'fa-file-word',
+            'xls': 'fa-file-excel',
+            'xlsx': 'fa-file-excel',
+            'ppt': 'fa-file-powerpoint',
+            'pptx': 'fa-file-powerpoint',
+            'jpg': 'fa-file-image',
+            'jpeg': 'fa-file-image',
+            'png': 'fa-file-image',
+        }
+        return icon_map.get(self.file_type.lower(), 'fa-file')
+    
+    @staticmethod
+    def is_valid_file_type(filename):
+        """Validate file type"""
+        ext = filename.split('.')[-1].lower()
+        return ext in TaskFile.ALLOWED_FILE_TYPES

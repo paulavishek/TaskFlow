@@ -1,5 +1,5 @@
 from django import forms
-from .models import TaskThreadComment, ChatRoom, ChatMessage
+from .models import TaskThreadComment, ChatRoom, ChatMessage, FileAttachment
 from django.contrib.auth.models import User
 
 
@@ -84,3 +84,44 @@ class MentionForm(forms.Form):
             'autocomplete': 'off'
         })
     )
+
+
+class ChatRoomFileForm(forms.ModelForm):
+    """Form for uploading files to chat rooms"""
+    
+    class Meta:
+        model = FileAttachment
+        fields = ['file', 'description']
+        widgets = {
+            'file': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png',
+                'id': 'chat-file-input'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Optional: Add a description for this file',
+                'maxlength': '500'
+            })
+        }
+    
+    def clean_file(self):
+        """Validate file type and size"""
+        file = self.cleaned_data.get('file')
+        
+        if file:
+            # Check file size
+            if file.size > FileAttachment.MAX_FILE_SIZE:
+                raise forms.ValidationError(
+                    f'File size exceeds {FileAttachment.MAX_FILE_SIZE / (1024*1024):.0f}MB limit'
+                )
+            
+            # Check file type
+            if not FileAttachment.is_valid_file_type(file.name):
+                allowed = ', '.join(FileAttachment.ALLOWED_FILE_TYPES)
+                raise forms.ValidationError(
+                    f'Invalid file type. Allowed types: {allowed}'
+                )
+        
+        return file

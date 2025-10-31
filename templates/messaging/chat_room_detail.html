@@ -157,6 +157,56 @@
         color: #667eea;
         margin-right: 0.5rem;
     }
+
+    .file-upload-section {
+        background: #f0f4ff;
+        padding: 1rem;
+        border: 1px dashed #667eea;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+    }
+
+    .files-sidebar {
+        background: #f9f9f9;
+        padding: 1rem;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+    }
+
+    .files-sidebar h5 {
+        font-size: 0.95rem;
+        margin-bottom: 0.75rem;
+        color: #333;
+    }
+
+    .files-sidebar ul li {
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .files-sidebar ul li:hover {
+        background-color: #e8ecf8 !important;
+    }
+
+    .file-icon {
+        margin-right: 0.5rem;
+        color: #667eea;
+    }
+
+    .chat-form {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .chat-form input {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .chat-form button {
+        white-space: nowrap;
+    }
 </style>
 {% endblock %}
 
@@ -328,12 +378,34 @@
             </div>
 
             <div class="chat-input-area">
+                <!-- File Upload Section -->
+                <div class="file-upload-section mb-2" style="display: none;" id="fileUploadSection">
+                    <form id="chatFileForm" method="post" action="{% url 'messaging:upload_chat_room_file' room_id=chat_room.id %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="input-group input-group-sm">
+                            <input type="file" name="file" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png" required>
+                            <button type="submit" class="btn btn-outline-secondary" title="Upload file">
+                                <i class="fas fa-upload"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="toggleFileUpload()" title="Hide">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
+                        </div>
+                        <textarea name="description" class="form-control form-control-sm mt-2" placeholder="Optional description..." rows="2" maxlength="500"></textarea>
+                    </form>
+                </div>
+                
                 <form class="chat-form" method="post" action="{% url 'messaging:send_chat_message' room_id=chat_room.id %}">
                     {% csrf_token %}
                     <input type="text" name="message" class="form-control" placeholder="Type your message... (use @username to mention)" required autofocus>
-                    <button type="submit" class="btn btn-primary" title="Send (or press Enter)">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1" title="Send (or press Enter)">
+                            <i class="fas fa-paper-plane"></i> Send
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="toggleFileUpload()" title="Attach file">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -352,6 +424,46 @@
                     <li class="text-muted">No members</li>
                 {% endfor %}
             </ul>
+        </div>
+
+        <!-- Files Section -->
+        <div class="files-sidebar mt-3">
+            <h5><i class="fas fa-file me-2"></i> Files</h5>
+            <div id="filesList" style="max-height: 300px; overflow-y: auto;">
+                {% if chat_room.file_attachments.all %}
+                    <ul class="list-unstyled">
+                        {% for file in chat_room.file_attachments.all %}
+                            {% if not file.is_deleted %}
+                                <li class="mb-2 p-2 bg-light rounded">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <div>
+                                                <i class="fas {{ file.get_file_icon }} me-1"></i>
+                                                <a href="{% url 'messaging:download_chat_room_file' file_id=file.id %}" target="_blank" class="text-decoration-none">
+                                                    {{ file.filename }}
+                                                </a>
+                                            </div>
+                                            <small class="text-muted d-block">
+                                                By {{ file.uploaded_by.username }} • {{ file.file_size|filesizeformat }}
+                                            </small>
+                                            {% if file.description %}
+                                                <small class="text-muted">{{ file.description }}</small>
+                                            {% endif %}
+                                        </div>
+                                        {% if user == file.uploaded_by or user == chat_room.created_by or user.is_staff %}
+                                            <button type="button" class="btn btn-sm btn-link text-danger" onclick="deleteFile({{ file.id }}, '{{ file.filename }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted small">No files yet</p>
+                {% endif %}
+            </div>
         </div>
 
         <div class="alert alert-info mt-3">
@@ -503,6 +615,70 @@
         const messageCount = document.querySelectorAll('.chat-messages .message').length;
         document.getElementById('messageCountDisplay').textContent = messageCount;
     });
+
+    // File Management Functions
+    function toggleFileUpload() {
+        const section = document.getElementById('fileUploadSection');
+        section.style.display = section.style.display === 'none' ? 'block' : 'none';
+    }
+
+    document.getElementById('chatFileForm')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const fileInput = document.querySelector('input[name="file"]');
+        
+        // Validate file is selected
+        if (!fileInput.files.length) {
+            alert('Please select a file');
+            return;
+        }
+        
+        fetch('{% url "messaging:upload_chat_room_file" room_id=chat_room.id %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('File uploaded successfully!');
+                fileInput.value = '';
+                document.querySelector('textarea[name="description"]').value = '';
+                toggleFileUpload();
+                location.reload();
+            } else {
+                alert('Upload failed: ' + JSON.stringify(data.errors));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Upload error: ' + error);
+        });
+    });
+
+    function deleteFile(fileId, filename) {
+        if (confirm(`Delete "${filename}"?`)) {
+            fetch(`{% url 'messaging:delete_chat_room_file' file_id=0 %}`.replace('0', fileId), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error deleting file');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    }
 </script>
 
 {% endblock %}

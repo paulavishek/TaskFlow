@@ -1,14 +1,17 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages as django_messages
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q
 from django.contrib.auth.models import User
+from django.core.files.storage import default_storage
+from django.utils import timezone
+import os
 
 from kanban.models import Board, Task
-from .models import ChatRoom, ChatMessage, TaskThreadComment, Notification
-from .forms import ChatRoomForm, ChatMessageForm, TaskThreadCommentForm, MentionForm
+from .models import ChatRoom, ChatMessage, TaskThreadComment, Notification, FileAttachment
+from .forms import ChatRoomForm, ChatMessageForm, TaskThreadCommentForm, MentionForm, ChatRoomFileForm
 
 
 @login_required
@@ -431,3 +434,115 @@ def go_to_first_unread_room(request):
     
     # No unread messages found, go to messaging hub
     return redirect('messaging:hub')
+
+
+# ===== FILE MANAGEMENT VIEWS FOR CHAT ROOMS =====
+
+@login_required
+@require_http_methods(["POST"])
+def upload_chat_room_file(request, room_id):
+    """Upload a file to a chat room"""
+    chat_room = get_object_or_404(ChatRoom, id=room_id)
+    
+    # Check if user is member
+    if request.user not in chat_room.members.all():
+        django_messages.error(request, 'You do not have access to this room.')
+        return redirect('messaging:chat_room_list', board_id=chat_room.board.id)
+    
+    if request.method == 'POST':
+        form = ChatRoomFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            file_obj = form.save(commit=False)
+            file_obj.chat_room = chat_room
+            file_obj.uploaded_by = request.user
+            file_obj.filename = request.FILES['file'].name
+            file_obj.file_size = request.FILES['file'].size
+            file_obj.file_type = request.FILES['file'].name.split('.')[-1].lower()
+            file_obj.save()
+            
+            django_messages.success(request, f'File "{file_obj.filename}" uploaded successfully!')
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'id': file_obj.id,
+                    'filename': file_obj.filename,
+                    'file_type': file_obj.file_type,
+                    'file_size': file_obj.file_size,
+                    'uploaded_by': file_obj.uploaded_by.username,
+                    'uploaded_at': file_obj.uploaded_at.isoformat(),
+                })
+        else:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'errors': form.errors
+                }, status=400)
+    
+    return redirect('messaging:chat_room_detail', room_id=room_id)
+
+
+@login_required
+@require_http_methods(["GET"])
+def download_chat_room_file(request, file_id):
+    """Download a file from a chat room"""
+    file_obj = get_object_or_404(FileAttachment, id=file_id)
+    
+    # Check if user is member of the room
+    if request.user not in file_obj.chat_room.members.all():
+        django_messages.error(request, 'You do not have access to this file.')
+        return redirect('messaging:hub')
+    
+    # Serve the file
+    if file_obj.file:
+        response = FileResponse(file_obj.file.open('rb'), as_attachment=True)
+        response['Content-Disposition'] = f'attachment; filename="{file_obj.filename}"'
+        return response
+    
+    django_messages.error(request, 'File not found.')
+    return redirect('messaging:chat_room_detail', room_id=file_obj.chat_room.id)
+
+
+@login_required
+@require_http_methods(["POST"])
+def delete_chat_room_file(request, file_id):
+    """Delete (soft delete) a file from a chat room"""
+    file_obj = get_object_or_404(FileAttachment, id=file_id)
+    chat_room = file_obj.chat_room
+    
+    # Check permissions - only uploader, room creator, or staff can delete
+    if request.user not in [file_obj.uploaded_by, chat_room.created_by] and not request.user.is_staff:
+        django_messages.error(request, 'You do not have permission to delete this file.')
+        return redirect('messaging:chat_room_detail', room_id=chat_room.id)
+    
+    # Soft delete
+    file_obj.deleted_at = timezone.now()
+    file_obj.save()
+    
+    django_messages.success(request, f'File "{file_obj.filename}" deleted.')
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': True})
+    
+    return redirect('messaging:chat_room_detail', room_id=chat_room.id)
+
+
+@login_required
+@require_http_methods(["GET"])
+def list_chat_room_files(request, room_id):
+    """Get a list of files in a chat room (JSON API)"""
+    chat_room = get_object_or_404(ChatRoom, id=room_id)
+    
+    # Check if user is member
+    if request.user not in chat_room.members.all():
+        return JsonResponse({'error': 'Access denied'}, status=403)
+    
+    # Get non-deleted files
+    files = chat_room.file_attachments.filter(deleted_at__isnull=True).values(
+        'id', 'filename', 'file_type', 'file_size', 'uploaded_by__username', 'uploaded_at', 'description'
+    )
+    
+    return JsonResponse({
+        'success': True,
+        'files': list(files)
+    })

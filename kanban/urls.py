@@ -79,4 +79,10 @@ urlpatterns = [
     path('api/task/<int:task_id>/analyze-dependencies/', api_views.analyze_task_dependencies_api, name='analyze_task_dependencies_api'),
     path('api/task/<int:task_id>/dependency-tree/', api_views.get_dependency_tree_api, name='get_dependency_tree_api'),
     path('api/board/<int:board_id>/dependency-graph/', api_views.get_board_dependency_graph_api, name='get_board_dependency_graph_api'),
+    
+    # File Management for Tasks
+    path('tasks/<int:task_id>/files/upload/', views.upload_task_file, name='upload_task_file'),
+    path('tasks/<int:task_id>/files/list/', views.list_task_files, name='list_task_files'),
+    path('files/<int:file_id>/download/', views.download_task_file, name='download_task_file'),
+    path('files/<int:file_id>/delete/', views.delete_task_file, name='delete_task_file'),
 ]

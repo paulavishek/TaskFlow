@@ -1,10 +1,11 @@
 import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
+from django.http import JsonResponse, HttpResponseForbidden, HttpResponse, FileResponse
 from django.contrib import messages
 from django.db.models import Count, Q, Case, When, IntegerField, Max
 from django.utils import timezone
+from django.views.decorators.http import require_http_methods
 from datetime import timedelta
 import json
 import csv
@@ -14,8 +15,8 @@ from django.core.management import call_command
 # Configure logger
 logger = logging.getLogger(__name__)
 
-from .models import Board, Column, Task, TaskLabel, Comment, TaskActivity
-from .forms import BoardForm, ColumnForm, TaskForm, TaskLabelForm, CommentForm, TaskMoveForm, TaskSearchForm
+from .models import Board, Column, Task, TaskLabel, Comment, TaskActivity, TaskFile
+from .forms import BoardForm, ColumnForm, TaskForm, TaskLabelForm, CommentForm, TaskMoveForm, TaskSearchForm, TaskFileForm
 from accounts.models import UserProfile
 from .stakeholder_models import StakeholderTaskInvolvement
 
@@ -1724,4 +1725,120 @@ def board_dependency_graph(request, board_id):
     except Board.DoesNotExist:
         messages.error(request, 'Board not found')
         return redirect('dashboard')
+
+
+# ===== FILE MANAGEMENT VIEWS FOR TASKS =====
+
+@login_required
+@require_http_methods(["POST"])
+def upload_task_file(request, task_id):
+    """Upload a file to a task"""
+    task = get_object_or_404(Task, id=task_id)
+    board = task.column.board
+    
+    # Check if user is board member
+    if request.user not in board.members.all() and board.created_by != request.user:
+        messages.error(request, 'You do not have access to this task.')
+        return redirect('board_list')
+    
+    if request.method == 'POST':
+        form = TaskFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            file_obj = form.save(commit=False)
+            file_obj.task = task
+            file_obj.uploaded_by = request.user
+            file_obj.filename = request.FILES['file'].name
+            file_obj.file_size = request.FILES['file'].size
+            file_obj.file_type = request.FILES['file'].name.split('.')[-1].lower()
+            file_obj.save()
+            
+            messages.success(request, f'File "{file_obj.filename}" uploaded successfully!')
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'id': file_obj.id,
+                    'filename': file_obj.filename,
+                    'file_type': file_obj.file_type,
+                    'file_size': file_obj.file_size,
+                    'uploaded_by': file_obj.uploaded_by.username,
+                    'uploaded_at': file_obj.uploaded_at.isoformat(),
+                })
+        else:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'errors': form.errors
+                }, status=400)
+    
+    return redirect('task_detail', task_id=task_id)
+
+
+@login_required
+@require_http_methods(["GET"])
+def download_task_file(request, file_id):
+    """Download a file from a task"""
+    file_obj = get_object_or_404(TaskFile, id=file_id)
+    board = file_obj.task.column.board
+    
+    # Check if user is board member
+    if request.user not in board.members.all() and board.created_by != request.user:
+        messages.error(request, 'You do not have access to this file.')
+        return redirect('board_list')
+    
+    # Serve the file
+    if file_obj.file:
+        response = FileResponse(file_obj.file.open('rb'), as_attachment=True)
+        response['Content-Disposition'] = f'attachment; filename="{file_obj.filename}"'
+        return response
+    
+    messages.error(request, 'File not found.')
+    return redirect('task_detail', task_id=file_obj.task.id)
+
+
+@login_required
+@require_http_methods(["POST"])
+def delete_task_file(request, file_id):
+    """Delete (soft delete) a file from a task"""
+    file_obj = get_object_or_404(TaskFile, id=file_id)
+    task = file_obj.task
+    board = task.column.board
+    
+    # Check permissions - only uploader or staff can delete
+    if request.user != file_obj.uploaded_by and not request.user.is_staff:
+        messages.error(request, 'You do not have permission to delete this file.')
+        return redirect('task_detail', task_id=task.id)
+    
+    # Soft delete
+    file_obj.deleted_at = timezone.now()
+    file_obj.save()
+    
+    messages.success(request, f'File "{file_obj.filename}" deleted.')
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': True})
+    
+    return redirect('task_detail', task_id=task.id)
+
+
+@login_required
+@require_http_methods(["GET"])
+def list_task_files(request, task_id):
+    """Get a list of files in a task (JSON API)"""
+    task = get_object_or_404(Task, id=task_id)
+    board = task.column.board
+    
+    # Check if user is board member
+    if request.user not in board.members.all() and board.created_by != request.user:
+        return JsonResponse({'error': 'Access denied'}, status=403)
+    
+    # Get non-deleted files
+    files = task.file_attachments.filter(deleted_at__isnull=True).values(
+        'id', 'filename', 'file_type', 'file_size', 'uploaded_by__username', 'uploaded_at', 'description'
+    )
+    
+    return JsonResponse({
+        'success': True,
+        'files': list(files)
+    })
 

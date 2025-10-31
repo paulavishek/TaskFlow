@@ -35,4 +35,10 @@ urlpatterns = [
     # Delete Messages
     path('message/<int:message_id>/delete/', views.delete_chat_message, name='delete_chat_message'),
     path('room/<int:room_id>/clear/', views.clear_chat_room_messages, name='clear_chat_room_messages'),
+    
+    # File Management for Chat Rooms
+    path('room/<int:room_id>/files/upload/', views.upload_chat_room_file, name='upload_chat_room_file'),
+    path('room/<int:room_id>/files/list/', views.list_chat_room_files, name='list_chat_room_files'),
+    path('file/<int:file_id>/download/', views.download_chat_room_file, name='download_chat_room_file'),
+    path('file/<int:file_id>/delete/', views.delete_chat_room_file, name='delete_chat_room_file'),
 ]

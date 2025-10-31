@@ -1,5 +1,5 @@
 from django import forms
-from ..models import Board, Column, Task, TaskLabel, Comment
+from ..models import Board, Column, Task, TaskLabel, Comment, TaskFile
 
 class BoardForm(forms.ModelForm):
     class Meta:
@@ -122,3 +122,85 @@ class TaskSearchForm(forms.Form):
             self.fields['column'].queryset = Column.objects.filter(board=board)
             self.fields['label'].queryset = TaskLabel.objects.filter(board=board)
             self.fields['assignee'].queryset = board.members.all()
+
+
+class TaskFileForm(forms.ModelForm):
+    """Form for uploading files to tasks"""
+    
+    class Meta:
+        model = TaskFile
+        fields = ['file', 'description']
+        widgets = {
+            'file': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png',
+                'id': 'task-file-input'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Optional: Add a description for this file',
+                'maxlength': '500'
+            })
+        }
+    
+    def clean_file(self):
+        """Validate file type and size"""
+        file = self.cleaned_data.get('file')
+        
+        if file:
+            # Check file size
+            if file.size > TaskFile.MAX_FILE_SIZE:
+                raise forms.ValidationError(
+                    f'File size exceeds {TaskFile.MAX_FILE_SIZE / (1024*1024):.0f}MB limit'
+                )
+            
+            # Check file type
+            if not TaskFile.is_valid_file_type(file.name):
+                allowed = ', '.join(TaskFile.ALLOWED_FILE_TYPES)
+                raise forms.ValidationError(
+                    f'Invalid file type. Allowed types: {allowed}'
+                )
+        
+        return file
+
+
+class TaskFileForm(forms.ModelForm):
+    """Form for uploading files to tasks"""
+    
+    class Meta:
+        model = TaskFile
+        fields = ['file', 'description']
+        widgets = {
+            'file': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png',
+                'id': 'task-file-input'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Optional: Add a description for this file',
+                'maxlength': '500'
+            })
+        }
+    
+    def clean_file(self):
+        """Validate file type and size"""
+        file = self.cleaned_data.get('file')
+        
+        if file:
+            # Check file size
+            if file.size > TaskFile.MAX_FILE_SIZE:
+                raise forms.ValidationError(
+                    f'File size exceeds {TaskFile.MAX_FILE_SIZE / (1024*1024):.0f}MB limit'
+                )
+            
+            # Check file type
+            if not TaskFile.is_valid_file_type(file.name):
+                allowed = ', '.join(TaskFile.ALLOWED_FILE_TYPES)
+                raise forms.ValidationError(
+                    f'Invalid file type. Allowed types: {allowed}'
+                )
+        
+        return file
