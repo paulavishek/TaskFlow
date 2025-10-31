@@ -203,7 +203,7 @@
             
             // Build delete button (show for current user or if they're room creator)
             let deleteButtonHtml = '';
-            if (data.user_id === currentUserId || data.is_room_creator) {
+            if (data.user_id === currentUserId || data.current_user_is_room_creator) {
                 deleteButtonHtml = `<div class="message-actions">
                     <button type="button" class="message-delete-btn" data-message-id="${data.id}" onclick="deleteMessage(${data.id})">
                         <i class="fas fa-trash-alt"></i> Delete

@@ -151,8 +151,10 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
     # Message handlers for group_send
     async def chat_message_send(self, event):
         """Send a chat message to WebSocket - delivered to ALL members"""
-        # Determine if current user is room creator
-        is_room_creator = event.get('room_creator_id') == self.user.id
+        # Check if current user is room creator (can delete any message)
+        current_user_is_room_creator = event.get('room_creator_id') == self.user.id
+        # Check if message sender is room creator
+        sender_is_room_creator = event.get('room_creator_id') == event['user_id']
         
         await self.send(text_data=json.dumps({
             'type': 'chat_message',
@@ -165,7 +167,8 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
             'mentioned_users': event['mentioned_users'],
             'is_broadcast': event.get('is_broadcast', True),  # All messages are broadcast to room
             'is_own_message': event['user_id'] == self.user.id,
-            'is_room_creator': is_room_creator
+            'current_user_is_room_creator': current_user_is_room_creator,
+            'sender_is_room_creator': sender_is_room_creator
         }))
     
     async def user_join(self, event):

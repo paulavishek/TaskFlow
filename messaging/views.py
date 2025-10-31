@@ -460,6 +460,15 @@ def upload_chat_room_file(request, room_id):
             file_obj.file_type = request.FILES['file'].name.split('.')[-1].lower()
             file_obj.save()
             
+            # Create a system message to notify about file upload
+            file_icon = file_obj.get_file_icon()
+            system_message_text = f'📎 {request.user.username} uploaded <i class="fas {file_icon}"></i> {file_obj.filename}'
+            ChatMessage.objects.create(
+                chat_room=chat_room,
+                author=request.user,
+                content=system_message_text
+            )
+            
             django_messages.success(request, f'File "{file_obj.filename}" uploaded successfully!')
             
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
