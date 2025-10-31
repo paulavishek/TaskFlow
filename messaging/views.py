@@ -72,7 +72,10 @@ def chat_room_detail(request, room_id):
     form = ChatMessageForm()
     
     # Get list of message IDs that current user has read
-    read_message_ids = set(chat_room.messages.filter(read_by=request.user).values_list('id', flat=True))
+    # Include messages from the current user (they don't need to be marked as read)
+    read_message_ids = set(chat_room.messages.filter(
+        Q(read_by=request.user) | Q(author=request.user)
+    ).values_list('id', flat=True))
     
     context = {
         'chat_room': chat_room,

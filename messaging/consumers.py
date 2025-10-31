@@ -284,6 +284,9 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
                 content=message_text
             )
             
+            # Auto-mark sender's message as read for themselves
+            message.read_by.add(self.user)
+            
             # Extract and add mentioned users
             # This is OPTIONAL - messages don't need mentions to be sent
             mentions = re.findall(r'@(\w+)', message_text)

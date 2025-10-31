@@ -226,7 +226,7 @@
             // Build read status
             let readStatusHtml = '<div class="message-read-status"><small class="text-muted"><i class="fas fa-check"></i> Read by 1/{{ chat_room.members.count }}</small></div>';
             
-            // Build read button (show for other users)
+            // Build read button (show for other users, NOT for sender)
             let readButtonHtml = '';
             if (data.user_id !== currentUserId) {
                 readButtonHtml = `<button type="button" class="message-read-btn" data-message-id="${data.id}" onclick="markMessageAsRead(${data.id})">
@@ -368,9 +368,11 @@
                             <div class="message-read-status"><small class="text-muted"><i class="fas fa-check"></i> Read by {{ message.read_by.count }}/{{ chat_room.members.count }}</small></div>
                         {% endif %}
                         <div class="message-actions">
+                            {% if user != message.author %}
                             <button type="button" class="message-read-btn" data-message-id="{{ message.id }}" onclick="markMessageAsRead({{ message.id }})">
                                 <i class="fas fa-check"></i> Mark as Read
                             </button>
+                            {% endif %}
                             {% if user == message.author or user == chat_room.created_by or user.is_staff %}
                             <button type="button" class="message-delete-btn" data-message-id="{{ message.id }}" onclick="deleteMessage({{ message.id }})">
                                 <i class="fas fa-trash-alt"></i> Delete
