@@ -490,11 +490,22 @@ def upload_chat_room_file(request, room_id):
             }
             file_icon = file_icon_map.get(file_obj.file_type.lower(), '📎')
             system_message_text = f'📎 {request.user.username} uploaded {file_icon} {file_obj.filename}'
-            ChatMessage.objects.create(
+            system_message = ChatMessage.objects.create(
                 chat_room=chat_room,
                 author=request.user,
                 content=system_message_text
             )
+            
+            # Create notifications for other room members
+            for member in chat_room.members.all():
+                if member != request.user:  # Don't notify the uploader
+                    Notification.objects.create(
+                        recipient=member,
+                        sender=request.user,
+                        notification_type='CHAT_MESSAGE',
+                        chat_message=system_message,
+                        text=f'{request.user.username} uploaded {file_obj.filename} in {chat_room.name}'
+                    )
             
             django_messages.success(request, f'File "{file_obj.filename}" uploaded successfully!')
             
