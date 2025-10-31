@@ -461,7 +461,7 @@
     }
 
     function clearAllMessages(roomId) {
-        fetch(`/messages/room/${roomId}/clear/`, {
+        fetch(`/messaging/room/${roomId}/clear/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
