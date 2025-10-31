@@ -375,7 +375,7 @@
             </div>
             <div class="modal-body">
                 <p><strong>Are you sure you want to delete all messages from this room?</strong></p>
-                <p class="text-muted">This action cannot be undone. All {{ chat_messages|length }} messages will be permanently deleted.</p>
+                <p class="text-muted">This action cannot be undone. All <span id="messageCountDisplay">0</span> messages will be permanently deleted.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -497,6 +497,12 @@
             alert('Error clearing messages');
         });
     }
+
+    // Update message count when modal opens
+    document.getElementById('clearAllModal').addEventListener('show.bs.modal', function() {
+        const messageCount = document.querySelectorAll('.chat-messages .message').length;
+        document.getElementById('messageCountDisplay').textContent = messageCount;
+    });
 </script>
 
 {% endblock %}

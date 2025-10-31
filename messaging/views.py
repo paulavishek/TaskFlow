@@ -312,9 +312,23 @@ def task_comment_history(request, task_id):
 @login_required
 @require_http_methods(["GET"])
 def get_unread_message_count(request):
-    """API endpoint to get unread message count for the current user"""
+    """API endpoint to get unread message count for the current user
+    
+    Optional query parameter:
+    - board_id: If provided, only count messages from chat rooms in this board
+    """
+    board_id = request.GET.get('board_id')
+    
     # Get all chat rooms the user is a member of
     user_chat_rooms = ChatRoom.objects.filter(members=request.user)
+    
+    # If board_id is provided, filter to only that board
+    if board_id:
+        try:
+            board_id = int(board_id)
+            user_chat_rooms = user_chat_rooms.filter(board_id=board_id)
+        except (ValueError, TypeError):
+            pass  # Invalid board_id, ignore the filter
     
     # Count total messages in all these rooms
     # (In a production system, you'd track which messages the user has seen)
@@ -384,3 +398,36 @@ def clear_chat_room_messages(request, room_id):
     else:
         django_messages.success(request, f'All {count} messages have been deleted from the room.')
         return redirect('messaging:chat_room_detail', room_id=room_id)
+
+
+@login_required
+def go_to_first_unread_room(request):
+    """Redirect user to the first chat room with unread messages, or to messaging hub if none"""
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    # Get all chat rooms the user is a member of
+    user_chat_rooms = ChatRoom.objects.filter(members=request.user).order_by('-created_at')
+    
+    # Get board_id from query params if available
+    board_id = request.GET.get('board_id')
+    if board_id:
+        try:
+            board_id = int(board_id)
+            user_chat_rooms = user_chat_rooms.filter(board_id=board_id)
+        except (ValueError, TypeError):
+            pass
+    
+    # Find first room with unread messages
+    recent_cutoff = timezone.now() - timedelta(hours=24)
+    
+    for room in user_chat_rooms:
+        unread_count = room.messages.filter(
+            created_at__gte=recent_cutoff
+        ).exclude(author=request.user).count()
+        
+        if unread_count > 0:
+            return redirect('messaging:chat_room_detail', room_id=room.id)
+    
+    # No unread messages found, go to messaging hub
+    return redirect('messaging:hub')

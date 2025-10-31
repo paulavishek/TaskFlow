@@ -40,7 +40,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link position-relative" href="{% url 'messaging:hub' %}">
+                            <a class="nav-link position-relative" href="{% url 'messaging:go_to_first_unread_room' %}" onclick="addBoardIdToLink(event)">
                                 <i class="fas fa-comments me-1"></i> Messages
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="unread-message-badge" style="display: none; font-size: 0.65rem;">
                                     <span id="unread-count">0</span>
@@ -112,10 +112,27 @@
     
     <!-- Unread Message Badge Script -->
     <script>
+        // Function to add board_id to Messages link if user is viewing a board
+        function addBoardIdToLink(event) {
+            const boardIdMatch = window.location.pathname.match(/\/board\/(\d+)\//);
+            if (boardIdMatch) {
+                event.preventDefault();
+                const boardId = boardIdMatch[1];
+                window.location.href = `{% url 'messaging:go_to_first_unread_room' %}?board_id=${boardId}`;
+            }
+        }
+
         // Function to update unread message count
         function updateUnreadMessageCount() {
             {% if user.is_authenticated %}
-            fetch('{% url "messaging:get_unread_message_count" %}')
+            // Get current board ID from URL if available
+            let url = '{% url "messaging:get_unread_message_count" %}';
+            const boardIdMatch = window.location.pathname.match(/\/board\/(\d+)\//);
+            if (boardIdMatch) {
+                url += `?board_id=${boardIdMatch[1]}`;
+            }
+            
+            fetch(url)
                 .then(response => response.json())
                 .then(data => {
                     const badge = document.getElementById('unread-message-badge');

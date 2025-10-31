@@ -30,6 +30,7 @@ urlpatterns = [
     
     # Unread Messages
     path('messages/unread-count/', views.get_unread_message_count, name='get_unread_message_count'),
+    path('messages/go-to-unread/', views.go_to_first_unread_room, name='go_to_first_unread_room'),
     
     # Delete Messages
     path('message/<int:message_id>/delete/', views.delete_chat_message, name='delete_chat_message'),
