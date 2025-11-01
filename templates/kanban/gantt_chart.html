@@ -157,6 +157,16 @@
         fill: #ff9500 !important;
     }
 
+    /* Make bars clearly clickable */
+    .gantt .bar-wrapper {
+        cursor: pointer !important;
+    }
+
+    .gantt .bar-wrapper:hover .bar {
+        opacity: 0.85;
+        filter: brightness(1.1);
+    }
+
     .empty-state {
         text-align: center;
         padding: 60px 20px;
@@ -461,14 +471,17 @@
                 on_click: function(task) {
                     // Redirect to task detail page
                     window.location.href = `/tasks/${task.id}/`;
+                    return false; // Prevent default behavior
                 },
                 on_date_change: function(task, start, end) {
                     // Update task dates via API
                     updateTaskDates(task.id, start, end);
+                    return false; // Prevent promise error
                 },
                 on_progress_change: function(task, progress) {
                     // Update task progress via API
                     updateTaskProgress(task.id, progress);
+                    return false; // Prevent promise error
                 }
             });
 
@@ -488,6 +501,17 @@
                         barElement.setAttribute('data-status', actualStatus);
                         barElement.setAttribute('data-priority', task.priority);
                     }
+                });
+
+                // Add manual click handlers to all bars for better compatibility
+                document.querySelectorAll('.bar-wrapper').forEach(barWrapper => {
+                    barWrapper.style.cursor = 'pointer';
+                    barWrapper.addEventListener('click', function(e) {
+                        const taskId = this.getAttribute('data-id');
+                        if (taskId) {
+                            window.location.href = `/tasks/${taskId}/`;
+                        }
+                    });
                 });
 
                 // Add today marker
