@@ -29,6 +29,84 @@
         font-size: 1.5rem;
     }
 
+    /* Quick Stats Panel */
+    .quick-stats-panel {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px;
+        min-width: 240px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        z-index: 100;
+    }
+
+    .quick-stats-panel h6 {
+        margin: 0 0 12px 0;
+        font-weight: 600;
+        font-size: 14px;
+        color: #374151;
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 8px;
+    }
+
+    .stats-grid {
+        display: grid;
+        gap: 8px;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 8px;
+        border-radius: 4px;
+        background: #f9fafb;
+        transition: background 0.2s;
+    }
+
+    .stat-item:hover {
+        background: #f3f4f6;
+    }
+
+    .stat-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #6b7280;
+    }
+
+    .stat-icon {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .stat-value {
+        font-weight: 600;
+        font-size: 16px;
+        color: #1f2937;
+    }
+
+    .stat-item.done .stat-icon {
+        background: #22c55e;
+    }
+
+    .stat-item.in-progress .stat-icon {
+        background: #4c9aff;
+    }
+
+    .stat-item.not-started .stat-icon {
+        background: #888;
+    }
+
+    .stat-item.overdue .stat-icon {
+        background: #ef4444;
+    }
+
     .view-buttons {
         display: flex;
         gap: 8px;
@@ -132,6 +210,60 @@
         border-radius: 2px;
         vertical-align: middle;
     }
+
+    /* Adaptive task labels */
+    .gantt .bar-label {
+        font-size: 12px;
+        font-weight: 500;
+        fill: white;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .gantt .bar-label.outside-left {
+        fill: #374151;
+        text-shadow: none;
+        font-weight: 500;
+    }
+
+    /* Task bar info overlay */
+    .bar-info-overlay {
+        pointer-events: none;
+        font-size: 11px;
+        fill: rgba(255, 255, 255, 0.95);
+        font-weight: 500;
+    }
+
+    .assignee-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: white;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 600;
+        color: #374151;
+        border: 2px solid rgba(255,255,255,0.3);
+        position: absolute;
+        right: 4px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    /* Today marker line */
+    .today-marker {
+        stroke: #ef4444;
+        stroke-width: 2;
+        stroke-dasharray: 5, 5;
+        opacity: 0.8;
+    }
+
+    .today-label {
+        fill: #ef4444;
+        font-size: 11px;
+        font-weight: 600;
+    }
 </style>
 {% endblock %}
 
@@ -164,7 +296,44 @@
         </li>
     </ul>
 
-    <div class="gantt-container">
+    <div class="gantt-container" style="position: relative;">
+        <!-- Quick Stats Panel -->
+        <div class="quick-stats-panel">
+            <h6>
+                <i class="fas fa-heartbeat me-1"></i>Project Health
+            </h6>
+            <div class="stats-grid">
+                <div class="stat-item done">
+                    <div class="stat-label">
+                        <span class="stat-icon"></span>
+                        <span>✓ Done</span>
+                    </div>
+                    <div class="stat-value" id="stat-done">0</div>
+                </div>
+                <div class="stat-item in-progress">
+                    <div class="stat-label">
+                        <span class="stat-icon"></span>
+                        <span>⚡ In Progress</span>
+                    </div>
+                    <div class="stat-value" id="stat-in-progress">0</div>
+                </div>
+                <div class="stat-item not-started">
+                    <div class="stat-label">
+                        <span class="stat-icon"></span>
+                        <span>⏸ Not Started</span>
+                    </div>
+                    <div class="stat-value" id="stat-not-started">0</div>
+                </div>
+                <div class="stat-item overdue">
+                    <div class="stat-label">
+                        <span class="stat-icon"></span>
+                        <span>⚠ Overdue</span>
+                    </div>
+                    <div class="stat-value" id="stat-overdue">0</div>
+                </div>
+            </div>
+        </div>
+
         <div class="gantt-header">
             <h2>📊 Project Timeline</h2>
             <div class="view-buttons">
@@ -181,23 +350,23 @@
             <div class="gantt-legend">
                 <strong>Legend:</strong>
                 <div class="legend-item">
-                    <span class="legend-color" style="background-color: #6c757d;"></span>
+                    <span class="legend-color" style="background: linear-gradient(to right, #a3a3a3 0%, #888 100%);"></span>
                     <span>To Do</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-color" style="background-color: #0d6efd;"></span>
+                    <span class="legend-color" style="background: linear-gradient(to right, #7db3ff 0%, #4c9aff 100%);"></span>
                     <span>In Progress</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-color" style="background-color: #198754;"></span>
+                    <span class="legend-color" style="background: linear-gradient(to right, #4ade80 0%, #22c55e 100%);"></span>
                     <span>Completed</span>
                 </div>
                 <div class="legend-item">
-                    <span style="border: 3px solid #dc3545; display: inline-block; width: 30px; height: 15px; margin-right: 5px; border-radius: 2px; vertical-align: middle;"></span>
+                    <span class="legend-color" style="background: linear-gradient(to right, #ff6b6b 0%, #ff5252 100%); border: 2px solid #dc3545;"></span>
                     <span>Urgent Priority</span>
                 </div>
                 <div class="legend-item">
-                    <span style="border: 2px solid #fd7e14; display: inline-block; width: 30px; height: 15px; margin-right: 5px; border-radius: 2px; vertical-align: middle;"></span>
+                    <span class="legend-color" style="background: linear-gradient(to right, #ffa94d 0%, #ff9500 100%); border: 2px solid #fd7e14;"></span>
                     <span>High Priority</span>
                 </div>
             </div>
@@ -273,8 +442,8 @@
                     `;
                 },
                 on_click: function(task) {
-                    // Redirect to task detail page
-                    window.location.href = `/tasks/${task.id}/`;
+                    // Redirect to task edit page (modal on board detail page)
+                    window.location.href = `/boards/{{ board.id }}/#task-${task.id}`;
                 },
                 on_date_change: function(task, start, end) {
                     // Update task dates via API
@@ -294,11 +463,267 @@
                     barElement.setAttribute('data-priority', task.priority);
                 }
             });
+
+            // Add today marker
+            addTodayMarker();
+
+            // Enhance bars with additional info
+            enhanceBarsWithInfo();
         }
     }
 
+    // Add "Today" marker line
+    function addTodayMarker() {
+        const ganttSvg = document.querySelector('#gantt');
+        if (!ganttSvg) return;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Find the grid elements to determine positioning
+        const gridRows = ganttSvg.querySelectorAll('.grid-row');
+        if (gridRows.length === 0) return;
+
+        // Get the gantt chart instance to calculate position
+        const ganttRect = ganttSvg.getBoundingClientRect();
+        const ganttLayers = ganttSvg.querySelector('.layers');
+        
+        if (!ganttLayers) return;
+
+        // Calculate today's position based on the date range
+        const firstTask = tasks[0];
+        if (!firstTask) return;
+
+        const startDate = new Date(Math.min(...tasks.map(t => new Date(t.start))));
+        const endDate = new Date(Math.max(...tasks.map(t => new Date(t.end))));
+        
+        // Only show marker if today is within the date range
+        if (today < startDate || today > endDate) return;
+
+        // Get the SVG grid to find x position
+        const gridHeader = ganttSvg.querySelector('.grid-header');
+        if (!gridHeader) return;
+
+        // Create SVG group for today marker
+        const markerGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        markerGroup.setAttribute('class', 'today-marker-group');
+
+        // Calculate approximate x position (this is a simplified calculation)
+        const totalDays = (endDate - startDate) / (1000 * 60 * 60 * 24);
+        const daysFromStart = (today - startDate) / (1000 * 60 * 60 * 24);
+        const svgWidth = parseFloat(ganttSvg.getAttribute('width')) || ganttRect.width;
+        const xPos = (daysFromStart / totalDays) * svgWidth;
+
+        // Create vertical line
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('class', 'today-marker');
+        line.setAttribute('x1', xPos);
+        line.setAttribute('y1', '0');
+        line.setAttribute('x2', xPos);
+        line.setAttribute('y2', ganttSvg.getAttribute('height') || '500');
+
+        // Create label
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('class', 'today-label');
+        text.setAttribute('x', xPos + 5);
+        text.setAttribute('y', '15');
+        text.textContent = 'Today';
+
+        markerGroup.appendChild(line);
+        markerGroup.appendChild(text);
+        ganttLayers.appendChild(markerGroup);
+    }
+
+    // Enhance bars with additional information
+    function enhanceBarsWithInfo() {
+        tasks.forEach(task => {
+            const barWrapper = document.querySelector(`.bar-wrapper[data-id="${task.id}"]`);
+            if (!barWrapper) return;
+
+            const bar = barWrapper.querySelector('.bar');
+            if (!bar) return;
+
+            const barRect = bar.getBBox();
+            const barWidth = barRect.width;
+
+            // Calculate duration
+            const start = new Date(task.start);
+            const end = new Date(task.end);
+            const duration = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+
+            // Add info based on available space
+            if (barWidth > 120) {
+                // Wide bar: Add duration and progress info
+                const infoText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                infoText.setAttribute('class', 'bar-info-overlay');
+                infoText.setAttribute('x', barRect.x + barWidth - 5);
+                infoText.setAttribute('y', barRect.y + barRect.height - 5);
+                infoText.setAttribute('text-anchor', 'end');
+                infoText.textContent = `${duration}d • ${task.progress}%`;
+                barWrapper.appendChild(infoText);
+
+                // Add assignee initials if available
+                if (task.assigned_to && task.assigned_to !== 'Unassigned') {
+                    const initials = task.assigned_to.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                    const avatar = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    avatar.setAttribute('class', 'bar-info-overlay');
+                    avatar.setAttribute('x', barRect.x + 8);
+                    avatar.setAttribute('y', barRect.y + barRect.height / 2 + 4);
+                    avatar.setAttribute('text-anchor', 'start');
+                    avatar.setAttribute('font-weight', '600');
+                    avatar.setAttribute('font-size', '10');
+                    avatar.textContent = `👤 ${initials}`;
+                    barWrapper.appendChild(avatar);
+                }
+            } else if (barWidth > 60) {
+                // Medium bar: Just show progress
+                const progressText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                progressText.setAttribute('class', 'bar-info-overlay');
+                progressText.setAttribute('x', barRect.x + barWidth - 5);
+                progressText.setAttribute('y', barRect.y + barRect.height - 5);
+                progressText.setAttribute('text-anchor', 'end');
+                progressText.setAttribute('font-size', '10');
+                progressText.textContent = `${task.progress}%`;
+                barWrapper.appendChild(progressText);
+            }
+        });
+    }
+
+    // Calculate and update project statistics
+    function updateProjectStats() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        let doneCount = 0;
+        let inProgressCount = 0;
+        let notStartedCount = 0;
+        let overdueCount = 0;
+
+        tasks.forEach(task => {
+            const endDate = new Date(task.end);
+            endDate.setHours(0, 0, 0, 0);
+
+            if (task.status === 'done') {
+                doneCount++;
+            } else if (task.status === 'in_progress') {
+                inProgressCount++;
+                if (endDate < today) {
+                    overdueCount++;
+                }
+            } else {
+                notStartedCount++;
+                if (endDate < today) {
+                    overdueCount++;
+                }
+            }
+        });
+
+        document.getElementById('stat-done').textContent = doneCount;
+        document.getElementById('stat-in-progress').textContent = inProgressCount;
+        document.getElementById('stat-not-started').textContent = notStartedCount;
+        document.getElementById('stat-overdue').textContent = overdueCount;
+    }
+
+    // Initialize Gantt chart on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        initGantt('Week');
+        updateProjectStats();
+    });
+
     // Update task dates
     function updateTaskDates(taskId, start, end) {
+        fetch(`/api/tasks/update-dates/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                task_id: taskId,
+                start_date: formatDate(start),
+                due_date: formatDate(end)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Task dates updated successfully');
+                updateProjectStats();
+            } else {
+                console.error('Failed to update task dates:', data.error);
+                // Reload the page to revert changes
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error updating task dates:', error);
+            location.reload();
+        });
+    }
+
+    // Update task progress
+    function updateTaskProgress(taskId, progress) {
+        fetch(`/tasks/${taskId}/update-progress/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                progress: progress
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Task progress updated successfully');
+                updateProjectStats();
+            } else {
+                console.error('Failed to update task progress:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error updating task progress:', error);
+        });
+    }
+
+    // Helper function to format date
+    function formatDate(date) {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // View mode buttons
+    document.querySelectorAll('.view-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove active class from all buttons
+            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+            // Add active class to clicked button
+            this.classList.add('active');
+            // Change Gantt view mode
+            const mode = this.getAttribute('data-mode');
+            initGantt(mode);
+        });
+    });
         fetch(`/api/tasks/update-dates/`, {
             method: 'POST',
             headers: {
