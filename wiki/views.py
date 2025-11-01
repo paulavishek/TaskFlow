@@ -242,6 +242,47 @@ class WikiCategoryCreateView(WikiBaseView, CreateView):
         return reverse_lazy('wiki:category_list', kwargs={'org_id': org.id})
 
 
+class WikiCategoryUpdateView(WikiBaseView, UpdateView):
+    """Edit an existing wiki category"""
+    model = WikiCategory
+    form_class = WikiCategoryForm
+    template_name = 'wiki/category_form.html'
+    pk_url_kwarg = 'pk'
+    
+    def get_queryset(self):
+        org = self.get_organization()
+        return WikiCategory.objects.filter(organization=org)
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, f'Category "{self.object.name}" updated!')
+        return response
+    
+    def get_success_url(self):
+        org = self.get_organization()
+        return reverse_lazy('wiki:category_list', kwargs={'org_id': org.id})
+
+
+class WikiCategoryDeleteView(WikiBaseView, DeleteView):
+    """Delete a wiki category"""
+    model = WikiCategory
+    template_name = 'wiki/category_confirm_delete.html'
+    pk_url_kwarg = 'pk'
+    
+    def get_queryset(self):
+        org = self.get_organization()
+        return WikiCategory.objects.filter(organization=org)
+    
+    def delete(self, request, *args, **kwargs):
+        org = self.get_organization()
+        messages.success(request, f'Category deleted successfully!')
+        return super().delete(request, *args, **kwargs)
+    
+    def get_success_url(self):
+        org = self.get_organization()
+        return reverse_lazy('wiki:category_list', kwargs={'org_id': org.id})
+
+
 class WikiLinkCreateView(WikiBaseView, CreateView):
     """Link a wiki page to a task or board"""
     model = WikiLink

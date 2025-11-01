@@ -7,6 +7,8 @@ urlpatterns = [
     # Category Management
     path('categories/', views.WikiCategoryListView.as_view(), name='category_list'),
     path('categories/create/', views.WikiCategoryCreateView.as_view(), name='category_create'),
+    path('categories/<int:pk>/edit/', views.WikiCategoryUpdateView.as_view(), name='category_edit'),
+    path('categories/<int:pk>/delete/', views.WikiCategoryDeleteView.as_view(), name='category_delete'),
     
     # Page Management
     path('', views.WikiPageListView.as_view(), name='page_list'),

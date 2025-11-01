@@ -7,6 +7,7 @@
     .category-card {
         border-top: 4px solid;
         transition: all 0.2s;
+        position: relative;
     }
     
     .category-card:hover {
@@ -26,6 +27,24 @@
         border-radius: 20px;
         font-size: 0.85rem;
         margin-top: 10px;
+    }
+    
+    .category-actions {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    
+    .category-card:hover .category-actions {
+        opacity: 1;
+    }
+    
+    .category-actions .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.85rem;
+        margin-left: 3px;
     }
 </style>
 {% endblock %}
@@ -49,8 +68,19 @@
         <div class="row">
             {% for category in categories %}
                 <div class="col-md-6 col-lg-4 mb-4">
-                    <a href="{% url 'wiki:page_list_by_category' category.id %}" class="text-decoration-none">
-                        <div class="card category-card h-100" style="border-top-color: {{ category.color }};">
+                    <div class="card category-card h-100" style="border-top-color: {{ category.color }};">
+                        <div class="category-actions">
+                            <a href="{% url 'wiki:category_edit' category.pk %}" 
+                               class="btn btn-sm btn-outline-primary" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'wiki:category_delete' category.pk %}" 
+                               class="btn btn-sm btn-outline-danger" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                        
+                        <a href="{% url 'wiki:page_list_by_category' category.id %}" class="text-decoration-none text-dark">
                             <div class="card-body">
                                 <div class="category-icon" style="color: {{ category.color }};">
                                     <i class="fas fa-{{ category.icon }}"></i>
@@ -68,8 +98,8 @@
                                     {{ category.pages.count }} page{{ category.pages.count|pluralize }}
                                 </span>
                             </div>
-                        </div>
-                    </a>
+                        </a>
+                    </div>
                 </div>
             {% endfor %}
         </div>

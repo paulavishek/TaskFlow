@@ -2,13 +2,14 @@
 {% load crispy_forms_tags %}
 {% load widget_tweaks %}
 
-{% block title %}Create Category{% endblock %}
+{% block title %}{% if form.instance.pk %}Edit{% else %}Create{% endif %} Category{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-lg-6">
         <h2 class="mb-4">
-            <i class="fas fa-folder-plus"></i> Create Category
+            <i class="fas fa-folder-{% if form.instance.pk %}edit{% else %}plus{% endif %}"></i>
+            {% if form.instance.pk %}Edit{% else %}Create{% endif %} Category
         </h2>
         
         <form method="post">
@@ -16,18 +17,87 @@
             
             <div class="card">
                 <div class="card-body">
-                    {{ form.as_p }}
+                    <div class="mb-3">
+                        {{ form.name.label_tag }}
+                        {{ form.name|add_class:"form-control" }}
+                        {% if form.name.help_text %}
+                            <small class="form-text text-muted">{{ form.name.help_text|safe }}</small>
+                        {% endif %}
+                        {{ form.name.errors }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.description.label_tag }}
+                        {{ form.description|add_class:"form-control" }}
+                        {{ form.description.errors }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.icon.label_tag }}
+                                {{ form.icon|add_class:"form-control" }}
+                                <small class="form-text text-muted">Font Awesome icon name (e.g., folder, book, code)</small>
+                                {{ form.icon.errors }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.color.label_tag }}
+                                {{ form.color|add_class:"form-control" }}
+                                {{ form.color.errors }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.position.label_tag }}
+                        {{ form.position|add_class:"form-control" }}
+                        <small class="form-text text-muted">Display order (lower numbers appear first)</small>
+                        {{ form.position.errors }}
+                    </div>
                 </div>
-                <div class="card-footer">
+                
+                <div class="card-footer bg-light">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Create Category
+                        <i class="fas fa-save"></i>
+                        {% if form.instance.pk %}Update{% else %}Create{% endif %} Category
                     </button>
                     <a href="{% url 'wiki:category_list' %}" class="btn btn-outline-secondary">
-                        Cancel
+                        <i class="fas fa-times"></i> Cancel
                     </a>
                 </div>
             </div>
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger mt-3">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
         </form>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card position-sticky" style="top: 20px;">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-lightbulb"></i> Icon Reference</h6>
+            </div>
+            <div class="card-body small">
+                <p><strong>Font Awesome Icons:</strong></p>
+                <ul>
+                    <li><code>folder</code> - <i class="fas fa-folder"></i></li>
+                    <li><code>book</code> - <i class="fas fa-book"></i></li>
+                    <li><code>code</code> - <i class="fas fa-code"></i></li>
+                    <li><code>rocket</code> - <i class="fas fa-rocket"></i></li>
+                    <li><code>cog</code> - <i class="fas fa-cog"></i></li>
+                    <li><code>database</code> - <i class="fas fa-database"></i></li>
+                    <li><code>file-alt</code> - <i class="fas fa-file-alt"></i></li>
+                    <li><code>link</code> - <i class="fas fa-link"></i></li>
+                    <li><code>sitemap</code> - <i class="fas fa-sitemap"></i></li>
+                    <li><code>question-circle</code> - <i class="fas fa-question-circle"></i></li>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

@@ -10,7 +10,7 @@ from django.utils.safestring import mark_safe
 class WikiCategory(models.Model):
     """Categories for organizing wiki pages"""
     name = models.CharField(max_length=100)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField()
     description = models.TextField(blank=True, null=True)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='wiki_categories')
     icon = models.CharField(max_length=50, default='folder', help_text='Font Awesome icon name')
@@ -22,7 +22,7 @@ class WikiCategory(models.Model):
     class Meta:
         ordering = ['position', 'name']
         verbose_name_plural = 'Wiki Categories'
-        unique_together = ('organization', 'name')
+        unique_together = ('organization', 'name', 'slug')
     
     def __str__(self):
         return self.name
@@ -36,7 +36,7 @@ class WikiCategory(models.Model):
 class WikiPage(models.Model):
     """Main wiki page model"""
     title = models.CharField(max_length=255)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField()
     content = models.TextField(help_text='Markdown supported')
     category = models.ForeignKey(WikiCategory, on_delete=models.CASCADE, related_name='pages')
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='wiki_pages')
@@ -67,6 +67,7 @@ class WikiPage(models.Model):
             models.Index(fields=['slug']),
             models.Index(fields=['category']),
         ]
+        unique_together = ('organization', 'slug')
     
     def __str__(self):
         return self.title

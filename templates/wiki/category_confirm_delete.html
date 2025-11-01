@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Category{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Delete Category</h5>
+            </div>
+            
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <strong><i class="fas fa-info-circle"></i> Warning!</strong>
+                    <p class="mb-0 mt-2">
+                        Are you sure you want to delete the category <strong>"{{ object.name }}"</strong>?
+                    </p>
+                </div>
+                
+                {% if object.pages.count %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        This category contains <strong>{{ object.pages.count }}</strong> wiki page(s).
+                        These pages will become uncategorized but will not be deleted.
+                    </div>
+                {% endif %}
+                
+                <p class="text-muted">
+                    This action cannot be undone.
+                </p>
+            </div>
+            
+            <div class="card-footer">
+                <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Yes, Delete Category
+                    </button>
+                </form>
+                <a href="{% url 'wiki:category_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
