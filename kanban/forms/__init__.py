@@ -32,11 +32,16 @@ class TaskForm(forms.ModelForm):
     class Meta:
         model = Task
         fields = [
-            'title', 'description', 'due_date', 'assigned_to', 'labels', 'priority'
+            'title', 'description', 'start_date', 'due_date', 'assigned_to', 'labels', 'priority', 'progress'
         ]
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'start_date': forms.DateInput(attrs={
+                'class': 'form-control', 
+                'type': 'date',
+                'title': 'When this task should start (for Gantt chart)'
+            }),
             'due_date': forms.DateTimeInput(attrs={
                 'class': 'form-control', 
                 'type': 'datetime-local',
@@ -45,6 +50,12 @@ class TaskForm(forms.ModelForm):
             'assigned_to': forms.Select(attrs={'class': 'form-select'}),
             'labels': forms.SelectMultiple(attrs={'class': 'form-select'}),
             'priority': forms.Select(attrs={'class': 'form-select'}),
+            'progress': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0,
+                'max': 100,
+                'title': 'Task completion progress (0-100%)'
+            }),
         }
     def __init__(self, *args, **kwargs):
         board = kwargs.pop('board', None)

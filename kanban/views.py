@@ -759,6 +759,29 @@ def board_analytics(request, board_id):
     })
 
 @login_required
+def gantt_chart(request, board_id):
+    """Display Gantt chart view for a board"""
+    board = get_object_or_404(Board, id=board_id)
+    
+    # Check if user has access to this board
+    if not (board.created_by == request.user or request.user in board.members.all()):
+        return HttpResponseForbidden("You don't have access to this board.")
+    
+    # Get all tasks for this board with dates
+    tasks = Task.objects.filter(
+        column__board=board,
+        start_date__isnull=False,
+        due_date__isnull=False
+    ).select_related('assigned_to', 'column').prefetch_related('dependencies')
+    
+    context = {
+        'board': board,
+        'tasks': tasks,
+    }
+    
+    return render(request, 'kanban/gantt_chart.html', context)
+
+@login_required
 def move_task(request):
     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         data = json.loads(request.body)

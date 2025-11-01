@@ -16,7 +16,7 @@ from django.utils import timezone
 # Setup logging
 logger = logging.getLogger(__name__)
 
-from kanban.models import Task, Comment, Board, Column
+from kanban.models import Task, Comment, Board, Column, TaskActivity
 from accounts.models import UserProfile
 from django.contrib.auth.models import User
 from kanban.utils.ai_utils import (
@@ -1418,4 +1418,65 @@ def get_board_dependency_graph_api(request, board_id):
     except Exception as e:
         logger.error(f"Error in get_board_dependency_graph_api: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def update_task_dates_api(request):
+    """
+    Update task start_date and due_date from Gantt chart
+    """
+    try:
+        data = json.loads(request.body)
+        task_id = data.get('task_id')
+        start_date = data.get('start_date')
+        due_date = data.get('due_date')
+        
+        if not task_id:
+            return JsonResponse({'error': 'Task ID is required'}, status=400)
+        
+        task = get_object_or_404(Task, id=task_id)
+        
+        # Verify user has access
+        board = task.column.board
+        if not (request.user in board.members.all() or board.created_by == request.user):
+            return JsonResponse({'error': 'Access denied'}, status=403)
+        
+        # Update dates
+        if start_date:
+            from datetime import datetime
+            task.start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        
+        if due_date:
+            from datetime import datetime
+            # Keep the time part if due_date is datetime, otherwise set to end of day
+            if task.due_date:
+                # Preserve time component
+                new_date = datetime.strptime(due_date, '%Y-%m-%d').date()
+                task.due_date = datetime.combine(new_date, task.due_date.time())
+            else:
+                # Set to end of day
+                task.due_date = datetime.strptime(due_date + ' 23:59:59', '%Y-%m-%d %H:%M:%S')
+        
+        task.save()
+        
+        # Log activity
+        TaskActivity.objects.create(
+            task=task,
+            user=request.user,
+            activity_type='updated',
+            description=f'Updated task dates: {start_date} to {due_date}'
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Task dates updated successfully'
+        })
+        
+    except Task.DoesNotExist:
+        return JsonResponse({'error': 'Task not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error in update_task_dates_api: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
 

@@ -54,6 +54,7 @@ class Task(models.Model):
     position = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    start_date = models.DateField(blank=True, null=True, help_text="Task start date for Gantt chart")
     due_date = models.DateTimeField(blank=True, null=True)
     assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='assigned_tasks', blank=True, null=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_tasks')
@@ -186,6 +187,14 @@ class Task(models.Model):
         related_name='related_to',
         help_text="Tasks that are related but not parent-child"
     )
+    # Gantt Chart Dependencies (blocking tasks)
+    dependencies = models.ManyToManyField(
+        'self',
+        blank=True,
+        symmetrical=False,
+        related_name='dependent_tasks',
+        help_text="Tasks that must be completed before this task can start"
+    )
     dependency_chain = models.JSONField(
         default=list,
         blank=True,
@@ -209,6 +218,14 @@ class Task(models.Model):
     
     def __str__(self):
         return self.title
+    
+    def duration_days(self):
+        """Calculate task duration in days"""
+        if self.start_date and self.due_date:
+            # Convert due_date to date if it's datetime
+            due = self.due_date.date() if hasattr(self.due_date, 'date') else self.due_date
+            return (due - self.start_date).days
+        return 0
     
     def get_all_subtasks(self):
         """Get all subtasks recursively"""

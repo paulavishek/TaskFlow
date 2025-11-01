@@ -16,6 +16,7 @@ urlpatterns = [
     
     path('boards/', views.board_list, name='board_list'),
     path('boards/create/', views.create_board, name='create_board'),    path('boards/<int:board_id>/', views.board_detail, name='board_detail'),    path('boards/<int:board_id>/analytics/', views.board_analytics, name='board_analytics'),
+    path('boards/<int:board_id>/gantt/', views.gantt_chart, name='gantt_chart'),
     path('boards/<int:board_id>/edit/', views.edit_board, name='edit_board'),
     path('boards/<int:board_id>/create-task/', views.create_task, name='create_task'),
     path('boards/<int:board_id>/columns/<int:column_id>/create-task/', views.create_task, name='create_task_in_column'),
@@ -79,6 +80,9 @@ urlpatterns = [
     path('api/task/<int:task_id>/analyze-dependencies/', api_views.analyze_task_dependencies_api, name='analyze_task_dependencies_api'),
     path('api/task/<int:task_id>/dependency-tree/', api_views.get_dependency_tree_api, name='get_dependency_tree_api'),
     path('api/board/<int:board_id>/dependency-graph/', api_views.get_board_dependency_graph_api, name='get_board_dependency_graph_api'),
+    
+    # Gantt Chart API Endpoints
+    path('api/tasks/update-dates/', api_views.update_task_dates_api, name='update_task_dates_api'),
     
     # File Management for Tasks
     path('tasks/<int:task_id>/files/upload/', views.upload_task_file, name='upload_task_file'),
