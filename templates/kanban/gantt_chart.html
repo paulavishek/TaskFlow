@@ -133,26 +133,28 @@
 
     /* Custom task colors based on status */
     .gantt .bar-wrapper .bar[data-status="todo"] {
-        fill: #6c757d !important;
+        fill: #888 !important;
     }
 
     .gantt .bar-wrapper .bar[data-status="in_progress"] {
-        fill: #0d6efd !important;
+        fill: #4c9aff !important;
     }
 
     .gantt .bar-wrapper .bar[data-status="done"] {
-        fill: #198754 !important;
+        fill: #22c55e !important;
     }
 
-    /* Priority colors */
+    /* Priority colors - add border styling */
     .gantt .bar-wrapper .bar[data-priority="urgent"] {
         stroke: #dc3545 !important;
         stroke-width: 3 !important;
+        fill: #ff5252 !important;
     }
 
     .gantt .bar-wrapper .bar[data-priority="high"] {
         stroke: #fd7e14 !important;
         stroke-width: 2 !important;
+        fill: #ff9500 !important;
     }
 
     .empty-state {
@@ -213,16 +215,30 @@
 
     /* Adaptive task labels */
     .gantt .bar-label {
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 500;
         fill: white;
         text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .gantt .bar-label.outside-left {
         fill: #374151;
         text-shadow: none;
         font-weight: 500;
+    }
+    
+    /* Hide labels on small bars to reduce clutter */
+    .gantt .bar-wrapper .bar-label {
+        display: none;
+    }
+    
+    /* Show labels only in tooltips instead */
+    .gantt .bar-wrapper:hover .bar-label {
+        display: none;
     }
 
     /* Task bar info overlay */
@@ -350,23 +366,23 @@
             <div class="gantt-legend">
                 <strong>Legend:</strong>
                 <div class="legend-item">
-                    <span class="legend-color" style="background: linear-gradient(to right, #a3a3a3 0%, #888 100%);"></span>
+                    <span class="legend-color" style="background: #888;"></span>
                     <span>To Do</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-color" style="background: linear-gradient(to right, #7db3ff 0%, #4c9aff 100%);"></span>
+                    <span class="legend-color" style="background: #4c9aff;"></span>
                     <span>In Progress</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-color" style="background: linear-gradient(to right, #4ade80 0%, #22c55e 100%);"></span>
+                    <span class="legend-color" style="background: #22c55e;"></span>
                     <span>Completed</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-color" style="background: linear-gradient(to right, #ff6b6b 0%, #ff5252 100%); border: 2px solid #dc3545;"></span>
+                    <span class="legend-color" style="background: #ff5252; border: 2px solid #dc3545;"></span>
                     <span>Urgent Priority</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-color" style="background: linear-gradient(to right, #ffa94d 0%, #ff9500 100%); border: 2px solid #fd7e14;"></span>
+                    <span class="legend-color" style="background: #ff9500; border: 2px solid #fd7e14;"></span>
                     <span>High Priority</span>
                 </div>
             </div>
@@ -393,7 +409,8 @@
         {% for task in tasks %}
         {
             id: '{{ task.id }}',
-            name: '{{ task.title|escapejs }}',
+            name: '{{ task.title|escapejs|truncatechars:30 }}',
+            fullName: '{{ task.title|escapejs }}',
             start: '{{ task.start_date|date:"Y-m-d" }}',
             end: '{{ task.due_date|date:"Y-m-d" }}',
             progress: {{ task.progress|default:0 }},
@@ -431,7 +448,7 @@
                     
                     return `
                         <div class="details-container">
-                            <h5>${task.name}</h5>
+                            <h5>${task.fullName || task.name}</h5>
                             <p><strong>Assigned to:</strong> ${task.assigned_to}</p>
                             <p><strong>Duration:</strong> ${duration} days</p>
                             <p><strong>Progress:</strong> ${task.progress}%</p>
@@ -442,8 +459,8 @@
                     `;
                 },
                 on_click: function(task) {
-                    // Redirect to task edit page (modal on board detail page)
-                    window.location.href = `/boards/{{ board.id }}/#task-${task.id}`;
+                    // Redirect to task detail page
+                    window.location.href = `/tasks/${task.id}/`;
                 },
                 on_date_change: function(task, start, end) {
                     // Update task dates via API
@@ -460,7 +477,15 @@
                 tasks.forEach(task => {
                     const barElement = document.querySelector(`.bar-wrapper[data-id="${task.id}"] .bar`);
                     if (barElement) {
-                        barElement.setAttribute('data-status', task.status);
+                        // Determine actual status based on progress
+                        let actualStatus = task.status;
+                        if (task.progress >= 100) {
+                            actualStatus = 'done';
+                        } else if (task.progress > 0) {
+                            actualStatus = 'in_progress';
+                        }
+                        
+                        barElement.setAttribute('data-status', actualStatus);
                         barElement.setAttribute('data-priority', task.priority);
                     }
                 });
@@ -605,9 +630,17 @@
             const endDate = new Date(task.end);
             endDate.setHours(0, 0, 0, 0);
 
-            if (task.status === 'done') {
+            // Use both status and progress to determine actual state
+            let actualStatus = task.status;
+            if (task.progress >= 100) {
+                actualStatus = 'done';
+            } else if (task.progress > 0) {
+                actualStatus = 'in_progress';
+            }
+
+            if (actualStatus === 'done') {
                 doneCount++;
-            } else if (task.status === 'in_progress') {
+            } else if (actualStatus === 'in_progress') {
                 inProgressCount++;
                 if (endDate < today) {
                     overdueCount++;
