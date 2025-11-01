@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     'kanban',
     'ai_assistant',
     'messaging',
+    'wiki',
 ]
 
 MIDDLEWARE = [

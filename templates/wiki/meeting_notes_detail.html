@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}{{ notes.title }} - Meeting Notes{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notes-header {
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .notes-content {
+        line-height: 1.8;
+        font-size: 1rem;
+    }
+    
+    .action-items, .decisions {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    
+    .action-item, .decision {
+        padding: 8px;
+        border-left: 3px solid #0d6efd;
+        margin-bottom: 8px;
+        background-color: white;
+        border-radius: 3px;
+    }
+    
+    .attendee-badge {
+        background-color: #e9ecef;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        margin-right: 5px;
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Header -->
+        <div class="notes-header">
+            <h1 class="mb-3">{{ notes.title }}</h1>
+            
+            <div class="d-flex gap-3 mb-3">
+                <div>
+                    <strong><i class="fas fa-calendar"></i> Date</strong>
+                    <br>{{ notes.date|date:"F j, Y g:i A" }}
+                </div>
+                {% if notes.duration_minutes %}
+                    <div>
+                        <strong><i class="fas fa-clock"></i> Duration</strong>
+                        <br>{{ notes.duration_minutes }} minutes
+                    </div>
+                {% endif %}
+                <div>
+                    <strong><i class="fas fa-user"></i> Created By</strong>
+                    <br>{{ notes.created_by.get_full_name|default:notes.created_by.username }}
+                </div>
+            </div>
+            
+            {% if notes.related_board %}
+                <div>
+                    <strong><i class="fas fa-layer-group"></i> Related Board</strong>
+                    <br>
+                    <a href="{% url 'board_detail' notes.related_board.id %}">{{ notes.related_board.name }}</a>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Content -->
+        <div class="notes-content mb-4">
+            {{ notes.get_html_content }}
+        </div>
+        
+        <!-- Attendees -->
+        {% if notes.attendees.all %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-users"></i> Attendees</h6>
+                </div>
+                <div class="card-body">
+                    {% for attendee in notes.attendees.all %}
+                        <span class="attendee-badge">
+                            {{ attendee.get_full_name|default:attendee.username }}
+                        </span>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Decisions -->
+        {% if notes.decisions %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-check-circle"></i> Key Decisions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="decisions">
+                        {% for decision in notes.decisions %}
+                            <div class="decision">
+                                {{ decision }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Action Items -->
+        {% if notes.action_items %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-tasks"></i> Action Items</h6>
+                </div>
+                <div class="card-body">
+                    <div class="action-items">
+                        {% for item in notes.action_items %}
+                            <div class="action-item">
+                                <strong>{{ item.task }}</strong>
+                                {% if item.assigned_to %}
+                                    <br><small>Assigned to: {{ item.assigned_to }}</small>
+                                {% endif %}
+                                {% if item.due_date %}
+                                    <br><small>Due: {{ item.due_date }}</small>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Related Wiki Page -->
+        {% if notes.related_wiki_page %}
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-file-alt"></i> Related Wiki Page</h6>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'wiki:page_detail' notes.related_wiki_page.slug %}" class="text-decoration-none">
+                        {{ notes.related_wiki_page.title }}
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card position-sticky" style="top: 20px;">
+            <div class="card-header">
+                <h6 class="mb-0">Meeting Info</h6>
+            </div>
+            <div class="list-group list-group-flush">
+                <div class="list-group-item">
+                    <small class="text-muted">Created</small>
+                    <br>{{ notes.created_at|date:"M d, Y g:i A" }}
+                </div>
+                <div class="list-group-item">
+                    <small class="text-muted">Last Updated</small>
+                    <br>{{ notes.updated_at|date:"M d, Y g:i A" }}
+                </div>
+                <div class="list-group-item">
+                    <small class="text-muted">Attendees</small>
+                    <br>{{ notes.attendees.count }} people
+                </div>
+                {% if notes.duration_minutes %}
+                    <div class="list-group-item">
+                        <small class="text-muted">Duration</small>
+                        <br>{{ notes.duration_minutes }} minutes
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

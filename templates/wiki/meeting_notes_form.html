@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load widget_tweaks %}
+
+{% block title %}Create Meeting Notes{% endblock %}
+
+{% block extra_css %}
+<style>
+    .meeting-form {
+        max-width: 100%;
+    }
+    
+    .form-section {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <h2 class="mb-4">
+            <i class="fas fa-file-alt"></i> Create Meeting Notes
+        </h2>
+        
+        <form method="post" class="meeting-form">
+            {% csrf_token %}
+            
+            <div class="form-section">
+                <h5 class="mb-3">Meeting Details</h5>
+                
+                <div class="mb-3">
+                    {{ form.title.label_tag }}
+                    {{ form.title|add_class:"form-control form-control-lg" }}
+                    {{ form.title.errors }}
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.date.label_tag }}
+                        {{ form.date|add_class:"form-control" }}
+                        {{ form.date.errors }}
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        {{ form.duration_minutes.label_tag }}
+                        {{ form.duration_minutes|add_class:"form-control" }}
+                        {{ form.duration_minutes.errors }}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.related_board.label_tag }}
+                    {{ form.related_board|add_class:"form-control" }}
+                    <small class="text-muted">Link to a related board (optional)</small>
+                    {{ form.related_board.errors }}
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h5 class="mb-3">Content</h5>
+                
+                {{ form.content.label_tag }}
+                {{ form.content|add_class:"form-control" }}
+                <small class="text-muted d-block mt-2">Markdown supported</small>
+                {{ form.content.errors }}
+            </div>
+            
+            <div class="form-section">
+                <h5 class="mb-3">Participants & Decisions</h5>
+                
+                <div class="mb-3">
+                    {{ form.attendee_usernames.label_tag }}
+                    {{ form.attendee_usernames }}
+                    <small class="text-muted">{{ form.attendee_usernames.help_text }}</small>
+                    {{ form.attendee_usernames.errors }}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.decisions.label_tag }}
+                    {{ form.decisions|add_class:"form-control" }}
+                    <small class="text-muted">Key decisions made during the meeting</small>
+                    {{ form.decisions.errors }}
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i> Create Meeting Notes
+                    </button>
+                    <a href="{% url 'wiki:meeting_notes_list' %}" class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card position-sticky" style="top: 20px;">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-lightbulb"></i> Tips</h6>
+            </div>
+            <div class="card-body">
+                <h6>Meeting Notes Best Practices</h6>
+                <ul class="small">
+                    <li>Include meeting date/time</li>
+                    <li>List all attendees</li>
+                    <li>Document key points</li>
+                    <li>Record decisions</li>
+                    <li>Note action items</li>
+                    <li>Include next steps</li>
+                </ul>
+                
+                <hr>
+                
+                <h6>Markdown Tips</h6>
+                <ul class="small">
+                    <li>Use **bold** for emphasis</li>
+                    <li>Use `code` for keywords</li>
+                    <li>Use - for bullet points</li>
+                    <li>Link to wiki pages</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

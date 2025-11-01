@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page.title }} - Version History{% endblock %}
+
+{% block extra_css %}
+<style>
+    .version-item {
+        border-left: 3px solid #0d6efd;
+        padding: 15px;
+        margin-bottom: 15px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+    
+    .version-item.current {
+        border-left-color: #28a745;
+        background-color: #f0fdf4;
+    }
+    
+    .version-number {
+        display: inline-block;
+        background-color: #0d6efd;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+    
+    .version-item.current .version-number {
+        background-color: #28a745;
+    }
+    
+    .version-meta {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 10px;
+    }
+    
+    .version-actions {
+        margin-top: 10px;
+    }
+    
+    .diff-content {
+        background-color: #fff3cd;
+        padding: 10px;
+        border-radius: 3px;
+        font-size: 0.9rem;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-9">
+        <h2 class="mb-1">
+            <i class="fas fa-history"></i> Version History
+        </h2>
+        <p class="text-muted mb-4">
+            <a href="{% url 'wiki:page_detail' page.slug %}">{{ page.title }}</a>
+        </p>
+        
+        {% if versions %}
+            {% for version in versions %}
+                <div class="version-item {% if version.version_number == page.version %}current{% endif %}">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="version-number">
+                                v{{ version.version_number }}
+                            </span>
+                            {% if version.version_number == page.version %}
+                                <span class="badge bg-success ms-2">Current</span>
+                            {% endif %}
+                        </div>
+                        {% if version.version_number != page.version %}
+                            <a href="{% url 'wiki:page_restore' page.slug version.version_number %}" 
+                               class="btn btn-sm btn-outline-primary"
+                               onclick="return confirm('Restore to this version?')">
+                                <i class="fas fa-undo"></i> Restore
+                            </a>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="version-meta">
+                        <strong>{{ version.title }}</strong><br>
+                        Edited by <strong>{{ version.edited_by.get_full_name|default:version.edited_by.username }}</strong>
+                        on {{ version.created_at|date:"F j, Y g:i A" }}
+                    </div>
+                    
+                    {% if version.change_summary %}
+                        <div class="mb-2">
+                            <small class="text-muted">
+                                <i class="fas fa-comment"></i> {{ version.change_summary }}
+                            </small>
+                        </div>
+                    {% endif %}
+                    
+                    {% if version.version_number != page.version %}
+                        <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                data-bs-toggle="collapse" data-bs-target="#content-{{ version.id }}">
+                            <i class="fas fa-eye"></i> View Content
+                        </button>
+                        <div class="collapse mt-2" id="content-{{ version.id }}">
+                            <div class="diff-content">
+                                {{ version.content|truncatewords:100 }}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                No version history available
+            </div>
+        {% endif %}
+        
+        <div class="mt-4">
+            <a href="{% url 'wiki:page_detail' page.slug %}" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Back to Page
+            </a>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+        <div class="card position-sticky" style="top: 20px;">
+            <div class="card-header">
+                <h6 class="mb-0">Version Information</h6>
+            </div>
+            <div class="list-group list-group-flush">
+                <div class="list-group-item">
+                    <small class="text-muted">Current Version</small>
+                    <br><strong>v{{ page.version }}</strong>
+                </div>
+                <div class="list-group-item">
+                    <small class="text-muted">Total Versions</small>
+                    <br><strong>{{ versions.count }} version{{ versions.count|pluralize }}</strong>
+                </div>
+                <div class="list-group-item">
+                    <small class="text-muted">Last Updated</small>
+                    <br>{{ page.updated_at|date:"M d, Y g:i A" }}
+                </div>
+                <div class="list-group-item">
+                    <small class="text-muted">Created</small>
+                    <br>{{ page.created_at|date:"M d, Y" }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

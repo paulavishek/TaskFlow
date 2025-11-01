@@ -27,6 +27,7 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),  # Add allauth URLs
     path('assistant/', include('ai_assistant.urls')),  # AI Project Assistant URLs
     path('messaging/', include('messaging.urls')),  # Real-time messaging URLs
+    path('wiki/', include('wiki.urls')),  # Wiki and Knowledge Base URLs
 ]
 
 if settings.DEBUG:

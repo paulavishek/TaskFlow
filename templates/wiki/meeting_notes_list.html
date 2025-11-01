@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Meeting Notes{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notes-card {
+        border-left: 4px solid #0d6efd;
+        transition: all 0.2s;
+    }
+    
+    .notes-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .attendees-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .attendee-badge {
+        background-color: #e9ecef;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>
+                <i class="fas fa-file-alt"></i> Meeting Notes
+            </h2>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'wiki:meeting_notes_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Meeting Notes
+            </a>
+        </div>
+    </div>
+    
+    {% if notes %}
+        <div class="row">
+            {% for note in notes %}
+                <div class="col-md-6 mb-4">
+                    <div class="card notes-card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title">
+                                    <a href="{% url 'wiki:meeting_notes_detail' note.id %}" class="text-decoration-none">
+                                        {{ note.title }}
+                                    </a>
+                                </h5>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar"></i> {{ note.date|date:"M d, Y g:i A" }}
+                                    {% if note.duration_minutes %}
+                                        • <i class="fas fa-clock"></i> {{ note.duration_minutes }} min
+                                    {% endif %}
+                                </small>
+                            </div>
+                            
+                            {% if note.attendees.all %}
+                                <div class="mb-2">
+                                    <strong class="small">Attendees:</strong>
+                                    <div class="attendees-list">
+                                        {% for attendee in note.attendees.all|slice:":5" %}
+                                            <span class="attendee-badge">{{ attendee.first_name|default:attendee.username }}</span>
+                                        {% endfor %}
+                                        {% if note.attendees.count > 5 %}
+                                            <span class="attendee-badge">+{{ note.attendees.count|add:-5 }} more</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            <p class="card-text small mb-3">
+                                {{ note.content|truncatewords:30 }}
+                            </p>
+                            
+                            <div class="btn-group btn-group-sm w-100" role="group">
+                                <a href="{% url 'wiki:meeting_notes_detail' note.id %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <a href="{% url 'wiki:meeting_notes_detail' note.id %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            No meeting notes yet. <a href="{% url 'wiki:meeting_notes_create' %}">Create the first one</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

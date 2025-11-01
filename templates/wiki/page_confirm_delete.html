@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Page{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-6">
+        <div class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Confirm Page Deletion</strong>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ page.title }}</h5>
+                <p class="card-text text-muted">
+                    Are you sure you want to delete this wiki page? This action cannot be undone.
+                </p>
+                
+                <div class="alert alert-info">
+                    <strong>Page Information:</strong>
+                    <ul class="mb-0">
+                        <li>Category: {{ page.category.name }}</li>
+                        <li>Created: {{ page.created_at|date:"M d, Y" }}</li>
+                        <li>Views: {{ page.view_count }}</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-footer">
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete Page
+                    </button>
+                </form>
+                <a href="{% url 'wiki:page_detail' page.slug %}" class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

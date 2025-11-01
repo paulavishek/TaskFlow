@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load widget_tweaks %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}Create{% endif %} Wiki Page{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-markdown@3.0.0/bootstrap-markdown.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
+<style>
+    .page-form-container {
+        max-width: 100%;
+    }
+    
+    .form-section {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    
+    .help-text {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    
+    .markdown-editor {
+        font-family: 'Monaco', 'Courier New', monospace;
+        font-size: 0.95rem;
+    }
+    
+    .preview-pane {
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 15px;
+        min-height: 300px;
+    }
+    
+    .tagsinput {
+        width: 100% !important;
+    }
+    
+    .tag {
+        display: inline-block;
+        background-color: #0d6efd;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 3px;
+        margin-right: 5px;
+        margin-bottom: 5px;
+    }
+    
+    .tag span {
+        cursor: pointer;
+        margin-left: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-tagsinput/1.3.6/jquery.tagsinput.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-tagsinput/1.3.6/jquery.tagsinput.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-9">
+        <h2 class="mb-4">
+            <i class="fas fa-edit"></i>
+            {% if form.instance.pk %}Edit{% else %}Create New{% endif %} Wiki Page
+        </h2>
+        
+        <form method="post" class="page-form-container" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Basic Information -->
+            <div class="form-section">
+                <h5 class="mb-3">Page Details</h5>
+                
+                <div class="mb-3">
+                    {{ form.title.label_tag }}
+                    {{ form.title|add_class:"form-control form-control-lg" }}
+                    {% if form.title.help_text %}
+                        <small class="help-text">{{ form.title.help_text|safe }}</small>
+                    {% endif %}
+                    {{ form.title.errors }}
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.category.label_tag }}
+                        {{ form.category|add_class:"form-control" }}
+                        {{ form.category.errors }}
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        {{ form.parent_page.label_tag }}
+                        {{ form.parent_page|add_class:"form-control" }}
+                        <small class="help-text">For hierarchical organization (optional)</small>
+                        {{ form.parent_page.errors }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Page Content -->
+            <div class="form-section">
+                <h5 class="mb-3">Content</h5>
+                
+                <ul class="nav nav-tabs mb-3" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="edit-tab" data-bs-toggle="tab" 
+                                data-bs-target="#edit-pane" type="button" role="tab">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="preview-tab" data-bs-toggle="tab" 
+                                data-bs-target="#preview-pane" type="button" role="tab">
+                            <i class="fas fa-eye"></i> Preview
+                        </button>
+                    </li>
+                    <li class="nav-item ms-auto">
+                        <small class="text-muted align-self-center">Markdown supported</small>
+                    </li>
+                </ul>
+                
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="edit-pane" role="tabpanel">
+                        {{ form.content|add_class:"form-control markdown-editor" }}
+                        {{ form.content.errors }}
+                    </div>
+                    <div class="tab-pane fade" id="preview-pane" role="tabpanel">
+                        <div class="preview-pane" id="markdown-preview">
+                            <p class="text-muted">Preview will appear here...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <small class="help-text mt-2 d-block">
+                    <strong>Markdown Help:</strong> Use **bold**, *italic*, `code`, [links](url), # Headings, - Lists, etc.
+                </small>
+            </div>
+            
+            <!-- Metadata -->
+            <div class="form-section">
+                <h5 class="mb-3">Metadata & Settings</h5>
+                
+                <div class="mb-3">
+                    {{ form.tags.label_tag }}
+                    {{ form.tags|add_class:"form-control" }}
+                    <small class="help-text">{{ form.tags.help_text|safe }}</small>
+                    {{ form.tags.errors }}
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-check mb-3">
+                            {{ form.is_published }}
+                            {{ form.is_published.label_tag }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check mb-3">
+                            {{ form.is_pinned }}
+                            {{ form.is_pinned.label_tag }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="form-section">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i>
+                        {% if form.instance.pk %}Update{% else %}Create{% endif %} Page
+                    </button>
+                    <a href="{% url 'wiki:page_list' %}" class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Form Errors -->
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+        </form>
+    </div>
+    
+    <!-- Sidebar Help -->
+    <div class="col-lg-3">
+        <div class="card position-sticky" style="top: 20px;">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-lightbulb"></i> Tips</h6>
+            </div>
+            <div class="card-body">
+                <h6>Markdown Syntax</h6>
+                <ul class="small">
+                    <li><code>**text**</code> - Bold</li>
+                    <li><code>*text*</code> - Italic</li>
+                    <li><code>`code`</code> - Inline code</li>
+                    <li><code>```<br>code<br>```</code> - Code block</li>
+                    <li><code># Heading</code> - Heading</li>
+                    <li><code>- Item</code> - List</li>
+                    <li><code>[Link](url)</code> - Links</li>
+                    <li><code>![Image](url)</code> - Images</li>
+                </ul>
+                
+                <hr>
+                
+                <h6>Best Practices</h6>
+                <ul class="small">
+                    <li>Use clear, descriptive titles</li>
+                    <li>Organize with headers</li>
+                    <li>Add tags for discoverability</li>
+                    <li>Link to related pages</li>
+                    <li>Keep content up-to-date</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Live markdown preview
+    const contentTextarea = document.querySelector('textarea[name="content"]');
+    const previewPane = document.getElementById('markdown-preview');
+    
+    if (contentTextarea && previewPane) {
+        function updatePreview() {
+            const markdown = contentTextarea.value;
+            previewPane.innerHTML = marked.parse(markdown);
+            document.querySelectorAll('pre code').forEach(block => {
+                hljs.highlightElement(block);
+            });
+        }
+        
+        contentTextarea.addEventListener('input', updatePreview);
+        updatePreview(); // Initial preview
+    }
+    
+    // Tags input
+    const tagsInput = document.querySelector('input[name="tags"]');
+    if (tagsInput) {
+        try {
+            $(tagsInput).tagsInput({
+                'width': '100%',
+                'height': '100%',
+                'interactive': true,
+                'defaultText': 'Add a tag',
+                'removeWithBackspace': true,
+                'minChars': 2,
+                'maxChars': 50,
+                'placeholderColor': '#999999'
+            });
+        } catch (e) {
+            // Fallback if tagsInput plugin fails
+        }
+    }
+});
+</script>
+{% endblock %}

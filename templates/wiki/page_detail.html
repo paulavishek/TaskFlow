@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page.title }} - Wiki{% endblock %}
+
+{% block extra_css %}
+<style>
+    .wiki-header {
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .wiki-content {
+        line-height: 1.8;
+        font-size: 1rem;
+    }
+    
+    .wiki-content h2 {
+        margin-top: 30px;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 10px;
+    }
+    
+    .wiki-content h3 {
+        margin-top: 25px;
+        margin-bottom: 12px;
+    }
+    
+    .wiki-content code {
+        background-color: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.9em;
+    }
+    
+    .wiki-content pre {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        overflow-x: auto;
+    }
+    
+    .wiki-sidebar {
+        position: sticky;
+        top: 20px;
+    }
+    
+    .breadcrumb {
+        background-color: transparent;
+        padding: 0;
+        margin-bottom: 20px;
+    }
+    
+    .page-stat {
+        display: inline-block;
+        margin-right: 20px;
+        color: #6c757d;
+    }
+    
+    .link-box {
+        background-color: #f8f9fa;
+        border-left: 4px solid #0d6efd;
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+    }
+    
+    .attachment-item {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        margin-bottom: 8px;
+    }
+    
+    .attachment-icon {
+        font-size: 1.5rem;
+        margin-right: 10px;
+        width: 30px;
+        text-align: center;
+    }
+    
+    .version-badge {
+        background-color: #e9ecef;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+    }
+    
+    .action-buttons {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #dee2e6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Main Content -->
+    <div class="col-lg-8">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'wiki:page_list' %}">Wiki</a></li>
+                {% for breadcrumb_page in breadcrumb %}
+                    {% if breadcrumb_page == page %}
+                        <li class="breadcrumb-item active">{{ breadcrumb_page.title }}</li>
+                    {% else %}
+                        <li class="breadcrumb-item"><a href="{% url 'wiki:page_detail' breadcrumb_page.slug %}">{{ breadcrumb_page.title }}</a></li>
+                    {% endif %}
+                {% endfor %}
+            </ol>
+        </nav>
+        
+        <!-- Page Header -->
+        <div class="wiki-header">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h1 class="mb-2">{{ page.title }}</h1>
+                    <span class="badge" style="background-color: {{ page.category.color }}">
+                        <i class="fas fa-{{ page.category.icon }}"></i> {{ page.category.name }}
+                    </span>
+                </div>
+                <div>
+                    {% if user == page.created_by or user.is_staff %}
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="{% url 'wiki:page_edit' page.slug %}" class="btn btn-outline-primary">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#linkModal">
+                                <i class="fas fa-link"></i> Link
+                            </button>
+                            <a href="{% url 'wiki:page_delete' page.slug %}" class="btn btn-outline-danger" onclick="return confirm('Delete this page?')">
+                                <i class="fas fa-trash"></i> Delete
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Page Meta -->
+            <div class="page-stat">
+                <i class="fas fa-user"></i> {{ page.created_by.first_name|default:page.created_by.username }}
+            </div>
+            <div class="page-stat">
+                <i class="fas fa-calendar"></i> {{ page.updated_at|date:"M d, Y \a\t g:i A" }}
+            </div>
+            <div class="page-stat">
+                <i class="fas fa-eye"></i> {{ page.view_count }} views
+            </div>
+            <div class="page-stat">
+                <span class="version-badge">v{{ page.version }}</span>
+            </div>
+        </div>
+        
+        <!-- Page Content -->
+        <div class="wiki-content">
+            {{ page.get_html_content }}
+        </div>
+        
+        <!-- Child Pages -->
+        {% if page.child_pages.all %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-sitemap"></i> Sub Pages</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for child in page.child_pages.all %}
+                        <a href="{% url 'wiki:page_detail' child.slug %}" class="list-group-item list-group-item-action">
+                            <h6 class="mb-1">{{ child.title }}</h6>
+                            <small class="text-muted">Updated {{ child.updated_at|date:"M d, Y" }}</small>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Attachments -->
+        {% if attachments %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-paperclip"></i> Attachments</h5>
+                </div>
+                <div class="card-body">
+                    {% for attachment in attachments %}
+                        <div class="attachment-item">
+                            <div class="attachment-icon">
+                                {% if attachment.file_type == 'pdf' %}
+                                    <i class="fas fa-file-pdf" style="color: #d32f2f;"></i>
+                                {% elif attachment.file_type in 'doc|docx' %}
+                                    <i class="fas fa-file-word" style="color: #1f73db;"></i>
+                                {% elif attachment.file_type in 'xls|xlsx' %}
+                                    <i class="fas fa-file-excel" style="color: #10b981;"></i>
+                                {% elif attachment.file_type in 'image' %}
+                                    <i class="fas fa-file-image" style="color: #f59e0b;"></i>
+                                {% else %}
+                                    <i class="fas fa-file" style="color: #6c757d;"></i>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <a href="{{ attachment.file.url }}" class="text-decoration-none" target="_blank">
+                                    {{ attachment.filename }}
+                                </a>
+                                <br>
+                                <small class="text-muted">{{ attachment.file_size|filesizeformat }} • Uploaded by {{ attachment.uploaded_by.username }}</small>
+                            </div>
+                            <a href="{{ attachment.file.url }}" class="btn btn-sm btn-outline-secondary" download>
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Related Content -->
+        <div class="row mt-4">
+            <!-- Linked Tasks -->
+            {% if linked_tasks %}
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-tasks"></i> Related Tasks</h6>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for link in linked_tasks %}
+                                <a href="{% url 'task_detail' link.task.id %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>{{ link.task.title }}</strong>
+                                        <span class="badge bg-primary">{{ link.task.priority|upper }}</span>
+                                    </div>
+                                    {% if link.description %}
+                                        <small class="text-muted">{{ link.description }}</small>
+                                    {% endif %}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Linked Boards -->
+            {% if linked_boards %}
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-layer-group"></i> Related Boards</h6>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for link in linked_boards %}
+                                <a href="{% url 'board_detail' link.board.id %}" class="list-group-item list-group-item-action">
+                                    <strong>{{ link.board.name }}</strong>
+                                    {% if link.description %}
+                                        <br><small class="text-muted">{{ link.description }}</small>
+                                    {% endif %}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Incoming Links (Wiki Page References) -->
+        {% if incoming_links %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-link"></i> Referenced By</h6>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for link in incoming_links %}
+                        <a href="{% url 'wiki:page_detail' link.source_page.slug %}" class="list-group-item list-group-item-action">
+                            <strong>{{ link.source_page.title }}</strong>
+                            <br><small class="text-muted">{{ link.source_page.content|truncatewords:10 }}</small>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Meeting Notes -->
+        {% if related_meeting_notes %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-file-alt"></i> Related Meeting Notes</h6>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for notes in related_meeting_notes %}
+                        <a href="{% url 'wiki:meeting_notes_detail' notes.id %}" class="list-group-item list-group-item-action">
+                            <strong>{{ notes.title }}</strong>
+                            <br><small class="text-muted">{{ notes.date|date:"M d, Y g:i A" }}</small>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Version History -->
+        {% if versions %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0"><i class="fas fa-history"></i> Version History</h6>
+                        <a href="{% url 'wiki:page_history' page.slug %}" class="btn btn-sm btn-outline-secondary">View All</a>
+                    </div>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for version in versions %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>Version {{ version.version_number }}</strong>
+                                    <br><small class="text-muted">by {{ version.edited_by.username }} • {{ version.created_at|date:"M d, Y g:i A" }}</small>
+                                    {% if version.change_summary %}
+                                        <br><small>{{ version.change_summary }}</small>
+                                    {% endif %}
+                                </div>
+                                <a href="{% url 'wiki:page_restore' page.slug version.version_number %}" class="btn btn-sm btn-outline-primary" onclick="return confirm('Restore to this version?')">
+                                    Restore
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="wiki-sidebar">
+            <!-- Page Info Card -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Page Information</h6>
+                </div>
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item">
+                        <small class="text-muted">Created</small>
+                        <br>{{ page.created_at|date:"M d, Y" }}
+                    </div>
+                    <div class="list-group-item">
+                        <small class="text-muted">Last Updated</small>
+                        <br>{{ page.updated_at|date:"M d, Y g:i A" }}
+                    </div>
+                    <div class="list-group-item">
+                        <small class="text-muted">Author</small>
+                        <br>{{ page.created_by.get_full_name|default:page.created_by.username }}
+                    </div>
+                    <div class="list-group-item">
+                        <small class="text-muted">Status</small>
+                        <br>
+                        {% if page.is_published %}
+                            <span class="badge bg-success">Published</span>
+                        {% else %}
+                            <span class="badge bg-warning">Draft</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tags -->
+            {% if page.tags %}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Tags</h6>
+                    </div>
+                    <div class="card-body">
+                        {% for tag in page.tags %}
+                            <a href="{% url 'wiki:page_list' %}?q={{ tag }}" class="badge bg-light text-dark me-1 mb-1">
+                                {{ tag }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Quick Actions</h6>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'wiki:page_history' page.slug %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-history"></i> View History
+                    </a>
+                    {% if user == page.created_by or user.is_staff %}
+                        <a href="{% url 'wiki:page_edit' page.slug %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-edit"></i> Edit Page
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#linkModal">
+                            <i class="fas fa-link"></i> Add Link
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'wiki:page_list' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-book"></i> All Pages
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Link Modal -->
+<div class="modal fade" id="linkModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Link Page to Task/Board</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Link this page to a task or board for better project management.</p>
+                <a href="{% url 'wiki:link_create' page.slug %}" class="btn btn-primary w-100">
+                    Add Link
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
