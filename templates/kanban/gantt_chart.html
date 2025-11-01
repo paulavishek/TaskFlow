@@ -456,19 +456,21 @@
             });
 
             // Add custom attributes for styling
-            tasks.forEach(task => {
-                const barElement = document.querySelector(`.bar-wrapper[data-id="${task.id}"] .bar`);
-                if (barElement) {
-                    barElement.setAttribute('data-status', task.status);
-                    barElement.setAttribute('data-priority', task.priority);
-                }
-            });
+            setTimeout(() => {
+                tasks.forEach(task => {
+                    const barElement = document.querySelector(`.bar-wrapper[data-id="${task.id}"] .bar`);
+                    if (barElement) {
+                        barElement.setAttribute('data-status', task.status);
+                        barElement.setAttribute('data-priority', task.priority);
+                    }
+                });
 
-            // Add today marker
-            addTodayMarker();
+                // Add today marker
+                addTodayMarker();
 
-            // Enhance bars with additional info
-            enhanceBarsWithInfo();
+                // Enhance bars with additional info
+                enhanceBarsWithInfo();
+            }, 100);
         }
     }
 
